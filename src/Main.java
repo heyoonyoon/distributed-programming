@@ -153,7 +153,7 @@ public class Main {
                 case 12: uc12BenefitPaymentReview(scanner); break;
                 case 13: uc13EnrollmentReview(scanner); break;
                 case 14: uc14AssignStaff(scanner); break;
-                case 15: System.out.println("UC15 미구현"); break;
+                case 15: uc15AccidentHistoryInquiry(scanner); break;
                 case 16: System.out.println("UC16 미구현"); break;
                 case 17: System.out.println("UC17 미구현"); break;
                 default: System.out.println("잘못된 입력입니다.");
@@ -1602,6 +1602,63 @@ public class Main {
         }
         System.out.println("가입자에게 안내 이메일/문자를 발송하였습니다.");
         review.unlock();
+    }
+
+    private static void uc15AccidentHistoryInquiry(Scanner scanner) {
+        System.out.println("\n=== 자동차 사고 이력 조회 (금융감독원 연동) ===");
+
+        // 2단계: 주민등록번호 기반 외부 기관 조회
+        System.out.print("조회할 주민등록번호 입력: ");
+        scanner.nextLine();
+        String ssn = scanner.nextLine().trim();
+
+        System.out.println("\n[금융감독원 사고 이력 조회 중...]");
+        AccidentHistory history = AccidentHistory.fetch(ssn);
+
+        if (history == null) {
+            // E1: 외부 연동 실패
+            System.out.println("정보 조회 실패.");
+            System.out.println("1. 재시도  2. 직접 입력 전환");
+            System.out.print("선택: ");
+            int retry = scanner.nextInt();
+            scanner.nextLine();
+            if (retry == 1) {
+                history = AccidentHistory.fetch(ssn);
+            } else {
+                // E1-3: 직접 입력 전환
+                System.out.println("\n[직접 입력]");
+                System.out.print("사고 건수: ");
+                int accidentCount = scanner.nextInt();
+                System.out.print("지급액 합계: ");
+                int totalPaid = scanner.nextInt();
+                scanner.nextLine();
+                System.out.print("면허 상태 (VALID/SUSPENDED/REVOKED): ");
+                String licenseStatus = scanner.nextLine().trim();
+                history = new AccidentHistory(ssn, accidentCount, totalPaid, licenseStatus);
+            }
+        }
+
+        if (history == null) {
+            System.out.println("사고 이력 조회에 실패하였습니다.");
+            return;
+        }
+
+        // 4단계: 조회된 정보 출력
+        System.out.println("\n=== 사고 이력 조회 결과 ===");
+        System.out.println("주민등록번호 : " + ssn);
+        System.out.println("사고 건수     : " + history.getAccidentCount() + "건");
+        System.out.println("지급액 합계   : " + String.format("%,d", history.getTotalPaidAmount()) + "원");
+        System.out.println("면허 상태     : " + history.getLicenseStatus());
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        if (!history.getRecords().isEmpty()) {
+            System.out.println("\n[사고 상세 이력]");
+            for (external.AccidentRecord r : history.getRecords()) {
+                System.out.println("  - 날짜: " + sdf.format(r.getAccidentDate())
+                        + " / 유형: " + r.getAccidentType()
+                        + " / 지급액: " + String.format("%,d", r.getPaidAmount()) + "원");
+            }
+        }
+        System.out.println("\n조회가 완료되었습니다.");
     }
 
     private static EnrollmentReview findEnrollmentReview(String applicationId) {
