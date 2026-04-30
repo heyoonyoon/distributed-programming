@@ -120,7 +120,7 @@ public class Main {
                 case 8: uc08ContractInquiry(scanner); break;
                 case 9: uc09CarAccidentReport(scanner); break;
                 case 10: uc10PayPremium(scanner); break;
-                case 11: System.out.println("UC11 미구현"); break;
+                case 11: uc11ProfitAnalysis(scanner); break;
                 case 12: System.out.println("UC12 미구현"); break;
                 case 13: System.out.println("UC13 미구현"); break;
                 case 14: System.out.println("UC14 미구현"); break;
@@ -1073,5 +1073,116 @@ public class Main {
         System.out.println("납부 수단  : " + (method == EPaymentMethod.CARD ? "신용카드" : "계좌이체"));
         System.out.println("납부 일시  : " + sdf.format(receipt.getPaidAt()));
         System.out.println("납부 완료 영수증을 이메일/문자로 발송하였습니다.");
+    }
+
+    private static void uc11ProfitAnalysis(Scanner scanner) {
+        System.out.println("\n=== 보험 처리 실익 분석 ===");
+
+        // 2단계: 분석 대상 계약 선택 화면
+        if (contracts.isEmpty()) {
+            System.out.println("보유 중인 계약이 없습니다.");
+            return;
+        }
+
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        System.out.println("\n[계약 목록]");
+        System.out.println("번호 | 계약명           | 시작일     | 월 보험료");
+        System.out.println("-----|-----------------|------------|----------");
+        for (int i = 0; i < contracts.size(); i++) {
+            InsuranceContract c = contracts.get(i);
+            System.out.printf("%-4d | %-15s | %s | %,d원%n",
+                    i + 1, c.getProductName(), sdf.format(c.getStartDate()), c.getMonthlyPremium());
+        }
+
+        // 3단계: 계약 선택
+        System.out.print("\n분석할 계약 번호 (0.뒤로): ");
+        int contractChoice = scanner.nextInt();
+        scanner.nextLine();
+        if (contractChoice == 0) return;
+        if (contractChoice < 1 || contractChoice > contracts.size()) {
+            System.out.println("잘못된 입력입니다.");
+            return;
+        }
+        InsuranceContract selected = contracts.get(contractChoice - 1);
+
+        // A1: 가입 기간 6개월 미만 체크
+        long diffMs = new Date().getTime() - selected.getStartDate().getTime();
+        long diffMonths = diffMs / (1000L * 60 * 60 * 24 * 30);
+        if (diffMonths < 6) {
+            System.out.println("분석에 필요한 데이터가 충분하지 않습니다. 6개월 이후 이용 가능합니다.");
+            return;
+        }
+
+        // 3단계: 분석 기간 선택
+        System.out.println("\n[분석 기간 선택]");
+        System.out.println("1. 전체 기간  2. 최근 6개월  3. 최근 1년  4. 최근 2년");
+        System.out.print("선택: ");
+        int periodChoice = scanner.nextInt();
+        scanner.nextLine();
+
+        long analysisMonths;
+        String periodLabel;
+        switch (periodChoice) {
+            case 2: analysisMonths = 6;  periodLabel = "최근 6개월"; break;
+            case 3: analysisMonths = 12; periodLabel = "최근 1년";   break;
+            case 4: analysisMonths = 24; periodLabel = "최근 2년";   break;
+            default: analysisMonths = diffMonths; periodLabel = "전체 기간 (" + diffMonths + "개월)"; break;
+        }
+        if (analysisMonths > diffMonths) analysisMonths = diffMonths;
+
+        // 4단계: 분석 결과 계산
+        int totalPaid = (int)(selected.getMonthlyPremium() * analysisMonths);
+
+        Date periodStart = new Date(new Date().getTime() - analysisMonths * 30L * 24 * 60 * 60 * 1000);
+        int totalReceived = 0;
+        for (Claim claim : claims) {
+            if (claim.getStatus() == EClaimStatus.APPROVED && claim.getPaidAmount() > 0) {
+                if (!claim.getClaimDate().before(periodStart)) {
+                    totalReceived += claim.getPaidAmount();
+                }
+            }
+        }
+
+        int netBenefit = totalReceived - totalPaid;
+        double profitRate = totalPaid > 0 ? (double) totalReceived / totalPaid * 100 : 0;
+
+        System.out.println("\n=== 보험 처리 실익 분석 결과 ===");
+        System.out.println("계약명    : " + selected.getProductName());
+        System.out.println("분석 기간 : " + periodLabel);
+        System.out.println();
+
+        // ASCII 바 차트
+        int maxBar = 30;
+        int paidBar  = totalPaid  > 0 ? Math.max(1, (int)((double) totalPaid  / Math.max(totalPaid, totalReceived) * maxBar)) : 0;
+        int recvBar  = totalReceived > 0 ? Math.max(1, (int)((double) totalReceived / Math.max(totalPaid, totalReceived) * maxBar)) : 0;
+
+        System.out.println("[납입 보험료] " + repeat("█", paidBar) + " " + String.format("%,d원", totalPaid));
+        System.out.println("[수령 보험금] " + repeat("█", recvBar) + " " + String.format("%,d원", totalReceived));
+        System.out.println();
+        System.out.printf("실익 금액 : %s%,d원%n", netBenefit >= 0 ? "+" : "", netBenefit);
+        System.out.printf("실익률    : %.1f%%%n", profitRate);
+
+        if (netBenefit >= 0) {
+            System.out.println("→ 납입 보험료 대비 보험금 수령이 많습니다. (이익)");
+        } else {
+            System.out.println("→ 아직 수령 보험금이 납입 보험료보다 적습니다.");
+        }
+
+        // 5단계: 유사 가입자 대비 비교
+        System.out.println("\n[유사 가입자 비교]");
+        double avgProfitRate = 45.0;
+        System.out.printf("유사 가입자 평균 실익률 : %.1f%%%n", avgProfitRate);
+        System.out.printf("나의 실익률             : %.1f%%%n", profitRate);
+        if (profitRate >= avgProfitRate) {
+            System.out.println("→ 유사 가입자 평균보다 높은 실익률입니다.");
+        } else {
+            System.out.println("→ 유사 가입자 평균보다 낮은 실익률입니다.");
+        }
+    }
+
+    private static String repeat(String s, int n) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; i++) sb.append(s);
+        return sb.toString();
     }
 }
