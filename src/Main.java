@@ -3,7 +3,9 @@ import claim.CarAccidentReport;
 import claim.HealthInsuranceClaim;
 import common.enums.EClaimComplexity;
 import common.enums.EClaimStatus;
+import contract.InsuranceContract;
 import contract.Notice;
+import common.enums.EContractStatus;
 import payment.BenefitPayment;
 import user.Policyholder;
 import contract.InsuranceApplication;
@@ -25,6 +27,7 @@ public class Main {
     static List<CarInsuranceProduct> carProducts = new ArrayList<>();
     static List<Claim> claims = new ArrayList<>();
     static List<Notice> notices = new ArrayList<>();
+    static List<InsuranceContract> contracts = new ArrayList<>();
     static Policyholder currentHolder = new Policyholder(
             "U001", "홍길동", "hong@example.com", "01012345678",
             "9001011234567", "서울시 강남구 테헤란로 123", "110-123-456789");
@@ -58,6 +61,15 @@ public class Main {
         claims.add(new CarAccidentReport("CLM-002", new Date(System.currentTimeMillis() - 2L*24*60*60*1000),
                 500000, EClaimStatus.PENDING, "서울시 강남구", "쌍방", "12가3456",
                 "교차로 쌍방 추돌 사고", "사고확인서, 수리견적서", 0));
+        contracts.add(new InsuranceContract("CON-001", "실속 의료보험", "의료보험",
+                new Date(System.currentTimeMillis() - 365L*24*60*60*1000),
+                new Date(System.currentTimeMillis() + 2*365L*24*60*60*1000),
+                30000, "홍길동", "자동이체", "입원 특약 포함"));
+        contracts.add(new InsuranceContract("CON-002", "기본 자동차보험", "자동차보험",
+                new Date(System.currentTimeMillis() - 180L*24*60*60*1000),
+                new Date(System.currentTimeMillis() + 185L*24*60*60*1000),
+                50000, "홍길동", "카드 결제", "대물 확장 특약"));
+
         notices.add(new Notice("NTC-001", "실속 의료보험",
                 new Date(System.currentTimeMillis() - 10L*24*60*60*1000), 30000, 10));
         notices.add(new Notice("NTC-002", "기본 자동차보험",
@@ -103,7 +115,7 @@ public class Main {
                 case 5: uc05HealthInsuranceClaim(scanner); break;
                 case 6: uc06UpdatePersonalInfo(scanner); break;
                 case 7: uc07UnpaidInquiry(scanner); break;
-                case 8: System.out.println("UC08 미구현"); break;
+                case 8: uc08ContractInquiry(scanner); break;
                 case 9: System.out.println("UC09 미구현"); break;
                 case 10: System.out.println("UC10 미구현"); break;
                 case 11: System.out.println("UC11 미구현"); break;
@@ -762,6 +774,77 @@ public class Main {
         scanner.nextLine();
         if (pay == 1) {
             System.out.println("UC10 보험료 납부 메뉴로 이동하세요. (메뉴 10번)");
+        }
+    }
+
+    private static void uc08ContractInquiry(Scanner scanner) {
+        System.out.println("\n=== 계약 내용 조회 ===");
+
+        // 2단계: 유효 계약 목록 출력 (ACTIVE만)
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        List<InsuranceContract> active = new ArrayList<>();
+        for (InsuranceContract c : contracts) {
+            if (c.getStatus() == EContractStatus.ACTIVE) active.add(c);
+        }
+
+        // A1: 유효 계약 없음
+        if (active.isEmpty()) {
+            System.out.println("현재 유효한 계약이 없습니다.");
+            return;
+        }
+
+        System.out.println("\n번호 | 계약번호  | 상품명           | 종류      | 계약 기간                        | 월 보험료");
+        System.out.println("-----|----------|-----------------|---------|--------------------------------|----------");
+        for (int i = 0; i < active.size(); i++) {
+            InsuranceContract c = active.get(i);
+            System.out.printf("%-4d | %-8s | %-15s | %-7s | %s ~ %s | %,d원%n",
+                    i + 1, c.getContractId(), c.getProductName(), c.getProductType(),
+                    sdf.format(c.getStartDate()), sdf.format(c.getEndDate()), c.getMonthlyPremium());
+        }
+
+        // 3단계: 상세보기 선택
+        System.out.print("\n상세보기할 번호 (0.뒤로): ");
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+        if (choice == 0) return;
+        if (choice < 1 || choice > active.size()) {
+            System.out.println("잘못된 입력입니다.");
+            return;
+        }
+
+        InsuranceContract selected = active.get(choice - 1);
+
+        // 4단계: 상세 내용 출력
+        System.out.println("\n=== 계약 상세 정보 ===");
+        System.out.println("계약번호  : " + selected.getContractId());
+        System.out.println("상품명    : " + selected.getProductName());
+        System.out.println("보험 종류 : " + selected.getProductType());
+        System.out.println("계약 기간 : " + sdf.format(selected.getStartDate()) + " ~ " + sdf.format(selected.getEndDate()));
+        System.out.println("월 보험료 : " + String.format("%,d", selected.getMonthlyPremium()) + "원");
+        System.out.println("납입 방법 : " + selected.getPaymentMethod());
+        System.out.println("수익자    : " + selected.getBeneficiary());
+        System.out.println("특약 사항 : " + selected.getSpecialTerms());
+
+        // 보장 항목 출력 (상품 데이터에서 조회)
+        System.out.println("\n[보장 항목]");
+        List<? extends InsuranceProduct> productList =
+                selected.getProductType().equals("의료보험") ? healthProducts : carProducts;
+        for (InsuranceProduct p : productList) {
+            if (p.getProductName().equals(selected.getProductName())) {
+                for (CoverageItem item : p.getCoverageItems()) {
+                    System.out.printf("  - %s | 보장 한도: %,d원 | 면책금액: %,d원%n",
+                            item.getItemName(), item.getCoverageLimit(), item.getDeductible());
+                }
+                break;
+            }
+        }
+
+        // 5~6단계: 계약서 다운로드 (선택 사항)
+        System.out.print("\n계약서를 다운로드하시겠습니까? (1.예 / 2.아니오): ");
+        int dl = scanner.nextInt();
+        scanner.nextLine();
+        if (dl == 1) {
+            System.out.println("계약서 파일이 생성되었습니다: " + selected.getContractId() + "_계약서.pdf");
         }
     }
 }
