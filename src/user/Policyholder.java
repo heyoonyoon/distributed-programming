@@ -32,6 +32,8 @@ public class Policyholder extends User {
     public String getPhone() { return phone; }
     public String getAddress() { return address; }
     public String getBankAccount() { return bankAccount; }
+    public String getSsn() { return ssn; }
+    public String getBirthDate() { return ssn.length() >= 6 ? ssn.substring(0, 6) : ssn; }
 
     public void setEmail(String email) { this.email = email; }
     public void setPhone(String phone) { this.phone = phone; }

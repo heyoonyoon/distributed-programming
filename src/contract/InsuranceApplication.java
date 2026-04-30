@@ -29,8 +29,12 @@ public class InsuranceApplication {
 
     public String getApplicationId() { return applicationId; }
     public EApplicationStatus getStatus() { return status; }
+    public void setStatus(EApplicationStatus status) { this.status = status; }
     public String getProductId() { return productId; }
     public String getHolderName() { return holderName; }
+    public Date getAppliedAt() { return appliedAt; }
+    public VehicleInfo getVehicleInfo() { return vehicleInfo; }
+    public MedicalHistory getMedicalHistory() { return medicalHistory; }
 
     public ApplicationDetail getDetail() {
         return null;
