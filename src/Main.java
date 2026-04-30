@@ -155,7 +155,7 @@ public class Main {
                 case 14: uc14AssignStaff(scanner); break;
                 case 15: uc15AccidentHistoryInquiry(scanner); break;
                 case 16: uc16SendUnpaidNotice(scanner); break;
-                case 17: System.out.println("UC17 미구현"); break;
+                case 17: uc17BenefitPayment(scanner); break;
                 default: System.out.println("잘못된 입력입니다.");
             }
         }
@@ -1602,6 +1602,67 @@ public class Main {
         }
         System.out.println("가입자에게 안내 이메일/문자를 발송하였습니다.");
         review.unlock();
+    }
+
+    private static void uc17BenefitPayment(Scanner scanner) {
+        System.out.println("\n=== 보험금 지급 (시스템 자동) ===");
+
+        // 1단계: 승인된 청구 건 확인
+        List<HealthInsuranceClaim> approvedClaims = new ArrayList<>();
+        for (Claim c : claims) {
+            if (c instanceof HealthInsuranceClaim && c.getStatus() == EClaimStatus.APPROVED) {
+                HealthInsuranceClaim hc = (HealthInsuranceClaim) c;
+                if (hc.getPaidAmount() > 0) {
+                    approvedClaims.add(hc);
+                }
+            }
+        }
+
+        if (approvedClaims.isEmpty()) {
+            System.out.println("지급 대기 중인 승인 청구 건이 없습니다.");
+            return;
+        }
+
+        System.out.println("\n[지급 대기 청구 목록]");
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        for (HealthInsuranceClaim hc : approvedClaims) {
+            System.out.println("- [" + hc.getClaimId() + "] 지급 예정액: "
+                    + String.format("%,d", hc.getPaidAmount()) + "원");
+        }
+
+        // 2~5단계: 각 건 송금 처리
+        System.out.println("\n[보험금 송금 처리 중...]");
+        for (HealthInsuranceClaim hc : approvedClaims) {
+            System.out.println("\n▶ 청구 ID: " + hc.getClaimId());
+            System.out.println("  지급 금액 : " + String.format("%,d", hc.getPaidAmount()) + "원");
+            System.out.println("  계좌 정보 : " + currentHolder.getBankAccount());
+
+            // 2단계: 송금 요청
+            String paymentId = "BPY-" + System.currentTimeMillis();
+            BenefitPayment bp = new BenefitPayment(paymentId, hc.getPaidAmount(), currentHolder.getBankAccount());
+            boolean transferred = bp.transfer();
+
+            if (!transferred) {
+                // E1: 송금 실패
+                System.out.println("  ✗ 지급 실패: 계좌 오류 또는 은행 시스템 문제");
+                System.out.println("  → 보험사 직원에게 송금 실패 알림 전송");
+                System.out.println("  → 보험사 담당자에게 송금 실패 알림 전송 완료");
+            } else {
+                // 3단계: 지급 정보 저장
+                System.out.println("  ✓ 송금 완료");
+                System.out.println("  지급 ID   : " + bp.getPaymentId());
+                System.out.println("  지급 일시  : " + sdf.format(bp.getPaidAt()));
+                System.out.println("  입금 계좌  : " + bp.getBankAccount());
+
+                // 4단계: 가입자 안내
+                bp.notifyPolicyholder(currentHolder.getEmail(), currentHolder.getPhone());
+
+                // 5단계: 청구 상태 변경
+                hc.setStatus(EClaimStatus.APPROVED);
+            }
+        }
+
+        System.out.println("\n[보험금 지급 처리 완료]");
     }
 
     private static void uc16SendUnpaidNotice(Scanner scanner) {

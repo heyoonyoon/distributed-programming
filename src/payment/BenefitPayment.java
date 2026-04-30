@@ -28,6 +28,9 @@ public class BenefitPayment {
         return true;
     }
 
+    public String getBankAccount() { return bankAccount; }
+
     public void notifyPolicyholder(String email, String phone) {
+        System.out.println("  → " + email + " / " + phone + " 지급 완료 안내 발송");
     }
 }
