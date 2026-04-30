@@ -3,6 +3,7 @@ import claim.CarAccidentReport;
 import claim.HealthInsuranceClaim;
 import common.enums.EClaimComplexity;
 import common.enums.EClaimStatus;
+import contract.Notice;
 import payment.BenefitPayment;
 import user.Policyholder;
 import contract.InsuranceApplication;
@@ -23,6 +24,7 @@ public class Main {
     static List<HealthInsuranceProduct> healthProducts = new ArrayList<>();
     static List<CarInsuranceProduct> carProducts = new ArrayList<>();
     static List<Claim> claims = new ArrayList<>();
+    static List<Notice> notices = new ArrayList<>();
     static Policyholder currentHolder = new Policyholder(
             "U001", "홍길동", "hong@example.com", "01012345678",
             "9001011234567", "서울시 강남구 테헤란로 123", "110-123-456789");
@@ -56,6 +58,11 @@ public class Main {
         claims.add(new CarAccidentReport("CLM-002", new Date(System.currentTimeMillis() - 2L*24*60*60*1000),
                 500000, EClaimStatus.PENDING, "서울시 강남구", "쌍방", "12가3456",
                 "교차로 쌍방 추돌 사고", "사고확인서, 수리견적서", 0));
+        notices.add(new Notice("NTC-001", "실속 의료보험",
+                new Date(System.currentTimeMillis() - 10L*24*60*60*1000), 30000, 10));
+        notices.add(new Notice("NTC-002", "기본 자동차보험",
+                new Date(System.currentTimeMillis() - 35L*24*60*60*1000), 50000, 35));
+
         claims.add(new HealthInsuranceClaim("CLM-003", new Date(System.currentTimeMillis() - 30L*24*60*60*1000),
                 300000, EClaimStatus.APPROVED, "연세병원", "K20",
                 "위염 치료 및 내시경 검사", "진단서, 영수증", 270000));
@@ -95,7 +102,7 @@ public class Main {
                 case 4: uc04ClaimHistoryInquiry(scanner); break;
                 case 5: uc05HealthInsuranceClaim(scanner); break;
                 case 6: uc06UpdatePersonalInfo(scanner); break;
-                case 7: System.out.println("UC07 미구현"); break;
+                case 7: uc07UnpaidInquiry(scanner); break;
                 case 8: System.out.println("UC08 미구현"); break;
                 case 9: System.out.println("UC09 미구현"); break;
                 case 10: System.out.println("UC10 미구현"); break;
@@ -702,5 +709,59 @@ public class Main {
         // 7단계: 완료 메시지 + 변경 완료 알림 발송
         System.out.println("\n개인정보가 성공적으로 변경되었습니다.");
         System.out.println("변경 완료 알림을 " + currentHolder.getPhone() + " 및 " + currentHolder.getEmail() + "로 발송하였습니다.");
+    }
+
+    private static void uc07UnpaidInquiry(Scanner scanner) {
+        System.out.println("\n=== 미납 내역 조회 ===");
+
+        // 2단계: 미납 보험료 목록 출력
+        // A1: 미납 내역 없음
+        if (notices.isEmpty()) {
+            System.out.println("미납된 보험료가 없습니다.");
+            return;
+        }
+
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        System.out.println("\n번호 | 계약명           | 납부 기한  | 미납 금액    | 연체 일수 | 연체 이자   | 경고");
+        System.out.println("-----|-----------------|------------|-------------|---------|------------|-----");
+        for (int i = 0; i < notices.size(); i++) {
+            Notice n = notices.get(i);
+            System.out.printf("%-4d | %-15s | %s | %,9d원 | %6d일 | %,8d원 | %s%n",
+                    i + 1, n.getContractName(), sdf.format(n.getDueDate()),
+                    n.getDueAmount(), n.getOverdueDays(), n.getInterest(),
+                    n.isTerminationWarning() ? "⚠ 계약 해지 위험" : "-");
+        }
+
+        // 3단계: 특정 미납 건 상세 확인
+        System.out.print("\n상세 확인할 번호 (0.뒤로): ");
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+        if (choice == 0) return;
+        if (choice < 1 || choice > notices.size()) {
+            System.out.println("잘못된 입력입니다.");
+            return;
+        }
+
+        Notice selected = notices.get(choice - 1);
+
+        // 4단계: 납부 방법 안내 + 바로 납부하기
+        System.out.println("\n=== 미납 상세 ===");
+        System.out.println("계약명    : " + selected.getContractName());
+        System.out.println("납부 기한 : " + sdf.format(selected.getDueDate()));
+        System.out.println("미납 금액 : " + String.format("%,d", selected.getDueAmount()) + "원");
+        System.out.println("연체 일수 : " + selected.getOverdueDays() + "일");
+        System.out.println("연체 이자 : " + String.format("%,d", selected.getInterest()) + "원");
+        System.out.println("총 납부액 : " + String.format("%,d", selected.getDueAmount() + selected.getInterest()) + "원");
+        if (selected.isTerminationWarning()) {
+            System.out.println("⚠ 연체 30일 초과 — 계약이 해지될 수 있습니다.");
+        }
+        System.out.println("\n[납부 방법]");
+        System.out.println("  1. 카드 결제   2. 계좌 이체   3. 자동 이체");
+        System.out.print("바로 납부하시겠습니까? (1.예 / 2.아니오): ");
+        int pay = scanner.nextInt();
+        scanner.nextLine();
+        if (pay == 1) {
+            System.out.println("UC10 보험료 납부 메뉴로 이동하세요. (메뉴 10번)");
+        }
     }
 }
