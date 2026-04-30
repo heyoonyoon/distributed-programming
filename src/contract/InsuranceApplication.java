@@ -13,6 +13,24 @@ public class InsuranceApplication {
     private EApplicationStatus status;
     private VehicleInfo vehicleInfo;
     private MedicalHistory medicalHistory;
+    private String productId;
+    private String holderName;
+
+    public InsuranceApplication(String applicationId, String productId, String holderName,
+                                VehicleInfo vehicleInfo, MedicalHistory medicalHistory) {
+        this.applicationId = applicationId;
+        this.productId = productId;
+        this.holderName = holderName;
+        this.vehicleInfo = vehicleInfo;
+        this.medicalHistory = medicalHistory;
+        this.appliedAt = new Date();
+        this.status = EApplicationStatus.PENDING;
+    }
+
+    public String getApplicationId() { return applicationId; }
+    public EApplicationStatus getStatus() { return status; }
+    public String getProductId() { return productId; }
+    public String getHolderName() { return holderName; }
 
     public ApplicationDetail getDetail() {
         return null;
