@@ -4,6 +4,7 @@ import claim.HealthInsuranceClaim;
 import common.enums.EClaimComplexity;
 import common.enums.EClaimStatus;
 import payment.BenefitPayment;
+import user.Policyholder;
 import contract.InsuranceApplication;
 import common.vo.MedicalHistory;
 import common.vo.VehicleInfo;
@@ -22,6 +23,9 @@ public class Main {
     static List<HealthInsuranceProduct> healthProducts = new ArrayList<>();
     static List<CarInsuranceProduct> carProducts = new ArrayList<>();
     static List<Claim> claims = new ArrayList<>();
+    static Policyholder currentHolder = new Policyholder(
+            "U001", "홍길동", "hong@example.com", "01012345678",
+            "9001011234567", "서울시 강남구 테헤란로 123", "110-123-456789");
 
     static {
         HealthInsuranceProduct h1 = new HealthInsuranceProduct("H001", "실속 의료보험", "입원·수술 보장 기본형", 30000, 60);
@@ -90,7 +94,7 @@ public class Main {
                 case 3: uc03ClaimStatusCheck(scanner); break;
                 case 4: uc04ClaimHistoryInquiry(scanner); break;
                 case 5: uc05HealthInsuranceClaim(scanner); break;
-                case 6: System.out.println("UC06 미구현"); break;
+                case 6: uc06UpdatePersonalInfo(scanner); break;
                 case 7: System.out.println("UC07 미구현"); break;
                 case 8: System.out.println("UC08 미구현"); break;
                 case 9: System.out.println("UC09 미구현"); break;
@@ -632,5 +636,71 @@ public class Main {
             System.out.println("처리 현황은 '보상 처리 현황' 메뉴에서 확인하실 수 있습니다.");
             System.out.println("안내를 이메일/문자로 발송하였습니다.");
         }
+    }
+
+    private static void uc06UpdatePersonalInfo(Scanner scanner) {
+        System.out.println("\n=== 개인정보 수정 ===");
+
+        // 2단계: 본인 인증 화면 출력
+        System.out.println("\n--- 본인 인증 ---");
+        System.out.println("인증번호 123456이 " + currentHolder.getPhone() + "로 발송되었습니다.");
+
+        // 3단계: 본인 인증 (E1: 실패 시 재시도, 3회 실패 시 차단)
+        int authFailCount = 0;
+        while (true) {
+            System.out.print("인증번호 입력: ");
+            String code = scanner.nextLine().trim();
+            if (code.equals("123456")) break;
+            authFailCount++;
+            if (authFailCount >= 3) {
+                System.out.println("본인 인증에 3회 연속 실패하였습니다. 해당 기능이 10분간 차단됩니다.");
+                return;
+            }
+            System.out.println("본인 인증에 실패하였습니다. 다시 시도해 주세요. (" + authFailCount + "/3)");
+        }
+
+        // 4단계: 현재 등록된 개인정보 출력
+        System.out.println("\n--- 현재 등록 정보 ---");
+        System.out.println("연락처  : " + currentHolder.getPhone());
+        System.out.println("주소    : " + currentHolder.getAddress());
+        System.out.println("이메일  : " + currentHolder.getEmail());
+        System.out.println("계좌번호: " + currentHolder.getBankAccount());
+
+        // 5단계: 수정할 항목 변경 (E2: 저장 실패 시뮬레이션 없음 — 항상 성공)
+        System.out.println("\n--- 수정할 정보 입력 (변경 없으면 엔터) ---");
+
+        System.out.print("연락처 [" + currentHolder.getPhone() + "]: ");
+        String newPhone = scanner.nextLine().trim();
+        if (!newPhone.isEmpty()) {
+            if (!newPhone.matches("\\d{10,11}")) {
+                System.out.println("올바른 형식으로 입력해 주세요. (10~11자리 숫자)");
+                System.out.println("저장에 실패하였습니다. 잠시 후 다시 시도해 주세요.");
+                return;
+            }
+        }
+
+        System.out.print("주소 [" + currentHolder.getAddress() + "]: ");
+        String newAddress = scanner.nextLine().trim();
+
+        System.out.print("이메일 [" + currentHolder.getEmail() + "]: ");
+        String newEmail = scanner.nextLine().trim();
+        if (!newEmail.isEmpty() && !newEmail.contains("@")) {
+            System.out.println("올바른 형식으로 입력해 주세요. (이메일)");
+            System.out.println("저장에 실패하였습니다. 잠시 후 다시 시도해 주세요.");
+            return;
+        }
+
+        System.out.print("계좌번호 [" + currentHolder.getBankAccount() + "]: ");
+        String newAccount = scanner.nextLine().trim();
+
+        // 6단계: 변경된 정보 저장 + 변경 기록
+        if (!newPhone.isEmpty())   currentHolder.setPhone(newPhone);
+        if (!newAddress.isEmpty()) currentHolder.setAddress(newAddress);
+        if (!newEmail.isEmpty())   currentHolder.setEmail(newEmail);
+        if (!newAccount.isEmpty()) currentHolder.setBankAccount(newAccount);
+
+        // 7단계: 완료 메시지 + 변경 완료 알림 발송
+        System.out.println("\n개인정보가 성공적으로 변경되었습니다.");
+        System.out.println("변경 완료 알림을 " + currentHolder.getPhone() + " 및 " + currentHolder.getEmail() + "로 발송하였습니다.");
     }
 }
