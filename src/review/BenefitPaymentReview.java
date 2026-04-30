@@ -20,6 +20,7 @@ public class BenefitPaymentReview extends Review {
         this.locked = false;
     }
 
+    public String getReviewId() { return reviewId; }
     public String getClaimId() { return claimId; }
     public String getAssignedStaffId() { return assignedStaffId; }
     public String getAssignedStaffName() { return assignedStaffName; }
@@ -28,6 +29,9 @@ public class BenefitPaymentReview extends Review {
     public void unlock() { this.locked = false; }
 
     public void assignStaff(InsuranceEmployee employee) {
+        this.assignedStaffId = employee.getEmployeeId();
+        this.assignedStaffName = employee.getName();
+        employee.incrementLoad();
     }
 
     public BenefitPayment approve(int paidAmount, String bankAccount) {

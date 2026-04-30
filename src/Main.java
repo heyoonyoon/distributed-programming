@@ -38,12 +38,18 @@ public class Main {
     static List<BenefitPaymentReview> benefitReviews = new ArrayList<>();
     static List<InsuranceApplication> applications = new ArrayList<>();
     static List<EnrollmentReview> enrollmentReviews = new ArrayList<>();
-    static InsuranceEmployee currentEmployee = new InsuranceEmployee("E001", "김심사", "심사부", "emp@insurance.com", "01099998888");
+    static List<InsuranceEmployee> employees = new ArrayList<>();
+    static InsuranceEmployee currentEmployee;
     static Policyholder currentHolder = new Policyholder(
             "U001", "홍길동", "hong@example.com", "01012345678",
             "9001011234567", "서울시 강남구 테헤란로 123", "110-123-456789");
 
     static {
+        employees.add(new InsuranceEmployee("E001", "김심사", "의료심사팀", "kim@insurance.com", "01011110001"));
+        employees.add(new InsuranceEmployee("E002", "이검토", "자동차심사팀", "lee@insurance.com", "01022220002"));
+        employees.add(new InsuranceEmployee("E003", "박확인", "의료심사팀", "park@insurance.com", "01033330003"));
+        currentEmployee = employees.get(0);
+
         HealthInsuranceProduct h1 = new HealthInsuranceProduct("H001", "실속 의료보험", "입원·수술 보장 기본형", 30000, 60);
         h1.addCoverageItem(new CoverageItem("HC001", "입원비", 5000000, 100000));
         h1.addCoverageItem(new CoverageItem("HC002", "수술비", 3000000, 50000));
@@ -146,7 +152,7 @@ public class Main {
                 case 11: uc11ProfitAnalysis(scanner); break;
                 case 12: uc12BenefitPaymentReview(scanner); break;
                 case 13: uc13EnrollmentReview(scanner); break;
-                case 14: System.out.println("UC14 미구현"); break;
+                case 14: uc14AssignStaff(scanner); break;
                 case 15: System.out.println("UC15 미구현"); break;
                 case 16: System.out.println("UC16 미구현"); break;
                 case 17: System.out.println("UC17 미구현"); break;
@@ -1329,6 +1335,99 @@ public class Main {
         }
 
         review.unlock();
+    }
+
+    private static void uc14AssignStaff(Scanner scanner) {
+        System.out.println("\n=== 담당자 지정 ===");
+
+        // 1단계: 심사 대기 청구 건 목록
+        List<BenefitPaymentReview> pending = new ArrayList<>();
+        for (BenefitPaymentReview r : benefitReviews) {
+            if (r.getResult() == null) pending.add(r);
+        }
+
+        if (pending.isEmpty()) {
+            System.out.println("담당자 배정이 필요한 심사 건이 없습니다.");
+            return;
+        }
+
+        System.out.println("\n번호 | 심사번호   | 청구번호   | 현재 담당자");
+        System.out.println("-----|-----------|-----------|------------");
+        for (int i = 0; i < pending.size(); i++) {
+            BenefitPaymentReview r = pending.get(i);
+            System.out.printf("%-4d | %-9s | %-9s | %s(%s)%n",
+                    i + 1, r.getReviewId(), r.getClaimId(),
+                    r.getAssignedStaffName(), r.getAssignedStaffId());
+        }
+
+        System.out.print("\n배정할 건 번호 (0.뒤로): ");
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+        if (choice == 0) return;
+        if (choice < 1 || choice > pending.size()) {
+            System.out.println("잘못된 입력입니다.");
+            return;
+        }
+        BenefitPaymentReview review = pending.get(choice - 1);
+
+        // 2단계: 자동 배정 or 수동 배정 선택
+        System.out.println("\n1. 자동 배정  2. 수동 배정 (A1)");
+        System.out.print("선택: ");
+        int mode = scanner.nextInt();
+        scanner.nextLine();
+
+        InsuranceEmployee assigned = null;
+
+        if (mode == 1) {
+            // 자동 배정: 업무량 가장 적은 직원 선정
+            for (InsuranceEmployee e : employees) {
+                if (assigned == null || e.getCurrentLoad() < assigned.getCurrentLoad()) {
+                    assigned = e;
+                }
+            }
+            if (assigned == null) {
+                // E1: 배정 가능한 직원 없음
+                System.out.println("배정 가능한 담당자가 없습니다. 관리자에게 알림을 발송하였습니다.");
+                return;
+            }
+            System.out.println("\n[자동 배정 결과]");
+            System.out.println("선정 기준: 현재 업무량 최소");
+            System.out.println("배정 직원: " + assigned.getName() + " (" + assigned.getDepartment() + ", 현재 " + assigned.getCurrentLoad() + "건)");
+        } else {
+            // A1: 수동 배정 — 직원 목록 출력
+            System.out.println("\n[배정 가능한 직원 목록]");
+            System.out.println("번호 | 이름   | 부서         | 현재 담당 건수");
+            System.out.println("-----|-------|-------------|---------------");
+            for (int i = 0; i < employees.size(); i++) {
+                InsuranceEmployee e = employees.get(i);
+                System.out.printf("%-4d | %-5s | %-11s | %d건%n",
+                        i + 1, e.getName(), e.getDepartment(), e.getCurrentLoad());
+            }
+            if (employees.isEmpty()) {
+                System.out.println("배정 가능한 담당자가 없습니다. 관리자에게 알림을 발송하였습니다.");
+                return;
+            }
+            System.out.print("\n배정할 직원 번호: ");
+            int empChoice = scanner.nextInt();
+            scanner.nextLine();
+            if (empChoice < 1 || empChoice > employees.size()) {
+                System.out.println("잘못된 입력입니다.");
+                return;
+            }
+            assigned = employees.get(empChoice - 1);
+        }
+
+        // 3단계: 담당자 연결 저장
+        review.assignStaff(assigned);
+
+        // 4단계: 담당자에게 알림 발송
+        System.out.println("\n\"새 심사 건이 배정되었습니다.\" 알림을 [" + assigned.getName() + "]에게 발송하였습니다.");
+
+        // 5단계: 담당자 정보 출력
+        System.out.println("\n[청구 건 담당자 정보]");
+        System.out.println("청구번호  : " + review.getClaimId());
+        System.out.println("담당자    : " + review.getAssignedStaffName() + " (" + review.getAssignedStaffId() + ")");
+        System.out.println("부서      : " + assigned.getDepartment());
     }
 
     private static void uc13EnrollmentReview(Scanner scanner) {

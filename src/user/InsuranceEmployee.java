@@ -22,6 +22,7 @@ public class InsuranceEmployee extends User {
     public String getName() { return name; }
     public String getDepartment() { return department; }
     public int getCurrentLoad() { return currentLoad; }
+    public void incrementLoad() { currentLoad++; }
 
     public EnrollmentReview reviewEnrollment(String applicationId, EReviewResult result) {
         return null;
