@@ -154,7 +154,7 @@ public class Main {
                 case 13: uc13EnrollmentReview(scanner); break;
                 case 14: uc14AssignStaff(scanner); break;
                 case 15: uc15AccidentHistoryInquiry(scanner); break;
-                case 16: System.out.println("UC16 미구현"); break;
+                case 16: uc16SendUnpaidNotice(scanner); break;
                 case 17: System.out.println("UC17 미구현"); break;
                 default: System.out.println("잘못된 입력입니다.");
             }
@@ -1602,6 +1602,66 @@ public class Main {
         }
         System.out.println("가입자에게 안내 이메일/문자를 발송하였습니다.");
         review.unlock();
+    }
+
+    private static void uc16SendUnpaidNotice(Scanner scanner) {
+        System.out.println("\n=== 미납 고지서 발송 (시스템 자동 스케줄러) ===");
+
+        // 1~2단계: 미납 건 조회
+        System.out.println("\n[미납 내역 확인 중...]");
+        if (notices.isEmpty()) {
+            System.out.println("현재 미납 건이 없습니다.");
+            return;
+        }
+
+        System.out.println("\n[미납 대상 계약 목록]");
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        for (Notice n : notices) {
+            String warning = n.isTerminationWarning() ? " [해지 예고]" : "";
+            System.out.println("- [" + n.getNoticeId() + "] " + n.getContractName()
+                    + " | 미납액: " + String.format("%,d", n.getDueAmount()) + "원"
+                    + " | 연체일수: " + n.getOverdueDays() + "일" + warning);
+        }
+
+        // 3~4단계: 고지서 생성 및 발송
+        System.out.println("\n[고지서 발송 시작]");
+        int successCount = 0;
+        int failCount = 0;
+        for (Notice n : notices) {
+            // 3단계: 고지서 구성
+            System.out.println("\n▶ [" + n.getNoticeId() + "] " + n.getContractName());
+            System.out.println("  납부 기한  : " + sdf.format(n.getDueDate()));
+            System.out.println("  미납 금액  : " + String.format("%,d", n.getDueAmount()) + "원");
+            System.out.println("  연체 이자  : " + String.format("%,d", n.getInterest()) + "원");
+            System.out.println("  납부 방법  : 계좌이체 / 카드 결제 / 자동이체 등록");
+
+            // A1: 30일 초과 → 해지 예고 문구
+            if (n.isTerminationWarning()) {
+                System.out.println("  ⚠ 연체 " + n.getOverdueDays() + "일 초과: 계약이 해지될 수 있습니다.");
+                System.out.println("  → 보험사 담당자에게 별도 알림을 전송하였습니다.");
+            }
+
+            // 4단계: 발송 (E1: 최대 3회 재시도)
+            boolean sent = false;
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                sent = n.send(currentHolder.getEmail(), currentHolder.getPhone());
+                if (sent) break;
+                System.out.println("  발송 실패 (시도 " + attempt + "/3)...");
+            }
+
+            // 5단계: 발송 기록
+            if (sent) {
+                System.out.println("  → " + currentHolder.getEmail() + " / "
+                        + currentHolder.getPhone() + " 발송 완료 (" + sdf.format(new Date()) + ")");
+                successCount++;
+            } else {
+                // E1-2: 관리자 알림
+                System.out.println("  → 발송 실패: 시스템 관리자에게 알리고 실패 기록을 남겼습니다.");
+                failCount++;
+            }
+        }
+
+        System.out.println("\n[발송 완료] 성공: " + successCount + "건 / 실패: " + failCount + "건");
     }
 
     private static void uc15AccidentHistoryInquiry(Scanner scanner) {

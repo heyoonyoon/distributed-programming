@@ -30,6 +30,7 @@ public class Notice {
     public int getInterest() { return (int)(dueAmount * 0.015 * overdueDays / 30.0); }
 
     public boolean send(String email, String phone) {
-        return false;
+        // 시뮬레이션: 항상 성공
+        return true;
     }
 }
