@@ -116,7 +116,7 @@ public class Main {
                 case 6: uc06UpdatePersonalInfo(scanner); break;
                 case 7: uc07UnpaidInquiry(scanner); break;
                 case 8: uc08ContractInquiry(scanner); break;
-                case 9: System.out.println("UC09 미구현"); break;
+                case 9: uc09CarAccidentReport(scanner); break;
                 case 10: System.out.println("UC10 미구현"); break;
                 case 11: System.out.println("UC11 미구현"); break;
                 case 12: System.out.println("UC12 미구현"); break;
@@ -846,5 +846,126 @@ public class Main {
         if (dl == 1) {
             System.out.println("계약서 파일이 생성되었습니다: " + selected.getContractId() + "_계약서.pdf");
         }
+    }
+
+    private static void uc09CarAccidentReport(Scanner scanner) {
+        System.out.println("\n=== 자동차사고 접수 ===");
+
+        // 선행 조건: 유효한 자동차보험 계약 확인
+        InsuranceContract carContract = null;
+        for (InsuranceContract c : contracts) {
+            if (c.getProductType().equals("자동차보험") && c.getStatus() == EContractStatus.ACTIVE) {
+                carContract = c;
+                break;
+            }
+        }
+        if (carContract == null) {
+            System.out.println("유효한 자동차보험 계약이 없습니다.");
+            return;
+        }
+        System.out.println("계약: [" + carContract.getContractId() + "] " + carContract.getProductName());
+
+        // 2단계: 사고 정보 입력란 출력
+        System.out.println("\n--- 사고 정보 입력 ---");
+
+        // 3단계: 사고 정보 입력
+        System.out.print("사고 일시 (YYYYMMDD HHMM): ");
+        String accidentDateTime;
+        while (true) {
+            accidentDateTime = scanner.nextLine().trim();
+            if (accidentDateTime.matches("\\d{8} \\d{4}")) break;
+            System.out.println("올바른 형식으로 입력해 주세요. (예: 20260430 1430)");
+            System.out.print("사고 일시 (YYYYMMDD HHMM): ");
+        }
+
+        System.out.print("사고 장소: ");
+        String location = scanner.nextLine().trim();
+
+        System.out.println("사고 유형 선택");
+        System.out.println("  1. 단독  2. 쌍방  3. 대인  4. 기타");
+        System.out.print("선택: ");
+        int typeChoice = scanner.nextInt();
+        scanner.nextLine();
+        String accidentType;
+        switch (typeChoice) {
+            case 1: accidentType = "단독"; break;
+            case 2: accidentType = "쌍방"; break;
+            case 3: accidentType = "대인"; break;
+            default: accidentType = "기타";
+        }
+
+        System.out.print("피해 차량 번호: ");
+        String vehicleNumber = scanner.nextLine().trim();
+
+        System.out.print("청구 예상 금액 (원): ");
+        int requestAmount;
+        while (true) {
+            String amtInput = scanner.nextLine().trim();
+            try {
+                requestAmount = Integer.parseInt(amtInput.replace(",", ""));
+                if (requestAmount > 0) break;
+            } catch (NumberFormatException ignored) {}
+            System.out.println("올바른 금액을 입력해 주세요.");
+            System.out.print("청구 예상 금액 (원): ");
+        }
+
+        // 부상 여부 입력
+        System.out.print("부상자가 있습니까? (1.예 / 2.아니오): ");
+        int injuryChoice = scanner.nextInt();
+        scanner.nextLine();
+        boolean hasInjury = injuryChoice == 1;
+        int injuredCount = 0;
+        String injuryDetail = "";
+
+        // A1: 대인사고 포함 시 부상자 정보 추가 입력
+        if (hasInjury || accidentType.equals("대인")) {
+            System.out.println("\n--- 부상자 정보 입력 (A1) ---");
+            System.out.print("부상자 수: ");
+            injuredCount = scanner.nextInt();
+            scanner.nextLine();
+            System.out.print("부상 정도 (경상/중상/사망): ");
+            injuryDetail = scanner.nextLine().trim();
+        }
+
+        // 증빙 자료 첨부 (E1: 파일 크기 초과 시 재입력)
+        String photoFile;
+        while (true) {
+            System.out.print("현장 사진 파일명 (예: photo.jpg, 없으면 엔터): ");
+            photoFile = scanner.nextLine().trim();
+            if (photoFile.isEmpty()) break;
+            // 파일 크기 시뮬레이션: 파일명에 "big" 포함 시 초과로 처리
+            if (photoFile.toLowerCase().contains("big")) {
+                System.out.println("파일 크기는 개당 10MB 이하여야 합니다.");
+                continue;
+            }
+            break;
+        }
+
+        // 4단계: 접수하기
+        System.out.println("\n접수 처리 중...");
+
+        // 5단계: 사고 접수 정보 저장 + 접수 번호 생성
+        String claimId = "CLM-" + String.format("%03d", claims.size() + 1);
+        String reason = accidentType + " 사고 (" + accidentDateTime + ", " + location + ")";
+        String docs = photoFile.isEmpty() ? "없음" : photoFile;
+        CarAccidentReport report = new CarAccidentReport(
+                claimId, new Date(), requestAmount, EClaimStatus.PENDING,
+                location, accidentType, vehicleNumber, reason, docs, 0);
+        claims.add(report);
+
+        // 6단계: 담당자 알림 발송
+        System.out.println("\n보험사 담당자에게 사고 접수 알림이 발송되었습니다.");
+
+        // 7단계: 접수 완료 안내
+        System.out.println("\n=== 접수 완료 ===");
+        System.out.println("접수 번호    : " + claimId);
+        System.out.println("사고 유형    : " + accidentType);
+        System.out.println("사고 장소    : " + location);
+        if (hasInjury || accidentType.equals("대인")) {
+            System.out.println("부상자 수    : " + injuredCount + "명 (" + injuryDetail + ")");
+        }
+        System.out.println("담당자 연락처: 02-1234-5678");
+        System.out.println("향후 처리 절차: 담당자 배정 → 현장 조사 → 손해 사정 → 보험금 지급");
+        System.out.println("안내를 이메일/문자로 발송하였습니다.");
     }
 }
