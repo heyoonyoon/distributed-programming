@@ -42,7 +42,7 @@ public abstract class Claim {
     public void submit() {
     }
 
-    public EClaimStatus getStatus() {
-        return status;
-    }
+    public EClaimStatus getStatus() { return status; }
+    public void setStatus(EClaimStatus status) { this.status = status; }
+    public void setPaidAmount(int paidAmount) { this.paidAmount = paidAmount; }
 }

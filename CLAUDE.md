@@ -47,7 +47,7 @@ public static void main(String[] args) {
 
 ## UC 구현 절차 (매번 이 순서대로)
 1. 해당 UC 시나리오 파일 읽기 (@docs/usecases/UC0N.md)
-2. 항상 로드: @docs/class_diagram/00_overview.md (목록과 관계만)
+2. 항상 로드: @docs/class_diagram/00_overv1iew.md (목록과 관계만)
 3. UC 구현 시: 00_overview.md의 UC별 필요 파일 매핑 참고 → 해당 파일만 추가로 읽기
 - total_class_diagram는 usecase 구현시 절대로 읽어선 안된다. 
 4. 구현 계획 사용자에게 보고 (승인 후 시작)

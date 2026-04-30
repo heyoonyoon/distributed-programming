@@ -3,12 +3,15 @@ import claim.CarAccidentReport;
 import claim.HealthInsuranceClaim;
 import common.enums.EClaimComplexity;
 import common.enums.EClaimStatus;
+import common.enums.EReviewResult;
 import contract.InsuranceContract;
 import contract.Notice;
 import contract.Payment;
 import common.enums.EContractStatus;
 import common.enums.EPaymentMethod;
 import payment.BenefitPayment;
+import review.BenefitPaymentReview;
+import user.InsuranceEmployee;
 import user.Policyholder;
 import contract.InsuranceApplication;
 import common.vo.MedicalHistory;
@@ -30,6 +33,8 @@ public class Main {
     static List<Claim> claims = new ArrayList<>();
     static List<Notice> notices = new ArrayList<>();
     static List<InsuranceContract> contracts = new ArrayList<>();
+    static List<BenefitPaymentReview> benefitReviews = new ArrayList<>();
+    static InsuranceEmployee currentEmployee = new InsuranceEmployee("E001", "김심사", "심사부", "emp@insurance.com", "01099998888");
     static Policyholder currentHolder = new Policyholder(
             "U001", "홍길동", "hong@example.com", "01012345678",
             "9001011234567", "서울시 강남구 테헤란로 123", "110-123-456789");
@@ -80,6 +85,15 @@ public class Main {
         claims.add(new HealthInsuranceClaim("CLM-003", new Date(System.currentTimeMillis() - 30L*24*60*60*1000),
                 300000, EClaimStatus.APPROVED, "연세병원", "K20",
                 "위염 치료 및 내시경 검사", "진단서, 영수증", 270000));
+
+        HealthInsuranceClaim complexClaim = new HealthInsuranceClaim(
+                "CLM-004", new Date(System.currentTimeMillis() - 3L*24*60*60*1000),
+                2500000, EClaimStatus.IN_REVIEW, "삼성서울병원", "C34",
+                "폐암 수술 및 항암 치료", "진단서, 수술확인서, 입원확인서, 영수증", 0);
+        complexClaim.setComplexity(EClaimComplexity.COMPLEX);
+        claims.add(complexClaim);
+
+        benefitReviews.add(new BenefitPaymentReview("BRV-001", "CLM-004", "E001", "김심사"));
     }
 
     public static void main(String[] args) {
@@ -121,7 +135,7 @@ public class Main {
                 case 9: uc09CarAccidentReport(scanner); break;
                 case 10: uc10PayPremium(scanner); break;
                 case 11: uc11ProfitAnalysis(scanner); break;
-                case 12: System.out.println("UC12 미구현"); break;
+                case 12: uc12BenefitPaymentReview(scanner); break;
                 case 13: System.out.println("UC13 미구현"); break;
                 case 14: System.out.println("UC14 미구현"); break;
                 case 15: System.out.println("UC15 미구현"); break;
@@ -1184,5 +1198,136 @@ public class Main {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < n; i++) sb.append(s);
         return sb.toString();
+    }
+
+    private static void uc12BenefitPaymentReview(Scanner scanner) {
+        System.out.println("\n=== 보험금 지급 심사 ===");
+
+        // 2단계: 심사 대기 목록 출력
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        List<BenefitPaymentReview> pending = new ArrayList<>();
+        for (BenefitPaymentReview r : benefitReviews) {
+            if (r.getResult() == null) pending.add(r);
+        }
+
+        if (pending.isEmpty()) {
+            System.out.println("심사 대기 중인 건이 없습니다.");
+            return;
+        }
+
+        System.out.println("\n번호 | 접수번호   | 청구인   | 청구 금액       | 청구 사유                | 접수일");
+        System.out.println("-----|-----------|---------|----------------|------------------------|----------");
+        for (int i = 0; i < pending.size(); i++) {
+            BenefitPaymentReview r = pending.get(i);
+            String claimId = r.getClaimId();
+            HealthInsuranceClaim claim = findHealthClaim(claimId);
+            if (claim == null) continue;
+            System.out.printf("%-4d | %-9s | %-7s | %,13d원 | %-22s | %s%n",
+                    i + 1, claimId, currentHolder.getName(),
+                    claim.getRequestAmount(), claim.getClaimReason(),
+                    sdf.format(claim.getClaimDate()));
+        }
+
+        // 3단계: 심사할 건 선택
+        System.out.print("\n심사할 번호 (0.뒤로): ");
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+        if (choice == 0) return;
+        if (choice < 1 || choice > pending.size()) {
+            System.out.println("잘못된 입력입니다.");
+            return;
+        }
+
+        BenefitPaymentReview review = pending.get(choice - 1);
+
+        // E2: 다른 직원 처리 중 체크
+        if (review.isLocked()) {
+            System.out.println("현재 담당자 [" + review.getAssignedStaffId() + "]가 처리 중인 건입니다.");
+            return;
+        }
+        review.lock();
+
+        HealthInsuranceClaim claim = findHealthClaim(review.getClaimId());
+
+        // 4단계: 상세 정보 출력
+        System.out.println("\n[청구 상세 정보]");
+        System.out.println("접수번호  : " + claim.getClaimId());
+        System.out.println("청구인    : " + currentHolder.getName());
+        System.out.println("청구 금액 : " + String.format("%,d", claim.getRequestAmount()) + "원");
+        System.out.println("청구 사유 : " + claim.getClaimReason());
+        System.out.println("접수일    : " + sdf.format(claim.getClaimDate()));
+        System.out.println("제출 서류 : " + claim.getDocuments());
+
+        // 5단계: 담당자 정보 표시 (UC14 include — 이미 배정 완료)
+        System.out.println("\n[담당자 정보]");
+        System.out.println("담당자 ID : " + review.getAssignedStaffId());
+        System.out.println("담당자명  : " + review.getAssignedStaffName());
+
+        // 6단계 → 7단계: 심사 결과 선택
+        System.out.println("\n[심사 결과 선택]");
+        System.out.println("1. 승인  2. 반려");
+        System.out.print("선택: ");
+        int resultChoice = scanner.nextInt();
+        scanner.nextLine();
+
+        if (resultChoice == 2) {
+            // A1: 반려 처리
+            System.out.print("반려 사유 입력: ");
+            String reason = scanner.nextLine().trim();
+
+            // E1: 저장 실패 시뮬레이션 → 실제로는 항상 성공
+            review.reject(reason);
+
+            // 8단계: 반려 결과 저장
+            System.out.println("\n=== 심사 결과: 반려 ===");
+            System.out.println("사유: " + reason);
+            System.out.println("보험가입자에게 반려 사유를 포함한 결과 통보를 발송하였습니다.");
+        } else {
+            // 승인 처리
+            System.out.print("지급 승인 금액 입력 (청구 금액: " + String.format("%,d", claim.getRequestAmount()) + "원): ");
+            int approvedAmount = scanner.nextInt();
+            scanner.nextLine();
+
+            // E1: 재시도 루프
+            while (true) {
+                System.out.println("\n심사 확정하시겠습니까? (1.확정 / 2.취소): ");
+                int confirm = scanner.nextInt();
+                scanner.nextLine();
+                if (confirm == 2) {
+                    review.unlock();
+                    System.out.println("심사가 취소되었습니다.");
+                    return;
+                }
+                if (confirm == 1) break;
+            }
+
+            // 8단계: 결과 저장
+            // 9단계: UC17 확장 — 보험금 지급
+            BenefitPayment payment = review.approve(approvedAmount, currentHolder.getBankAccount());
+
+            // claim 상태 업데이트
+            claim.setStatus(EClaimStatus.APPROVED);
+            claim.setPaidAmount(approvedAmount);
+
+            System.out.println("\n=== 심사 결과: 승인 ===");
+            System.out.println("지급 번호 : " + payment.getPaymentId());
+            System.out.println("지급 금액 : " + String.format("%,d", payment.getPaidAmount()) + "원");
+            System.out.println("지급 계좌 : " + currentHolder.getBankAccount());
+            System.out.println("지급 일시 : " + sdf.format(payment.getPaidAt()));
+
+            // 10단계: 결과 통보
+            System.out.println("\n보험가입자에게 심사 결과 통보 이메일/문자를 발송하였습니다.");
+        }
+
+        review.unlock();
+    }
+
+    private static HealthInsuranceClaim findHealthClaim(String claimId) {
+        for (Claim c : claims) {
+            if (c instanceof HealthInsuranceClaim && c.getClaimId().equals(claimId)) {
+                return (HealthInsuranceClaim) c;
+            }
+        }
+        return null;
     }
 }

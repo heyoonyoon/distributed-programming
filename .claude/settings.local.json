@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(javac *)",
-      "Bash(java -cp out Main)"
+      "Bash(java -cp out Main)",
+      "Bash(xargs ls *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
