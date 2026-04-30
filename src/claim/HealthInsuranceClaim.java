@@ -14,8 +14,9 @@ public class HealthInsuranceClaim extends Claim {
     private EClaimComplexity complexity;
 
     public HealthInsuranceClaim(String claimId, Date claimDate, int requestAmount,
-                                EClaimStatus status, String hospitalName, String diagnosisCode) {
-        super(claimId, claimDate, requestAmount, status);
+                                EClaimStatus status, String hospitalName, String diagnosisCode,
+                                String claimReason, String documents, int paidAmount) {
+        super(claimId, claimDate, requestAmount, status, claimReason, documents, paidAmount);
         this.hospitalName = hospitalName;
         this.diagnosisCode = diagnosisCode;
         this.treatmentDate = claimDate;

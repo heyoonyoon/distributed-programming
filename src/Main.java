@@ -45,11 +45,14 @@ public class Main {
         carProducts.add(c2);
 
         claims.add(new HealthInsuranceClaim("CLM-001", new Date(System.currentTimeMillis() - 5L*24*60*60*1000),
-                150000, EClaimStatus.IN_REVIEW, "서울대병원", "J00"));
+                150000, EClaimStatus.IN_REVIEW, "서울대병원", "J00",
+                "독감으로 인한 입원 치료", "진단서, 입원확인서, 영수증", 0));
         claims.add(new CarAccidentReport("CLM-002", new Date(System.currentTimeMillis() - 2L*24*60*60*1000),
-                500000, EClaimStatus.PENDING, "서울시 강남구", "쌍방", "12가3456"));
+                500000, EClaimStatus.PENDING, "서울시 강남구", "쌍방", "12가3456",
+                "교차로 쌍방 추돌 사고", "사고확인서, 수리견적서", 0));
         claims.add(new HealthInsuranceClaim("CLM-003", new Date(System.currentTimeMillis() - 30L*24*60*60*1000),
-                300000, EClaimStatus.APPROVED, "연세병원", "K20"));
+                300000, EClaimStatus.APPROVED, "연세병원", "K20",
+                "위염 치료 및 내시경 검사", "진단서, 영수증", 270000));
     }
 
     public static void main(String[] args) {
@@ -83,7 +86,7 @@ public class Main {
                 case 1: uc01InsuranceProductInquiry(scanner); break;
                 case 2: uc02InsuranceApplication(scanner); break;
                 case 3: uc03ClaimStatusCheck(scanner); break;
-                case 4: System.out.println("UC04 미구현"); break;
+                case 4: uc04ClaimHistoryInquiry(scanner); break;
                 case 5: System.out.println("UC05 미구현"); break;
                 case 6: System.out.println("UC06 미구현"); break;
                 case 7: System.out.println("UC07 미구현"); break;
@@ -463,6 +466,83 @@ public class Main {
             case PENDING:   return "영업일 기준 1~2일 (담당자 배정 대기 중)";
             case IN_REVIEW: return "영업일 기준 2~3일 (심사 진행 중)";
             default:        return "처리 완료";
+        }
+    }
+
+    private static void uc04ClaimHistoryInquiry(Scanner scanner) {
+        System.out.println("\n=== 보상 이력 조회 ===");
+
+        // 2단계: 조회 기간 선택 화면 출력 (기본값: 최근 1년)
+        System.out.println("조회 기간을 선택하세요.");
+        System.out.println("1. 최근 1개월  2. 최근 3개월  3. 최근 6개월  4. 최근 1년(기본)  5. 전체");
+        System.out.print("선택 (기본값 4): ");
+        String input = scanner.nextLine().trim();
+        int periodChoice = input.isEmpty() ? 4 : Integer.parseInt(input);
+
+        // 3단계: 조회 기간 설정
+        long now = System.currentTimeMillis();
+        long fromMillis;
+        String periodLabel;
+        switch (periodChoice) {
+            case 1: fromMillis = now - 30L*24*60*60*1000;  periodLabel = "최근 1개월"; break;
+            case 2: fromMillis = now - 90L*24*60*60*1000;  periodLabel = "최근 3개월"; break;
+            case 3: fromMillis = now - 180L*24*60*60*1000; periodLabel = "최근 6개월"; break;
+            case 5: fromMillis = 0;                         periodLabel = "전체"; break;
+            default: fromMillis = now - 365L*24*60*60*1000; periodLabel = "최근 1년"; break;
+        }
+
+        // 4단계: 해당 기간 보상 이력 목록 출력
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        List<Claim> history = new ArrayList<>();
+        for (Claim c : claims) {
+            if (c.getClaimDate().getTime() >= fromMillis) {
+                history.add(c);
+            }
+        }
+
+        System.out.println("\n[조회 기간: " + periodLabel + "]");
+
+        // A1: 이력 없음
+        if (history.isEmpty()) {
+            System.out.println("해당 기간의 보상 이력이 없습니다.");
+            return;
+        }
+
+        System.out.println("\n번호 | 처리일     | 보험 종류        | 청구 금액     | 지급 금액     | 처리 결과");
+        System.out.println("-----|------------|-----------------|--------------|--------------|----------");
+        for (int i = 0; i < history.size(); i++) {
+            Claim c = history.get(i);
+            System.out.printf("%-4d | %s | %-15s | %,9d원 | %,9d원 | %s%n",
+                    i + 1, sdf.format(c.getClaimDate()), c.getClaimType(),
+                    c.getRequestAmount(), c.getPaidAmount(), statusLabel(c.getStatus()));
+        }
+
+        // 5단계: 상세보기 선택
+        System.out.print("\n상세보기할 번호 (0.뒤로): ");
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+        if (choice == 0) return;
+        if (choice < 1 || choice > history.size()) {
+            System.out.println("잘못된 입력입니다.");
+            return;
+        }
+
+        // 6단계: 상세 내용 출력 (청구 사유, 제출 서류, 심사 결과, 지급 내역)
+        Claim selected = history.get(choice - 1);
+        System.out.println("\n=== 상세 내용: " + selected.getClaimId() + " ===");
+        System.out.println("보험 종류  : " + selected.getClaimType());
+        System.out.println("접수일     : " + sdf.format(selected.getClaimDate()));
+        System.out.println("청구 사유  : " + selected.getClaimReason());
+        System.out.println("제출 서류  : " + selected.getDocuments());
+        System.out.println("심사 결과  : " + statusLabel(selected.getStatus()));
+        System.out.println("청구 금액  : " + String.format("%,d", selected.getRequestAmount()) + "원");
+        System.out.println("지급 금액  : " + String.format("%,d", selected.getPaidAmount()) + "원");
+        if (selected.getPaidAmount() > 0) {
+            System.out.println("지급 방법  : 등록 계좌 자동 이체");
+        } else if (selected.getStatus() == EClaimStatus.PENDING || selected.getStatus() == EClaimStatus.IN_REVIEW) {
+            System.out.println("지급 내역  : 심사 진행 중 (미지급)");
+        } else {
+            System.out.println("지급 내역  : 지급 없음 (반려)");
         }
     }
 }

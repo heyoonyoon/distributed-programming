@@ -14,8 +14,9 @@ public class CarAccidentReport extends Claim {
     private int injuredCount;
 
     public CarAccidentReport(String claimId, Date claimDate, int requestAmount,
-                             EClaimStatus status, String accidentLocation, String accidentType, String vehicleNumber) {
-        super(claimId, claimDate, requestAmount, status);
+                             EClaimStatus status, String accidentLocation, String accidentType,
+                             String vehicleNumber, String claimReason, String documents, int paidAmount) {
+        super(claimId, claimDate, requestAmount, status, claimReason, documents, paidAmount);
         this.accidentDate = claimDate;
         this.accidentLocation = accidentLocation;
         this.accidentType = accidentType;
