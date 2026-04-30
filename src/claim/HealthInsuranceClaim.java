@@ -26,6 +26,9 @@ public class HealthInsuranceClaim extends Claim {
     @Override
     public String getClaimType() { return "의료보험 청구"; }
 
+    public void setComplexity(EClaimComplexity complexity) { this.complexity = complexity; }
+    public EClaimComplexity getComplexity() { return complexity; }
+
     public void attachDocument(File file) {
     }
 

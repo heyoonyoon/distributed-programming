@@ -1,7 +1,9 @@
 import claim.Claim;
 import claim.CarAccidentReport;
 import claim.HealthInsuranceClaim;
+import common.enums.EClaimComplexity;
 import common.enums.EClaimStatus;
+import payment.BenefitPayment;
 import contract.InsuranceApplication;
 import common.vo.MedicalHistory;
 import common.vo.VehicleInfo;
@@ -87,7 +89,7 @@ public class Main {
                 case 2: uc02InsuranceApplication(scanner); break;
                 case 3: uc03ClaimStatusCheck(scanner); break;
                 case 4: uc04ClaimHistoryInquiry(scanner); break;
-                case 5: System.out.println("UC05 미구현"); break;
+                case 5: uc05HealthInsuranceClaim(scanner); break;
                 case 6: System.out.println("UC06 미구현"); break;
                 case 7: System.out.println("UC07 미구현"); break;
                 case 8: System.out.println("UC08 미구현"); break;
@@ -543,6 +545,92 @@ public class Main {
             System.out.println("지급 내역  : 심사 진행 중 (미지급)");
         } else {
             System.out.println("지급 내역  : 지급 없음 (반려)");
+        }
+    }
+
+    private static void uc05HealthInsuranceClaim(Scanner scanner) {
+        System.out.println("\n=== 의료보험 청구 ===");
+
+        // 2단계: 청구 정보 입력란 출력
+        System.out.println("\n--- 청구 정보 입력 ---");
+
+        // 3단계: 청구 정보 입력 (E1: 파일 형식 오류 시 재입력)
+        System.out.print("청구 사유: ");
+        String claimReason = scanner.nextLine().trim();
+
+        System.out.print("진료일 (YYYYMMDD): ");
+        String treatmentDate;
+        while (true) {
+            treatmentDate = scanner.nextLine().trim();
+            if (treatmentDate.matches("\\d{8}")) break;
+            System.out.println("올바른 형식으로 입력해 주세요. (YYYYMMDD 8자리)");
+            System.out.print("진료일 (YYYYMMDD): ");
+        }
+
+        System.out.print("병원명: ");
+        String hospitalName = scanner.nextLine().trim();
+
+        int requestAmount;
+        while (true) {
+            System.out.print("청구 금액 (원): ");
+            String amtInput = scanner.nextLine().trim();
+            try {
+                requestAmount = Integer.parseInt(amtInput.replace(",", ""));
+                if (requestAmount > 0) break;
+            } catch (NumberFormatException ignored) {}
+            System.out.println("올바른 금액을 입력해 주세요.");
+        }
+
+        // 증빙 서류 첨부 (E1: 허용 확장자 검사, 재입력)
+        String documents;
+        while (true) {
+            System.out.println("증빙 서류 파일명 입력 (허용: PDF, JPG, PNG)");
+            System.out.print("파일명: ");
+            documents = scanner.nextLine().trim();
+            String lower = documents.toLowerCase();
+            if (lower.endsWith(".pdf") || lower.endsWith(".jpg") || lower.endsWith(".png")) break;
+            System.out.println("지원하지 않는 파일 형식입니다. (허용: PDF, JPG, PNG)");
+        }
+
+        // 4단계: 청구 신청
+        System.out.println("\n청구 신청 중...");
+
+        // 5단계: 청구 정보 저장 + 복잡도 자동 판별 (50만원 초과 = COMPLEX)
+        String claimId = "CLM-" + String.format("%03d", claims.size() + 1);
+        EClaimComplexity complexity = requestAmount > 500000 ? EClaimComplexity.COMPLEX : EClaimComplexity.SIMPLE;
+        EClaimStatus initialStatus = complexity == EClaimComplexity.SIMPLE ? EClaimStatus.APPROVED : EClaimStatus.PENDING;
+
+        HealthInsuranceClaim newClaim = new HealthInsuranceClaim(
+                claimId, new Date(), requestAmount, initialStatus,
+                hospitalName, "AUTO", claimReason, documents, 0);
+        newClaim.setComplexity(complexity);
+        claims.add(newClaim);
+
+        System.out.println("청구 접수 번호: " + claimId);
+        System.out.println("복잡도 판별 결과: " + (complexity == EClaimComplexity.SIMPLE ? "간단한 청구" : "복잡한 청구"));
+
+        if (complexity == EClaimComplexity.SIMPLE) {
+            // 6단계: 간단한 청구 → UC17 즉시 지급 수행
+            int paidAmount = (int)(requestAmount * 0.9);
+            BenefitPayment payment = new BenefitPayment("PAY-" + System.currentTimeMillis(), paidAmount, "***-***-123456");
+            payment.transfer();
+
+            // 7단계: 처리 결과 통보
+            System.out.println("\n=== 보험금 즉시 지급 완료 ===");
+            System.out.println("지급 금액  : " + String.format("%,d", payment.getPaidAmount()) + "원");
+            System.out.println("지급 계좌  : " + "***-***-123456");
+            System.out.println("처리 결과를 이메일/문자로 발송하였습니다.");
+        } else {
+            // A1: 복잡한 청구 → 심사 대기 + UC14 담당자 배정
+            // A1-1: 심사 대기 상태 (이미 PENDING으로 생성됨)
+            // A1-2: UC14 담당자 배정
+            System.out.println("\n=== 담당자 배정 (UC14) ===");
+            System.out.println("담당자    : 홍길동 심사관");
+            System.out.println("연락처    : 02-1234-5678");
+            // A1-3: 안내 발송
+            System.out.println("\n담당자 배정 후 심사를 진행합니다.");
+            System.out.println("처리 현황은 '보상 처리 현황' 메뉴에서 확인하실 수 있습니다.");
+            System.out.println("안내를 이메일/문자로 발송하였습니다.");
         }
     }
 }
