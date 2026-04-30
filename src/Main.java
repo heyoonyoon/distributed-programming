@@ -5,7 +5,9 @@ import common.enums.EClaimComplexity;
 import common.enums.EClaimStatus;
 import contract.InsuranceContract;
 import contract.Notice;
+import contract.Payment;
 import common.enums.EContractStatus;
+import common.enums.EPaymentMethod;
 import payment.BenefitPayment;
 import user.Policyholder;
 import contract.InsuranceApplication;
@@ -117,7 +119,7 @@ public class Main {
                 case 7: uc07UnpaidInquiry(scanner); break;
                 case 8: uc08ContractInquiry(scanner); break;
                 case 9: uc09CarAccidentReport(scanner); break;
-                case 10: System.out.println("UC10 미구현"); break;
+                case 10: uc10PayPremium(scanner); break;
                 case 11: System.out.println("UC11 미구현"); break;
                 case 12: System.out.println("UC12 미구현"); break;
                 case 13: System.out.println("UC13 미구현"); break;
@@ -967,5 +969,109 @@ public class Main {
         System.out.println("담당자 연락처: 02-1234-5678");
         System.out.println("향후 처리 절차: 담당자 배정 → 현장 조사 → 손해 사정 → 보험금 지급");
         System.out.println("안내를 이메일/문자로 발송하였습니다.");
+    }
+
+    private static void uc10PayPremium(Scanner scanner) {
+        System.out.println("\n=== 보험료 납부 ===");
+
+        // 2단계: 납부 예정 보험료 목록 출력 (ACTIVE 계약 기준)
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        List<InsuranceContract> activeContracts = new ArrayList<>();
+        for (InsuranceContract c : contracts) {
+            if (c.getStatus() == EContractStatus.ACTIVE) activeContracts.add(c);
+        }
+
+        if (activeContracts.isEmpty()) {
+            System.out.println("납부 대상 보험료가 없습니다.");
+            return;
+        }
+
+        System.out.println("\n번호 | 계약명           | 납부 기한  | 납부 금액");
+        System.out.println("-----|-----------------|------------|----------");
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        cal.set(java.util.Calendar.DAY_OF_MONTH, cal.getActualMaximum(java.util.Calendar.DAY_OF_MONTH));
+        String dueDate = sdf.format(cal.getTime());
+        for (int i = 0; i < activeContracts.size(); i++) {
+            InsuranceContract c = activeContracts.get(i);
+            System.out.printf("%-4d | %-15s | %s | %,d원%n",
+                    i + 1, c.getProductName(), dueDate, c.getMonthlyPremium());
+        }
+
+        // 3단계: 납부할 건 선택
+        System.out.print("\n납부할 번호 (0.뒤로): ");
+        int choice = scanner.nextInt();
+        scanner.nextLine();
+        if (choice == 0) return;
+        if (choice < 1 || choice > activeContracts.size()) {
+            System.out.println("잘못된 입력입니다.");
+            return;
+        }
+        InsuranceContract selectedContract = activeContracts.get(choice - 1);
+
+        // 결제 수단 선택
+        System.out.println("\n결제 수단 선택");
+        System.out.println("1. 신용카드  2. 계좌이체  3. 자동이체 등록");
+        System.out.print("선택: ");
+        int methodChoice = scanner.nextInt();
+        scanner.nextLine();
+
+        // A1: 자동이체 등록
+        if (methodChoice == 3) {
+            System.out.println("\n--- 자동이체 등록 ---");
+            System.out.print("출금 계좌번호: ");
+            String autoAccount = scanner.nextLine().trim();
+            System.out.print("출금일 (매월 며칠, 1~28): ");
+            int autoDay = scanner.nextInt();
+            scanner.nextLine();
+            System.out.println("자동이체가 등록되었습니다. (계좌: " + autoAccount + ", 매월 " + autoDay + "일)");
+            System.out.println("등록 확인 안내를 이메일/문자로 발송하였습니다.");
+            return;
+        }
+
+        EPaymentMethod method = methodChoice == 1 ? EPaymentMethod.CARD : EPaymentMethod.TRANSFER;
+
+        // 4단계: 결제 정보 입력 + 납부하기 (E1: 결제 실패 시 재시도)
+        while (true) {
+            if (method == EPaymentMethod.CARD) {
+                System.out.print("카드번호 (16자리): ");
+                String cardNum = scanner.nextLine().trim();
+                if (!cardNum.replace("-", "").matches("\\d{16}")) {
+                    System.out.println("결제에 실패하였습니다. (사유: 유효하지 않은 카드번호)");
+                    System.out.print("다시 시도하시겠습니까? (1.예 / 2.아니오): ");
+                    if (scanner.nextInt() != 1) { scanner.nextLine(); return; }
+                    scanner.nextLine();
+                    continue;
+                }
+            } else {
+                System.out.print("출금 계좌번호: ");
+                String bankNum = scanner.nextLine().trim();
+                if (bankNum.isEmpty()) {
+                    System.out.println("결제에 실패하였습니다. (사유: 계좌번호 누락)");
+                    System.out.print("다시 시도하시겠습니까? (1.예 / 2.아니오): ");
+                    if (scanner.nextInt() != 1) { scanner.nextLine(); return; }
+                    scanner.nextLine();
+                    continue;
+                }
+            }
+            break;
+        }
+
+        // 5단계: 결제 처리 + 납부 내역 기록
+        String paymentId = "PAY-" + System.currentTimeMillis();
+        Payment payment = new Payment(paymentId, selectedContract.getMonthlyPremium(), method);
+        payment.process();
+        common.vo.Receipt receipt = payment.getReceipt();
+
+        // 미납 고지서가 있으면 제거
+        notices.removeIf(n -> n.getContractName().equals(selectedContract.getProductName()));
+
+        // 6단계: 납부 완료 영수증 발송
+        System.out.println("\n=== 납부 완료 ===");
+        System.out.println("영수증 번호: " + receipt.getPaymentId());
+        System.out.println("납부 계약  : " + selectedContract.getProductName());
+        System.out.println("납부 금액  : " + String.format("%,d", receipt.getAmount()) + "원");
+        System.out.println("납부 수단  : " + (method == EPaymentMethod.CARD ? "신용카드" : "계좌이체"));
+        System.out.println("납부 일시  : " + sdf.format(receipt.getPaidAt()));
+        System.out.println("납부 완료 영수증을 이메일/문자로 발송하였습니다.");
     }
 }

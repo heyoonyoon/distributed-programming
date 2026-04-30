@@ -13,11 +13,25 @@ public class Payment {
     private EPaymentMethod method;
     private EPaymentStatus status;
 
+    public Payment(String paymentId, int amount, EPaymentMethod method) {
+        this.paymentId = paymentId;
+        this.amount = amount;
+        this.method = method;
+        this.paidAt = new Date();
+        this.status = EPaymentStatus.SUCCESS;
+    }
+
+    public String getPaymentId() { return paymentId; }
+    public int getAmount() { return amount; }
+    public Date getPaidAt() { return paidAt; }
+    public EPaymentMethod getMethod() { return method; }
+    public EPaymentStatus getStatus() { return status; }
+
     public boolean process() {
-        return false;
+        return true;
     }
 
     public Receipt getReceipt() {
-        return null;
+        return new Receipt(paymentId, amount, paidAt);
     }
 }
