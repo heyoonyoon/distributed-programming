@@ -11,6 +11,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -30,6 +31,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
         seedPolicyholder("hong@test.com", "홍길동", "010-1111-1111",
                 "900101-1234567", LocalDate.of(1990, 1, 1), "서울시 강남구", "110-111-111111");
@@ -52,6 +54,7 @@ public class DataSeeder implements CommandLineRunner {
                 name, email, phone, encoder.encode("1234"), department, 0));
     }
 
+    /** 상품 시드. run()의 트랜잭션 안에서 실행되어 중간 실패 시 일부만 남는 것을 방지. */
     private void seedProducts() {
         if (productRepository.count() > 0) return;
 
@@ -81,6 +84,7 @@ public class DataSeeder implements CommandLineRunner {
                 "가벼운자차", "자기차량손해 중심 보급형 자동차보험. 운전범위 누구나.",
                 28000, "경차", "누구나");
         lightCar.addCoverageItem(new CoverageItem("자기차량손해", 20_000_000, 300_000));
+        lightCar.addCoverageItem(new CoverageItem("자동차상해", 30_000_000, 0));
         productRepository.save(lightCar);
     }
 }

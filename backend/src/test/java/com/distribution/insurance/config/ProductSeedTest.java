@@ -22,7 +22,7 @@ class ProductSeedTest {
 
         new DataSeeder(userRepo, new BCryptPasswordEncoder(), productRepo).run();
 
-        verify(productRepo, atLeast(1)).save(any());
+        verify(productRepo, times(4)).save(any());
     }
 
     @Test
