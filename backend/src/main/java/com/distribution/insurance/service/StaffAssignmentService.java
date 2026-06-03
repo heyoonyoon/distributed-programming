@@ -30,13 +30,27 @@ public class StaffAssignmentService {
         bind(review, staff);
     }
 
-    /** 관리자가 지정한 직원으로 수동 배정(UC14 A1). */
+    /** 관리자가 지정한 직원으로 수동 배정(UC14 A1).
+     *  이미 배정된 경우 이전 담당자 부하를 회수 후 신규 담당자에게 배정.
+     *  확정된 심사는 재배정 불가. */
     @Transactional
     public void assignManually(BenefitPaymentReview review, Long employeeId) {
+        if (review.getResult() != null) {
+            throw new IllegalStateTransitionException("이미 확정된 심사는 재배정할 수 없습니다.");
+        }
         InsuranceEmployee staff = userRepository.findById(employeeId)
                 .filter(u -> u instanceof InsuranceEmployee)
                 .map(u -> (InsuranceEmployee) u)
                 .orElseThrow(() -> new IllegalArgumentException("심사 직원을 찾을 수 없습니다."));
+
+        // 이미 배정된 경우: 이전 담당자 부하 회수
+        if (review.getAssignedStaffId() != null) {
+            userRepository.findById(review.getAssignedStaffId())
+                    .filter(u -> u instanceof InsuranceEmployee)
+                    .map(u -> (InsuranceEmployee) u)
+                    .ifPresent(InsuranceEmployee::releaseWork);
+        }
+
         bind(review, staff);
     }
 

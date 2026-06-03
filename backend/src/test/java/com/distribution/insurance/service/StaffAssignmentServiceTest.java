@@ -5,9 +5,11 @@ import com.distribution.insurance.domain.claim.HealthInsuranceClaim;
 import com.distribution.insurance.domain.contract.InsuranceContract;
 import com.distribution.insurance.domain.product.HealthInsuranceProduct;
 import com.distribution.insurance.domain.review.BenefitPaymentReview;
+import com.distribution.insurance.domain.review.ReviewResult;
 import com.distribution.insurance.domain.user.InsuranceEmployee;
 import com.distribution.insurance.domain.user.Policyholder;
 import com.distribution.insurance.repository.*;
+import com.distribution.insurance.service.IllegalStateTransitionException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -70,5 +72,34 @@ class StaffAssignmentServiceTest {
         assignmentService.assignManually(review, b.getId());
 
         assertThat(review.getAssignedStaffId()).isEqualTo(b.getId());
+    }
+
+    @Test
+    void 재배정_시_이전_담당자_부하가_감소하고_새_담당자_부하가_증가한다() {
+        InsuranceEmployee staffA = emp("a@t.com", 0);
+        InsuranceEmployee staffB = emp("b@t.com", 0);
+        BenefitPaymentReview review = reviewRepository.save(new BenefitPaymentReview(savedComplexClaim()));
+
+        assignmentService.assignManually(review, staffA.getId());  // A: 1, B: 0
+        assignmentService.assignManually(review, staffB.getId());  // A: 0, B: 1
+
+        InsuranceEmployee reloadedA = (InsuranceEmployee) userRepository.findById(staffA.getId()).orElseThrow();
+        InsuranceEmployee reloadedB = (InsuranceEmployee) userRepository.findById(staffB.getId()).orElseThrow();
+        assertThat(reloadedA.getCurrentLoad()).isEqualTo(0);
+        assertThat(reloadedB.getCurrentLoad()).isEqualTo(1);
+        assertThat(review.getAssignedStaffId()).isEqualTo(staffB.getId());
+    }
+
+    @Test
+    void 이미_확정된_심사는_재배정할_수_없다() {
+        InsuranceEmployee staffA = emp("a@t.com", 0);
+        InsuranceEmployee staffB = emp("b@t.com", 0);
+        BenefitPaymentReview review = reviewRepository.save(new BenefitPaymentReview(savedComplexClaim()));
+        assignmentService.assignManually(review, staffA.getId());
+        review.confirm(ReviewResult.APPROVED, "정상");  // 직접 확정
+
+        assertThatThrownBy(() -> assignmentService.assignManually(review, staffB.getId()))
+                .isInstanceOf(IllegalStateTransitionException.class)
+                .hasMessageContaining("이미 확정된 심사는 재배정할 수 없습니다.");
     }
 }
