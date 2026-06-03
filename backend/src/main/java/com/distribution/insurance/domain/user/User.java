@@ -3,6 +3,7 @@ package com.distribution.insurance.domain.user;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Table(name = "users")
@@ -32,5 +33,10 @@ public abstract class User {
     public void updateContact(String email, String phone) {
         this.email = email;
         this.phone = phone;
+    }
+
+    /** 비밀번호 일치 여부(순수 도메인 비교) — 로그인 조율은 AuthService(ADR 0001). */
+    public boolean checkPassword(String rawPassword, PasswordEncoder encoder) {
+        return encoder.matches(rawPassword, this.password);
     }
 }
