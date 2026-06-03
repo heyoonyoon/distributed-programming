@@ -5,8 +5,10 @@ import com.distribution.insurance.domain.claim.ClaimAttachment;
 import com.distribution.insurance.domain.contract.ContractStatus;
 import com.distribution.insurance.domain.contract.InsuranceContract;
 import com.distribution.insurance.domain.product.CarInsuranceProduct;
+import com.distribution.insurance.domain.review.BenefitPaymentReview;
 import com.distribution.insurance.domain.user.InsuranceEmployee;
 import com.distribution.insurance.domain.user.Policyholder;
+import com.distribution.insurance.repository.BenefitPaymentReviewRepository;
 import com.distribution.insurance.repository.CarAccidentReportRepository;
 import com.distribution.insurance.repository.ContractRepository;
 import com.distribution.insurance.repository.UserRepository;
@@ -25,15 +27,21 @@ public class CarAccidentService {
     private final ContractRepository contractRepository;
     private final UserRepository userRepository;
     private final NotificationSender notificationSender;
+    private final BenefitPaymentReviewRepository reviewRepository;
+    private final StaffAssignmentService assignmentService;
 
     public CarAccidentService(CarAccidentReportRepository reportRepository,
                               ContractRepository contractRepository,
                               UserRepository userRepository,
-                              NotificationSender notificationSender) {
+                              NotificationSender notificationSender,
+                              BenefitPaymentReviewRepository reviewRepository,
+                              StaffAssignmentService assignmentService) {
         this.reportRepository = reportRepository;
         this.contractRepository = contractRepository;
         this.userRepository = userRepository;
         this.notificationSender = notificationSender;
+        this.reviewRepository = reviewRepository;
+        this.assignmentService = assignmentService;
     }
 
     @Transactional
@@ -57,6 +65,11 @@ public class CarAccidentService {
                 contract, accidentDate, accidentLocation, accidentType, vehicleNumber, hasInjury, injuredCount);
         attachments.forEach(report::addAttachment);
         reportRepository.save(report);
+
+        // 자동차사고도 보상심사 큐로 진입(ADR 0009): review 생성·자동배정 후 심사중 전이
+        BenefitPaymentReview review = reviewRepository.save(new BenefitPaymentReview(report));
+        assignmentService.assignAutomatically(review);
+        report.markInReview();
 
         // 직원 전원에게 접수 알림(UC09 step6)
         for (InsuranceEmployee staff : userRepository.findAllEmployees()) {
