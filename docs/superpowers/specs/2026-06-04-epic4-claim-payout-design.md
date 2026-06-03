@@ -154,8 +154,13 @@ COMPLEX 청구: PENDING → (담당자배정) IN_REVIEW → APPROVED → COMPLET
 
 ---
 
-## 7. grill-with-docs 로 넘길 미결 쟁점 (ADR 후보)
+## 7. 확정된 결정 (grill-with-docs)
 
-- 간단청구(SIMPLE)가 `BenefitPaymentReview` 없이 `BenefitPayment`를 직접 생성하는 구조 — composition 규칙("심사 없이 지급 없음")과의 예외 관계.
-- `Claim`을 `InsuranceContract` composition으로 둘 때, 계약 조회 부담 vs 별도 집계 트레이드오프.
-- 보험금 송금 포트를 `PaymentGateway`와 분리(`BenefitTransferGateway`)한 결정.
+CONTEXT.md에 보상&청구 용어(Claim, HealthInsuranceClaim, CarAccidentReport, ClaimStatus, ClaimComplexity, BenefitPaymentReview, BenefitPayment, ClaimAttachment, BenefitTransferGateway) 등재 완료. 아래 결정은 ADR로 확정:
+
+- **ADR 0006** — SIMPLE 청구는 `BenefitPaymentReview` 없이 `BenefitPayment`를 직접 생성(composition 규칙의 명시적 예외, 다이어그램 주석과 일치).
+- **ADR 0007** — `ClaimStatus`는 다이어그램 4값에 `COMPLETED`/`FAILED`를 더해 6값(지급 결과·현황 흐름·재시도 표현).
+- **ADR 0008** — 보험금 송금은 `PaymentGateway`와 분리한 `BenefitTransferGateway` 포트.
+
+`Claim`은 다이어그램대로 `InsuranceContract` composition을 유지한다(별도 ADR 불필요).
+`BenefitPaymentReview`는 기존 `ReviewResult`를 재사용하되 `CONDITIONAL`은 쓰지 않는다.
