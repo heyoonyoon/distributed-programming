@@ -40,9 +40,7 @@ class CarAccidentServiceTest {
     }
 
     @Test
-    void 접수하면_review가_생성되고_담당자에_배정되어_IN_REVIEW가_된다() {
-        InsuranceEmployee staff = userRepository.save(
-                new InsuranceEmployee("직원", "e@t.com", "010", "pw", "사고팀", 0));
+    void 접수하면_미배정_review가_생성되고_IN_REVIEW가_된다() {
         Policyholder p = ph("110-123-456789");
         InsuranceContract c = carContract(p);
 
@@ -53,7 +51,7 @@ class CarAccidentServiceTest {
         assertThat(reportRepository.findById(report.getId()).orElseThrow().getStatus())
                 .isEqualTo(ClaimStatus.IN_REVIEW);
         var review = reviewRepository.findByClaimId(report.getId()).orElseThrow();
-        assertThat(review.getAssignedStaffId()).isEqualTo(staff.getId());
+        assertThat(review.getAssignedStaffId()).isNull();   // 수동 배정 전이므로 미배정
     }
 
     @Test

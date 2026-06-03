@@ -25,6 +25,7 @@ class BenefitReviewServiceTest {
     @Autowired BenefitReviewService reviewService;
     @Autowired ClaimService claimService;
     @Autowired CarAccidentService carAccidentService;
+    @Autowired StaffAssignmentService assignmentService;
     @Autowired ClaimRepository claimRepository;
     @Autowired BenefitPaymentReviewRepository reviewRepository;
     @Autowired ContractRepository contractRepository;
@@ -43,6 +44,14 @@ class BenefitReviewServiceTest {
                 new com.distribution.insurance.domain.product.CarInsuranceProduct("자동차", "대물", 50000, "SEDAN", "ALL"));
         Long contractId = contractRepository.save(new InsuranceContract(ph, product, 50000, LocalDate.now())).getId();
         return carAccidentService.report(ph.getId(), contractId, LocalDate.now(), "서울", "쌍방", "12가3456", true, 2, List.of());
+    }
+
+    /** 자동차사고를 접수하고 지정한 담당자에게 수동 배정(UC14 A1)한 뒤 report를 반환. */
+    private CarAccidentReport assignedCarReport(String account, Long staffId) {
+        CarAccidentReport report = carReport(account);
+        assignmentService.assignManually(
+                reviewRepository.findByClaimId(report.getId()).orElseThrow(), staffId);
+        return report;
     }
 
     /** COMPLEX 청구를 만들고 (자동배정된) review를 반환. account로 지급 성공/실패 제어. */
@@ -117,7 +126,7 @@ class BenefitReviewServiceTest {
     @Test
     void 자동차사고_승인시_직원이_사정한_금액으로_지급되어_COMPLETED된다() {
         Long staff = staffId("e@t.com");
-        CarAccidentReport report = carReport("110-123-456789");
+        CarAccidentReport report = assignedCarReport("110-123-456789", staff);
         reviewService.confirm(staff, report.getId(), ReviewResult.APPROVED, "정상", 3_000_000);
 
         var saved = claimRepository.findById(report.getId()).orElseThrow();
@@ -128,7 +137,7 @@ class BenefitReviewServiceTest {
     @Test
     void 자동차사고_승인인데_금액이_없으면_400성_예외() {
         Long staff = staffId("e@t.com");
-        CarAccidentReport report = carReport("110-123-456789");
+        CarAccidentReport report = assignedCarReport("110-123-456789", staff);
         assertThatThrownBy(() -> reviewService.confirm(staff, report.getId(), ReviewResult.APPROVED, "정상", null))
                 .isInstanceOf(InvalidRequestException.class);
     }
@@ -136,7 +145,7 @@ class BenefitReviewServiceTest {
     @Test
     void 자동차사고_반려는_금액없이_REJECTED된다() {
         Long staff = staffId("e@t.com");
-        CarAccidentReport report = carReport("110-123-456789");
+        CarAccidentReport report = assignedCarReport("110-123-456789", staff);
         reviewService.confirm(staff, report.getId(), ReviewResult.REJECTED, "과실 불인정", null);
         assertThat(claimRepository.findById(report.getId()).orElseThrow().getStatus())
                 .isEqualTo(ClaimStatus.REJECTED);

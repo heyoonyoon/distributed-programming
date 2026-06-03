@@ -34,6 +34,13 @@ public class StaffReviewController {
                 .toList();
     }
 
+    @GetMapping("/benefit-reviews/unassigned")
+    public List<BenefitReviewSummaryResponse> unassigned() {
+        return reviewService.unassignedReviews().stream()
+                .map(BenefitReviewSummaryResponse::from)
+                .toList();
+    }
+
     @GetMapping("/benefit-reviews/{claimId}")
     public BenefitReviewDetailResponse detail(@AuthenticationPrincipal Long staffId, @PathVariable Long claimId) {
         return BenefitReviewDetailResponse.from(reviewService.detail(staffId, claimId));

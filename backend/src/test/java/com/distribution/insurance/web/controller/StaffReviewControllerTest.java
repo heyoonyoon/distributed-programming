@@ -140,6 +140,13 @@ class StaffReviewControllerTest {
         // reportId 파싱 (응답: {"reportId":N, "status":"IN_REVIEW"})
         long claimId = Long.parseLong(responseBody.replaceAll(".*\"reportId\":(\\d+).*", "$1"));
 
+        // 자동차사고는 미배정으로 생성되므로 관리자가 담당자를 수동 배정한다(UC14 A1)
+        mockMvc.perform(post("/staff/claims/" + claimId + "/assign")
+                        .header("Authorization", "Bearer " + staffToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"employeeId\":" + staff.getId() + "}"))
+                .andExpect(status().isOk());
+
         // 보상심사 목록에 CAR_ACCIDENT 항목이 있어야 한다
         mockMvc.perform(get("/staff/benefit-reviews")
                         .header("Authorization", "Bearer " + staffToken))
