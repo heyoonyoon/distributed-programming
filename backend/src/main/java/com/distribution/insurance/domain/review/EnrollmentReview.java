@@ -21,7 +21,7 @@ public class EnrollmentReview extends Review {
     private AccidentHistory accidentHistory;  // 자동차건만, nullable
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "application_id")
+    @JoinColumn(name = "application_id", unique = true)
     private InsuranceApplication application;
 
     @ManyToOne(fetch = FetchType.LAZY)

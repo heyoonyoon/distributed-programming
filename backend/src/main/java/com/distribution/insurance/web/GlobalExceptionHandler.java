@@ -4,6 +4,7 @@ import com.distribution.insurance.service.DuplicateEmailException;
 import com.distribution.insurance.service.IllegalStateTransitionException;
 import com.distribution.insurance.service.InvalidRequestException;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -58,5 +59,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateTransitionException.class)
     public ResponseEntity<String> handleStateTransition(IllegalStateTransitionException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    }
+
+    /** DB 무결성 제약 위반(중복 심사 등) → 409. 내부 SQL 노출 없이 고정 메시지 반환. */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<String> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body("이미 처리된 요청이거나 데이터 제약을 위반했습니다.");
     }
 }
