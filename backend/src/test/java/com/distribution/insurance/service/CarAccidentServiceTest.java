@@ -73,4 +73,44 @@ class CarAccidentServiceTest {
                 p.getId(), health.getId(), LocalDate.now(), "서울", "단독", "12가3456", false, 0, List.of()))
                 .isInstanceOf(InvalidRequestException.class);
     }
+
+    @Test
+    void 미래_사고일자는_400성_예외() {
+        Policyholder p = ph("110-123-456789");
+        InsuranceContract c = carContract(p);
+
+        assertThatThrownBy(() -> carAccidentService.report(
+                p.getId(), c.getId(), LocalDate.now().plusDays(1), "서울", "단독", "12가3456", false, 0, List.of()))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    void 필수_사고정보가_공백이면_400성_예외() {
+        Policyholder p = ph("110-123-456789");
+        InsuranceContract c = carContract(p);
+
+        assertThatThrownBy(() -> carAccidentService.report(
+                p.getId(), c.getId(), LocalDate.now(), " ", "단독", "12가3456", false, 0, List.of()))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    void 부상없음인데_부상자수가_있으면_400성_예외() {
+        Policyholder p = ph("110-123-456789");
+        InsuranceContract c = carContract(p);
+
+        assertThatThrownBy(() -> carAccidentService.report(
+                p.getId(), c.getId(), LocalDate.now(), "서울", "단독", "12가3456", false, 2, List.of()))
+                .isInstanceOf(InvalidRequestException.class);
+    }
+
+    @Test
+    void 대인사고인데_부상자수가_0이면_400성_예외() {
+        Policyholder p = ph("110-123-456789");
+        InsuranceContract c = carContract(p);
+
+        assertThatThrownBy(() -> carAccidentService.report(
+                p.getId(), c.getId(), LocalDate.now(), "서울", "쌍방", "12가3456", true, 0, List.of()))
+                .isInstanceOf(InvalidRequestException.class);
+    }
 }
