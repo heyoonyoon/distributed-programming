@@ -25,6 +25,9 @@ public class ClaimQueryService {
 
     private static final Set<ClaimStatus> IN_PROGRESS =
             EnumSet.of(ClaimStatus.PENDING, ClaimStatus.IN_REVIEW, ClaimStatus.APPROVED, ClaimStatus.FAILED);
+    /** 이력(UC04)은 처리 결과가 확정된 종결 건만 노출한다. */
+    private static final Set<ClaimStatus> TERMINAL =
+            EnumSet.of(ClaimStatus.COMPLETED, ClaimStatus.REJECTED);
 
     private final ClaimRepository claimRepository;
     private final ContractRepository contractRepository;
@@ -56,7 +59,11 @@ public class ClaimQueryService {
     public List<ClaimSummary> history(Long policyholderId, LocalDate from, LocalDate to) {
         LocalDate end = (to == null) ? LocalDate.now() : to;
         LocalDate start = (from == null) ? end.minusYears(1) : from;
+        if (start.isAfter(end)) {
+            throw new InvalidRequestException("조회 시작일이 종료일보다 늦을 수 없습니다.");
+        }
         return claimRepository.findByContractPolicyholderId(policyholderId).stream()
+                .filter(c -> TERMINAL.contains(c.getStatus()))
                 .filter(c -> !c.getClaimDate().isBefore(start) && !c.getClaimDate().isAfter(end))
                 .map(c -> toSummary(c, benefitPaymentRepository.sumPaidByClaimIdAndStatus(c.getId(), PaymentStatus.SUCCESS)))
                 .toList();

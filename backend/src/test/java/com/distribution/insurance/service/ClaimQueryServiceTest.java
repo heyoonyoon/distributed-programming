@@ -57,14 +57,34 @@ class ClaimQueryServiceTest {
     void 이력은_기간내_청구를_지급액과_함께_반환한다() {
         Policyholder p = ph();
         InsuranceContract c = contract(p, LocalDate.now());
-        HealthInsuranceClaim claim = claimRepository.save(new HealthInsuranceClaim(
-                c, 500000, "병원", "S00", LocalDate.now(), 500000, ClaimComplexity.SIMPLE));
+        HealthInsuranceClaim claim = new HealthInsuranceClaim(
+                c, 500000, "병원", "S00", LocalDate.now(), 500000, ClaimComplexity.SIMPLE);
+        claim.markCompleted();   // 종결 건만 이력에 노출(UC04)
+        claimRepository.save(claim);
         benefitPaymentRepository.save(BenefitPayment.success(claim, 400000, "110-123-456789"));
 
         List<ClaimQueryService.ClaimSummary> history = queryService.history(p.getId(),
                 LocalDate.now().minusMonths(1), LocalDate.now());
         assertThat(history).hasSize(1);
         assertThat(history.get(0).paidAmount()).isEqualTo(400000L);
+    }
+
+    @Test
+    void 진행중_청구는_이력에_나오지_않는다() {
+        Policyholder p = ph();
+        InsuranceContract c = contract(p, LocalDate.now());
+        claimRepository.save(new HealthInsuranceClaim(
+                c, 500000, "병원", "S00", LocalDate.now(), 500000, ClaimComplexity.SIMPLE));   // PENDING
+
+        assertThat(queryService.history(p.getId(), LocalDate.now().minusMonths(1), LocalDate.now())).isEmpty();
+    }
+
+    @Test
+    void 시작일이_종료일보다_늦으면_400성_예외() {
+        Policyholder p = ph();
+        assertThatThrownBy(() -> queryService.history(p.getId(),
+                LocalDate.now(), LocalDate.now().minusMonths(1)))
+                .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
