@@ -354,7 +354,18 @@ function EmployeeShell({
   )
 }
 
-function CustomerHomePage() {
+function CustomerHomePage({
+  token,
+  onUnauthorized,
+}: {
+  token: string
+  onUnauthorized: () => void
+}) {
+  const [summary, setSummary] = useState<{
+    total: number
+    health: number
+    car: number
+  } | null>(null)
   const actions = [
     { label: '상품 조회 및 가입 신청', icon: Search, path: '/customer/products' },
     { label: '신청 내역', icon: Receipt, path: '/customer/applications' },
@@ -364,6 +375,42 @@ function CustomerHomePage() {
     { label: '보상 이력', icon: CalendarDays, path: '/customer/claims/history' },
     { label: '보험료 납부', icon: CreditCard, path: '/customer/contracts' },
   ]
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadSummary() {
+      try {
+        const contracts = await apiClient.getContracts(token)
+        const activeContracts = contracts.filter((contract) => contract.status === 'ACTIVE')
+
+        if (!isMounted) {
+          return
+        }
+
+        setSummary({
+          total: activeContracts.length,
+          health: activeContracts.filter((contract) => contract.productType === 'HEALTH').length,
+          car: activeContracts.filter((contract) => contract.productType === 'CAR').length,
+        })
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          onUnauthorized()
+          return
+        }
+
+        if (isMounted) {
+          setSummary({ total: 0, health: 0, car: 0 })
+        }
+      }
+    }
+
+    loadSummary()
+
+    return () => {
+      isMounted = false
+    }
+  }, [onUnauthorized, token])
 
   return (
     <section className="customer-home">
@@ -386,8 +433,16 @@ function CustomerHomePage() {
       <section className="status-panel">
         <div>
           <BadgeCheck size={22} />
-          <h2>현재 유효한 계약 2건</h2>
-          <p>의료보험 1건, 자동차보험 1건이 정상 유지 중입니다.</p>
+          <h2>
+            {summary ? `현재 유효한 계약 ${summary.total}건` : '현재 유효한 계약을 불러오는 중입니다.'}
+          </h2>
+          <p>
+            {summary
+              ? summary.total > 0
+                ? `의료보험 ${summary.health}건, 자동차보험 ${summary.car}건이 정상 유지 중입니다.`
+                : '현재 유효한 계약이 없습니다.'
+              : '가입자 계약 현황을 계산하고 있습니다.'}
+          </p>
         </div>
         <Link className="secondary-button" to="/customer/contracts">
           계약 보기
@@ -1109,6 +1164,7 @@ function CustomerClaimsPage({
   const [historyClaims, setHistoryClaims] = useState<ClaimListItem[]>([])
   const [historyFrom, setHistoryFrom] = useState(formatInputDate(oneYearAgo))
   const [historyTo, setHistoryTo] = useState(formatInputDate(today))
+  const [hasHistorySearched, setHasHistorySearched] = useState(false)
   const [selectedAnalysisContractId, setSelectedAnalysisContractId] = useState('')
   const [benefitAnalysis, setBenefitAnalysis] = useState<BenefitAnalysis | null>(null)
   const [queryError, setQueryError] = useState('')
@@ -1169,18 +1225,12 @@ function CustomerClaimsPage({
     }
   }, [onUnauthorized, token])
 
-  async function loadClaimQueries() {
+  async function loadStatusClaims() {
     setQueryError('')
     setQueryLoading(true)
 
     try {
-      const [statusList, historyList] = await Promise.all([
-        apiClient.getClaimStatus(token),
-        apiClient.getClaimHistory(token, { from: historyFrom, to: historyTo }),
-      ])
-
-      setStatusClaims(statusList)
-      setHistoryClaims(historyList)
+      setStatusClaims(await apiClient.getClaimStatus(token))
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         onUnauthorized()
@@ -1195,7 +1245,7 @@ function CustomerClaimsPage({
 
   useEffect(() => {
     void Promise.resolve().then(() => {
-      loadClaimQueries()
+      loadStatusClaims()
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -1360,6 +1410,7 @@ function CustomerClaimsPage({
         from: historyFrom,
         to: historyTo,
       }))
+      setHasHistorySearched(true)
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         onUnauthorized()
@@ -1690,6 +1741,7 @@ function CustomerClaimsPage({
           <CalendarDays size={18} />
           <h2>보상 이력</h2>
         </div>
+        <p className="section-note">기간을 정한 뒤 조회 버튼을 눌러 보상이력을 불러오세요.</p>
         <form className="inline-fields" onSubmit={loadHistory}>
           <label>
             시작일
@@ -1723,7 +1775,10 @@ function CustomerClaimsPage({
               </span>
             </article>
           ))}
-          {historyClaims.length === 0 && !isQueryLoading && !isHistoryLoading ? <p>조회 기간의 보상 이력이 없습니다.</p> : null}
+          {historyClaims.length === 0 && !isQueryLoading && !isHistoryLoading && hasHistorySearched ? (
+            <p>조회 기간의 보상 이력이 없습니다.</p>
+          ) : null}
+          {!hasHistorySearched && !isHistoryLoading ? <p>조회 버튼을 누르면 보상이력이 표시됩니다.</p> : null}
         </div>
       </section>
       ) : null}
@@ -1734,6 +1789,7 @@ function CustomerClaimsPage({
           <BadgeCheck size={18} />
           <h2>실익 분석</h2>
         </div>
+        <p className="section-note">계약 유지 6개월 이후에만 조회할 수 있습니다.</p>
         <form className="analysis-form" onSubmit={loadBenefitAnalysis}>
           <label>
             계약
@@ -2520,7 +2576,15 @@ function App() {
           session ? (
             <CustomerShell session={session} onLogout={handleLogout}>
               <Routes>
-                <Route path="/home" element={<CustomerHomePage />} />
+                <Route
+                  path="/home"
+                  element={
+                    <CustomerHomePage
+                      token={session.token}
+                      onUnauthorized={handleUnauthorized}
+                    />
+                  }
+                />
                 <Route
                   path="/products"
                   element={
