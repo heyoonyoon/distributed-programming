@@ -399,6 +399,7 @@ function CustomerContractsPage({
   const [maxPremium, setMaxPremium] = useState('')
   const [products, setProducts] = useState<ProductSummary[]>([])
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null)
+  const [hasSearchedProducts, setSearchedProducts] = useState(false)
   const [applications, setApplications] = useState<MyApplication[]>([])
   const [contracts, setContracts] = useState<ContractSummary[]>([])
   const [selectedContract, setSelectedContract] = useState<ContractDetail | null>(null)
@@ -422,6 +423,7 @@ function CustomerContractsPage({
   async function loadProducts() {
     setError('')
     setLoading(true)
+    setSearchedProducts(true)
 
     try {
       const list = await apiClient.getProducts({
@@ -517,12 +519,19 @@ function CustomerContractsPage({
 
   useEffect(() => {
     void Promise.resolve().then(() => {
-      loadProducts()
       loadApplications()
       loadContractData()
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productType])
+  }, [])
+
+  function changeProductType(type: ProductType) {
+    setProductType(type)
+    setProducts([])
+    setSelectedProduct(null)
+    setSearchedProducts(false)
+    setError('')
+  }
 
   async function selectProduct(id: number) {
     setError('')
@@ -697,10 +706,20 @@ function CustomerContractsPage({
             loadProducts()
           }}>
             <div className="account-switch">
-              <button type="button" onClick={() => setProductType('HEALTH')}>
+              <button
+                aria-pressed={productType === 'HEALTH'}
+                className={productType === 'HEALTH' ? 'is-selected' : ''}
+                type="button"
+                onClick={() => changeProductType('HEALTH')}
+              >
                 의료보험
               </button>
-              <button type="button" onClick={() => setProductType('CAR')}>
+              <button
+                aria-pressed={productType === 'CAR'}
+                className={productType === 'CAR' ? 'is-selected' : ''}
+                type="button"
+                onClick={() => changeProductType('CAR')}
+              >
                 자동차보험
               </button>
             </div>
@@ -724,6 +743,7 @@ function CustomerContractsPage({
           </form>
           <div className="product-tabs">
             {isLoading ? <p>상품을 불러오는 중입니다.</p> : null}
+            {!isLoading && !hasSearchedProducts ? <p>조건을 선택한 뒤 필터 적용을 눌러 조회하세요.</p> : null}
             {products.map((product) => (
               <button
                 className={product.id === selectedProduct?.id ? 'is-selected' : ''}
@@ -735,6 +755,7 @@ function CustomerContractsPage({
                 <span>{product.coverageSummary} · {product.monthlyPremium.toLocaleString()}원</span>
               </button>
             ))}
+            {hasSearchedProducts && products.length === 0 && !isLoading ? <p>조회된 상품이 없습니다.</p> : null}
           </div>
         </section>
 
@@ -803,7 +824,7 @@ function CustomerContractsPage({
               </button>
             </>
           ) : (
-            <p>조회된 상품이 없습니다.</p>
+            <p>상품을 먼저 조회하고 선택하세요.</p>
           )}
           {error ? <p className="form-error">{error}</p> : null}
           {success ? <p className="form-success">{success}</p> : null}
@@ -834,7 +855,7 @@ function CustomerContractsPage({
                 </Link>
               </article>
             ) : (
-              <p>조회된 상품이 없습니다.</p>
+              <p>상품을 먼저 조회하고 선택하세요.</p>
             )}
           </section>
         )}
