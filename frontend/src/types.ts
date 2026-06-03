@@ -5,6 +5,14 @@ export type ReviewResult = 'APPROVED' | 'CONDITIONAL' | 'REJECTED'
 export type ContractStatus = 'ACTIVE' | 'SUSPENDED' | 'TERMINATED'
 export type PaymentMethod = 'CARD' | 'TRANSFER' | 'AUTO_DEBIT'
 export type PaymentStatus = 'SUCCESS' | 'FAILED'
+export type ClaimStatus =
+  | 'PENDING'
+  | 'IN_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'COMPLETED'
+  | 'FAILED'
+export type ClaimComplexity = 'SIMPLE' | 'COMPLEX'
 
 export type AuthSession = {
   token: string
@@ -172,4 +180,20 @@ export type PaymentResponse = {
 export type AutoDebitRequest = {
   account: string
   withdrawalDay: number
+}
+
+export type HealthClaimRequest = {
+  contractId: number
+  hospitalName: string
+  diagnosisCode: string
+  treatmentDate: string
+  requestAmount: number
+  receiptAmount: number
+  attachments: File[]
+}
+
+export type HealthClaimResponse = {
+  claimId: number
+  status: ClaimStatus
+  complexity: ClaimComplexity
 }
