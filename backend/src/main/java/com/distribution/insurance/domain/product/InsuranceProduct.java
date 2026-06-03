@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -26,6 +27,7 @@ public abstract class InsuranceProduct {
 
     private int basePremium;
 
+    @Getter(lombok.AccessLevel.NONE)
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CoverageItem> coverageItems = new ArrayList<>();
 
@@ -33,6 +35,11 @@ public abstract class InsuranceProduct {
         this.productName = productName;
         this.description = description;
         this.basePremium = basePremium;
+    }
+
+    /** 외부에서 add/clear로 불변식을 우회하지 못하도록 읽기전용 뷰로 노출. */
+    public List<CoverageItem> getCoverageItems() {
+        return Collections.unmodifiableList(coverageItems);
     }
 
     /** 보장항목 추가 — 양방향 연관관계를 한 곳에서 일관되게 설정. */
