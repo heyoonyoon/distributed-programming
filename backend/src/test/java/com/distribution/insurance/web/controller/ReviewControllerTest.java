@@ -9,6 +9,7 @@ import com.distribution.insurance.domain.product.InsuranceProduct;
 import com.distribution.insurance.domain.user.InsuranceEmployee;
 import com.distribution.insurance.domain.user.Policyholder;
 import com.distribution.insurance.repository.ApplicationRepository;
+import com.distribution.insurance.repository.ContractRepository;
 import com.distribution.insurance.repository.ProductRepository;
 import com.distribution.insurance.repository.ReviewRepository;
 import com.distribution.insurance.repository.UserRepository;
@@ -37,6 +38,7 @@ class ReviewControllerTest {
     @Autowired ProductRepository productRepository;
     @Autowired ApplicationRepository applicationRepository;
     @Autowired ReviewRepository reviewRepository;
+    @Autowired ContractRepository contractRepository;
     @Autowired PasswordEncoder encoder;
     @Autowired JwtTokenProvider tokenProvider;
 
@@ -44,6 +46,7 @@ class ReviewControllerTest {
 
     @AfterEach
     void tearDown() {
+        contractRepository.deleteAll();
         reviewRepository.deleteAll();
         applicationRepository.deleteAll();
         userRepository.deleteAll();
@@ -52,6 +55,7 @@ class ReviewControllerTest {
 
     @BeforeEach
     void setUp() {
+        contractRepository.deleteAll();
         reviewRepository.deleteAll();
         applicationRepository.deleteAll();
         userRepository.deleteAll();
