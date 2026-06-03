@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
-/** 자동차사고 접수(UC09). 접수번호 발급 + 직원·가입자 알림. 심사/지급 없음. */
+/** 자동차사고 접수(UC09). 접수번호 발급 + 직원·가입자 알림 후 보상심사 큐로 진입(ADR 0009). */
 @Service
 public class CarAccidentService {
 
