@@ -42,7 +42,8 @@ brainstorming → grill-with-docs → writing-plans → executing-plans → fini
 ### 3. writing-plans (superpowers)
 - 확정된 spec으로 TDD 구조의 단계별 구현 계획서를 만든다.
 - 산출물: `docs/superpowers/plans/YYYY-MM-DD-<기능명>.md`.
-- **writing-plans는 자동으로 CONTEXT.md/ADR을 읽지 않는다.** 호출 시 항상 다음을 준수하도록 명시한다:
+- **writing-plans는 자동으로 spec/CONTEXT.md/ADR을 읽지 않는다.** 호출 시 항상 아래 3개를 먼저 읽고 준수하도록 명시한다:
+  - `docs/superpowers/specs/`의 해당 spec 문서 — 계획의 단일 입력(범위·도메인 모델·API·에러규약·테스트 전략).
   - `CONTEXT.md`의 용어를 코드 네이밍에 그대로 사용 (동의어 혼용 금지. 예: Policyholder로 정했으면 account/user 금지).
   - `docs/adr/`의 결정을 위반하지 않음.
 - 각 task는 bite-sized step(테스트 작성 → 실패 확인 → 최소 구현 → 통과 확인 → 커밋)으로 구성된다.
@@ -62,12 +63,11 @@ brainstorming → grill-with-docs → writing-plans → executing-plans → fini
 
 ### 6. 마무리
 - 완료 선언 전 verification-before-completion 또는 `/verify`로 실제 동작 확인.
-- 코드 리뷰는 **2단계**로 한다(순서 엄수):
-  1. **superpowers:requesting-code-review** 를 먼저 수행한다(Claude 셀프/서브에이전트 리뷰, superpowers 파이프라인 정석).
-  2. 그 지적사항을 반영한 뒤, **Codex로 최종 교차 리뷰**를 수행한다(다른 모델의 second opinion).
-     - 플러그인(`openai/codex-plugin-cc`) 설치 시 `/codex:review`(또는 `/codex:adversarial-review`).
-     - 플러그인 없이도 `codex exec`에 `git diff main...HEAD`를 물려 직접 리뷰 가능.
-- 위 2단계 리뷰가 끝난 후 finishing-a-development-branch 로 브랜치를 마무리한다.
+- 코드 리뷰는 **Codex 교차 리뷰 1단계**로 한다:
+  - 모든 태스크가 끝난 뒤 `codex exec`에 `git diff main...HEAD`를 물려 리뷰.
+  - 플러그인(`openai/codex-plugin-cc`) 설치 시 `/codex:review`(또는 `/codex:adversarial-review`).
+  - (**superpowers:requesting-code-review 별도 수행 불필요** — 태스크별 2단계 리뷰(spec·품질)가 이미 커버. 최종 Claude 리뷰는 중복이라 제거.)
+- Codex 리뷰가 끝난 후 finishing-a-development-branch 로 브랜치를 마무리한다.
 
 ## 문서 위치 규약 (프로젝트 루트 기준)
 - `CONTEXT.md` — 루트
