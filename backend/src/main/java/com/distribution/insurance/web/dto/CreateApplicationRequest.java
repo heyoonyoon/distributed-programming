@@ -2,19 +2,29 @@ package com.distribution.insurance.web.dto;
 
 import com.distribution.insurance.domain.application.MedicalHistory;
 import com.distribution.insurance.domain.application.VehicleInfo;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 /** 가입 신청 요청. 개인정보는 인증 주체에서 읽으므로 받지 않는다(ADR 0002). */
 public record CreateApplicationRequest(
         @NotNull Long productId,
-        VehicleInfoDto vehicleInfo,
-        MedicalHistoryDto medicalHistory) {
+        @Valid VehicleInfoDto vehicleInfo,
+        @Valid MedicalHistoryDto medicalHistory) {
 
-    public record VehicleInfoDto(String plateNumber, String vehicleType,
-                                 int modelYear, int drivingExperienceYears) {}
+    public record VehicleInfoDto(
+            @NotBlank String plateNumber,
+            @NotBlank String vehicleType,
+            @Positive int modelYear,
+            @PositiveOrZero int drivingExperienceYears) {}
 
-    public record MedicalHistoryDto(String currentConditions, String pastHospitalization,
-                                    String medications) {}
+    public record MedicalHistoryDto(
+            @NotBlank @Size(max = 500) String currentConditions,
+            @NotBlank @Size(max = 500) String pastHospitalization,
+            @NotBlank @Size(max = 500) String medications) {}
 
     public VehicleInfo toVehicleInfo() {
         if (vehicleInfo == null) return null;

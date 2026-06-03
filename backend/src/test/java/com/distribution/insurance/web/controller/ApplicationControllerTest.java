@@ -1,5 +1,6 @@
 package com.distribution.insurance.web.controller;
 
+import com.distribution.insurance.domain.product.CarInsuranceProduct;
 import com.distribution.insurance.domain.product.HealthInsuranceProduct;
 import com.distribution.insurance.domain.product.InsuranceProduct;
 import com.distribution.insurance.domain.user.InsuranceEmployee;
@@ -33,7 +34,7 @@ class ApplicationControllerTest {
     @Autowired PasswordEncoder encoder;
     @Autowired JwtTokenProvider tokenProvider;
 
-    Long phId; String phToken; Long healthProductId; String employeeToken;
+    Long phId; String phToken; Long healthProductId; Long carProductId; String employeeToken;
 
     @AfterEach
     void tearDown() {
@@ -59,6 +60,10 @@ class ApplicationControllerTest {
         InsuranceProduct product = productRepository.save(
                 new HealthInsuranceProduct("건강플러스", "암 보장", 30000, 120));
         healthProductId = product.getId();
+
+        InsuranceProduct carProduct = productRepository.save(
+                new CarInsuranceProduct("자동차플러스", "차량 보장", 50000, "승용차", "가족"));
+        carProductId = carProduct.getId();
     }
 
     private String medicalBody(Long productId) {
@@ -114,6 +119,17 @@ class ApplicationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].productName").value("건강플러스"));
+    }
+
+    @Test
+    void 차량정보_plateNumber_공백이면_400() throws Exception {
+        // plateNumber가 blank → @NotBlank 위반 → 400
+        String body = "{\"productId\":" + carProductId + ",\"vehicleInfo\":"
+                + "{\"plateNumber\":\"\",\"vehicleType\":\"승용차\",\"modelYear\":2020,\"drivingExperienceYears\":5}}";
+        mockMvc.perform(post("/applications")
+                        .header("Authorization", "Bearer " + phToken)
+                        .contentType("application/json").content(body))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
