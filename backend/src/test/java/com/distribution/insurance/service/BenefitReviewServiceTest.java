@@ -86,9 +86,31 @@ class BenefitReviewServiceTest {
         // 가입자 계좌가 정상으로 바뀌었다고 가정하고 재시도
         Policyholder ph = claim.getContract().getPolicyholder();
         ph.updateProfile("주소", "110-123-999999");
-        reviewService.retryPayout(claim.getId());
+        reviewService.retryPayout(staff, claim.getId());
 
         assertThat(claimRepository.findById(claim.getId()).orElseThrow().getStatus())
                 .isEqualTo(ClaimStatus.COMPLETED);
+    }
+
+    @Test
+    void 이미_확정된_심사를_다시_confirm하면_409_예외() {
+        Long staff = staffId("e@t.com");
+        HealthInsuranceClaim claim = complexClaim("110-123-456789");
+        reviewService.confirm(staff, claim.getId(), ReviewResult.APPROVED, "정상");
+
+        assertThatThrownBy(() -> reviewService.confirm(staff, claim.getId(), ReviewResult.APPROVED, "중복"))
+                .isInstanceOf(IllegalStateTransitionException.class)
+                .hasMessageContaining("이미 확정된 심사입니다.");
+    }
+
+    @Test
+    void 비배정_담당자가_retryPayout_호출하면_409_예외() {
+        Long assigned = staffId("e@t.com");
+        Long other = staffId("o@t.com");
+        HealthInsuranceClaim claim = complexClaim("110-123-450000");  // 0000 → 송금 실패
+        reviewService.confirm(assigned, claim.getId(), ReviewResult.APPROVED, "정상");
+
+        assertThatThrownBy(() -> reviewService.retryPayout(other, claim.getId()))
+                .isInstanceOf(IllegalStateTransitionException.class);
     }
 }

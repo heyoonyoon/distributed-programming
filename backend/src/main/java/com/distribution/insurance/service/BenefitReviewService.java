@@ -41,6 +41,9 @@ public class BenefitReviewService {
     @Transactional
     public BenefitPaymentReview confirm(Long staffId, Long claimId, ReviewResult result, String comment) {
         BenefitPaymentReview review = requireOwned(staffId, claimId);
+        if (review.getResult() != null) {
+            throw new IllegalStateTransitionException("이미 확정된 심사입니다.");
+        }
         HealthInsuranceClaim claim = review.getClaim();
 
         review.confirm(result, comment);
@@ -57,16 +60,15 @@ public class BenefitReviewService {
         return review;
     }
 
-    /** 송금 실패(FAILED) 건 재시도(UC17 E1-3). */
+    /** 송금 실패(FAILED) 건 재시도(UC17 E1-3). 배정된 담당자만 재시도 가능. */
     @Transactional
-    public void retryPayout(Long claimId) {
-        BenefitPaymentReview review = reviewRepository.findByClaimId(claimId)
-                .orElseThrow(() -> new IllegalArgumentException("심사 건을 찾을 수 없습니다."));
+    public void retryPayout(Long staffId, Long claimId) {
+        BenefitPaymentReview review = requireOwned(staffId, claimId);
         payoutService.pay(review.getClaim());
     }
 
     private BenefitPaymentReview requireOwned(Long staffId, Long claimId) {
-        BenefitPaymentReview review = reviewRepository.findByClaimId(claimId)
+        BenefitPaymentReview review = reviewRepository.findByClaimIdWithClaim(claimId)
                 .orElseThrow(() -> new IllegalArgumentException("심사 건을 찾을 수 없습니다."));
         if (!staffId.equals(review.getAssignedStaffId())) {
             throw new IllegalStateTransitionException("현재 담당자가 처리 중인 건입니다.");

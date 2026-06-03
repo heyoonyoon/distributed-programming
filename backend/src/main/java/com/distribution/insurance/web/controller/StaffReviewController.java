@@ -55,7 +55,7 @@ public class StaffReviewController {
     }
 
     @PostMapping("/benefit-reviews/{claimId}/retry")
-    public void retry(@PathVariable Long claimId) {
-        reviewService.retryPayout(claimId);
+    public void retry(@AuthenticationPrincipal Long staffId, @PathVariable Long claimId) {
+        reviewService.retryPayout(staffId, claimId);
     }
 }
