@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
-/** 로컬 디스크 저장: {upload.dir}/{claimId}/{uuid}_{원본파일명}. */
+/** 로컬 디스크 저장: {upload.dir}/{ownerId}/{uuid}_{원본파일명}. */
 @Component
 public class LocalFileStorage implements FileStorage {
 
@@ -22,9 +22,9 @@ public class LocalFileStorage implements FileStorage {
     }
 
     @Override
-    public ClaimAttachment store(Long claimId, MultipartFile file) {
+    public ClaimAttachment store(Long ownerId, MultipartFile file) {
         try {
-            Path dir = Path.of(baseDir, String.valueOf(claimId));
+            Path dir = Path.of(baseDir, String.valueOf(ownerId));
             Files.createDirectories(dir);
             String original = file.getOriginalFilename() == null ? "file" : file.getOriginalFilename();
             Path target = dir.resolve(UUID.randomUUID() + "_" + original);
