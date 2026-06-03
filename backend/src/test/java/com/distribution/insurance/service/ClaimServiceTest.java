@@ -96,6 +96,65 @@ class ClaimServiceTest {
     }
 
     @Test
+    void SUSPENDED_계약에_청구하면_400성_예외() {
+        Policyholder p = ph("110-123-456789");
+        InsuranceContract c = healthContract(p);
+        c.suspend();
+        contractRepository.save(c);
+
+        assertThatThrownBy(() -> claimService.fileHealthClaim(
+                p.getId(), c.getId(), "서울병원", "S00", LocalDate.now(), 500000, 500000, List.of()))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("유효한 계약이 아닙니다");
+    }
+
+    @Test
+    void TERMINATED_계약에_청구하면_400성_예외() {
+        Policyholder p = ph("110-123-456789");
+        InsuranceContract c = healthContract(p);
+        c.terminate();
+        contractRepository.save(c);
+
+        assertThatThrownBy(() -> claimService.fileHealthClaim(
+                p.getId(), c.getId(), "서울병원", "S00", LocalDate.now(), 500000, 500000, List.of()))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("유효한 계약이 아닙니다");
+    }
+
+    @Test
+    void requestAmount가_0이면_400성_예외() {
+        Policyholder p = ph("110-123-456789");
+        InsuranceContract c = healthContract(p);
+
+        assertThatThrownBy(() -> claimService.fileHealthClaim(
+                p.getId(), c.getId(), "서울병원", "S00", LocalDate.now(), 0, 500000, List.of()))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("청구 금액은 0보다 커야 합니다");
+    }
+
+    @Test
+    void requestAmount가_음수이면_400성_예외() {
+        Policyholder p = ph("110-123-456789");
+        InsuranceContract c = healthContract(p);
+
+        assertThatThrownBy(() -> claimService.fileHealthClaim(
+                p.getId(), c.getId(), "서울병원", "S00", LocalDate.now(), -1, 500000, List.of()))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("청구 금액은 0보다 커야 합니다");
+    }
+
+    @Test
+    void receiptAmount가_0이하이면_400성_예외() {
+        Policyholder p = ph("110-123-456789");
+        InsuranceContract c = healthContract(p);
+
+        assertThatThrownBy(() -> claimService.fileHealthClaim(
+                p.getId(), c.getId(), "서울병원", "S00", LocalDate.now(), 500000, 0, List.of()))
+                .isInstanceOf(InvalidRequestException.class)
+                .hasMessageContaining("청구 금액은 0보다 커야 합니다");
+    }
+
+    @Test
     void 자동차보험_계약에_의료청구하면_400성_예외() {
         Policyholder p = ph("110-123-456789");
         // CarInsuranceProduct constructor: (productName, description, basePremium, vehicleType, driverScopeType)

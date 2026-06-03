@@ -2,6 +2,7 @@ package com.distribution.insurance.service;
 
 import com.distribution.insurance.domain.claim.BenefitPayment;
 import com.distribution.insurance.domain.claim.Claim;
+import com.distribution.insurance.domain.claim.ClaimStatus;
 import com.distribution.insurance.domain.user.Policyholder;
 import com.distribution.insurance.repository.BenefitPaymentRepository;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,11 @@ public class BenefitPayoutService {
 
     @Transactional
     public BenefitPayment pay(Claim claim) {
+        ClaimStatus status = claim.getStatus();
+        if (status != ClaimStatus.PENDING && status != ClaimStatus.APPROVED) {
+            throw new IllegalStateTransitionException(
+                    "지급 가능한 상태가 아닙니다. 현재 상태: " + status);
+        }
         Policyholder ph = claim.getContract().getPolicyholder();
         String account = ph.getBankAccount();
         int amount = claim.getRequestAmount();

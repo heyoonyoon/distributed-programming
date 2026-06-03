@@ -52,9 +52,15 @@ public class ClaimController {
             }
         }
 
-        HealthInsuranceClaim claim = claimService.fileHealthClaim(
-                userId, contractId, hospitalName, diagnosisCode, treatmentDate,
-                requestAmount, receiptAmount, metas);
-        return HealthClaimResultResponse.from(claim);
+        try {
+            HealthInsuranceClaim claim = claimService.fileHealthClaim(
+                    userId, contractId, hospitalName, diagnosisCode, treatmentDate,
+                    requestAmount, receiptAmount, metas);
+            return HealthClaimResultResponse.from(claim);
+        } catch (Exception e) {
+            // Fix 4: cleanup orphaned uploaded files when service rejects the request
+            metas.forEach(meta -> fileStorage.delete(meta.getStoredPath()));
+            throw e;
+        }
     }
 }

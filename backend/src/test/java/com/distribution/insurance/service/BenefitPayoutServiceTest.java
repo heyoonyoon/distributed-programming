@@ -48,6 +48,18 @@ class BenefitPayoutServiceTest {
     }
 
     @Test
+    void 이미_COMPLETED된_청구에_pay_호출시_IllegalStateTransitionException_송금_미호출() {
+        HealthInsuranceClaim claim = savedClaim("110-123-456789");
+        // First pay succeeds → COMPLETED
+        payoutService.pay(claim);
+        // Second pay must throw before hitting the gateway
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> payoutService.pay(claim))
+                .isInstanceOf(IllegalStateTransitionException.class);
+        // Only one BenefitPayment record should exist
+        assertThat(benefitPaymentRepository.findAll()).hasSize(1);
+    }
+
+    @Test
     void 계좌오류면_송금실패_FAILED_지급기록_FAILED() {
         HealthInsuranceClaim claim = savedClaim("110-123-450000");
 

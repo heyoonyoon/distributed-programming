@@ -3,6 +3,7 @@ package com.distribution.insurance.service;
 import com.distribution.insurance.domain.claim.ClaimAttachment;
 import com.distribution.insurance.domain.claim.ClaimComplexity;
 import com.distribution.insurance.domain.claim.HealthInsuranceClaim;
+import com.distribution.insurance.domain.contract.ContractStatus;
 import com.distribution.insurance.domain.contract.InsuranceContract;
 import com.distribution.insurance.domain.product.HealthInsuranceProduct;
 import com.distribution.insurance.domain.user.Policyholder;
@@ -50,6 +51,12 @@ public class ClaimService {
         }
         if (!(Hibernate.unproxy(contract.getProduct()) instanceof HealthInsuranceProduct)) {
             throw new InvalidRequestException("의료보험 계약이 아닙니다.");
+        }
+        if (contract.getStatus() != ContractStatus.ACTIVE) {
+            throw new InvalidRequestException("유효한 계약이 아닙니다.");
+        }
+        if (requestAmount <= 0 || receiptAmount <= 0) {
+            throw new InvalidRequestException("청구 금액은 0보다 커야 합니다.");
         }
 
         ClaimComplexity complexity = requestAmount >= complexThreshold
