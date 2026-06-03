@@ -74,4 +74,22 @@ public class InsuranceApplication {
         }
         this.status = ApplicationStatus.CANCELLED;
     }
+
+    /** 심사 승인 확정 시 호출(조건부승인 포함 — ADR 0003). PENDING에서만 전이. */
+    public void markApproved() {
+        requirePending();
+        this.status = ApplicationStatus.APPROVED;
+    }
+
+    /** 심사 반려 확정 시 호출. PENDING에서만 전이. */
+    public void markRejected() {
+        requirePending();
+        this.status = ApplicationStatus.REJECTED;
+    }
+
+    private void requirePending() {
+        if (this.status != ApplicationStatus.PENDING) {
+            throw new IllegalStateTransitionException("심사 대기 상태의 신청만 심사할 수 있습니다.");
+        }
+    }
 }
