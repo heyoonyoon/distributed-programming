@@ -87,8 +87,13 @@ public class NoticeService {
         if (notice.isTerminationWarning()) {
             // A1: 30일 초과 → 직원 별도 알림
             for (InsuranceEmployee emp : userRepository.findAllEmployees()) {
-                notificationSender.send(emp.getEmail(), emp.getPhone(),
-                        "[해지예고] 계약 " + contract.getId() + " 연체 30일 초과. 확인 바랍니다.");
+                // best-effort: 개별 직원 알림 실패가 당일 배치 트랜잭션을 롤백시키지 않도록 격리한다.
+                try {
+                    notificationSender.send(emp.getEmail(), emp.getPhone(),
+                            "[해지예고] 계약 " + contract.getId() + " 연체 30일 초과. 확인 바랍니다.");
+                } catch (RuntimeException e) {
+                    log.warn("직원 해지예고 알림 발송 실패: contractId={}, employeeId={}", contract.getId(), emp.getId());
+                }
             }
         }
     }

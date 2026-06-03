@@ -1,8 +1,8 @@
 package com.distribution.insurance.service;
 
 import com.distribution.insurance.domain.contract.InsuranceContract;
-import com.distribution.insurance.domain.contract.Notice;
 import com.distribution.insurance.domain.product.HealthInsuranceProduct;
+import com.distribution.insurance.domain.user.InsuranceEmployee;
 import com.distribution.insurance.domain.user.Policyholder;
 import com.distribution.insurance.repository.ContractRepository;
 import com.distribution.insurance.repository.NoticeRepository;
@@ -19,11 +19,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDate;
 
-import static org.assertj.core.api.Assertions.*;
-
-/** UC16 E1: 발송 실패 시 최대 3회 재시도 후 미발송으로 기록한다. */
+/** UC16 A1: 연체 30일 초과(해지예고) 시 직원에게도 별도 알림이 발송된다. */
 @SpringBootTest
-class NoticeServiceRetryTest {
+class NoticeServiceEmployeeAlertTest {
 
     @Autowired NoticeService noticeService;
     @Autowired ContractRepository contractRepository;
@@ -33,7 +31,7 @@ class NoticeServiceRetryTest {
 
     @MockitoBean NotificationSender notificationSender;
 
-    Long contractId;
+    String employeeEmail;
 
     @BeforeEach
     void setUp() {
@@ -42,11 +40,11 @@ class NoticeServiceRetryTest {
         userRepository.deleteAll();
         productRepository.deleteAll();
         Policyholder ph = userRepository.save(TestEntities.policyholder());
+        InsuranceEmployee emp = userRepository.save(TestEntities.employee());
+        employeeEmail = emp.getEmail();
         HealthInsuranceProduct product = productRepository.save(TestEntities.healthProduct());
-        // 4개월 전 시작 → 미납 누적·연체
-        InsuranceContract c = contractRepository.save(
-                new InsuranceContract(ph, product, 30000, LocalDate.now().minusMonths(4)));
-        contractId = c.getId();
+        // 4개월 전 시작 → 연체 30일 초과(해지예고)
+        contractRepository.save(new InsuranceContract(ph, product, 30000, LocalDate.now().minusMonths(4)));
     }
 
     @AfterEach
@@ -58,29 +56,12 @@ class NoticeServiceRetryTest {
     }
 
     @Test
-    void 발송이_계속_실패하면_3회_시도_후_미발송으로_기록된다() {
-        Mockito.doThrow(new RuntimeException("발송 실패"))
-                .when(notificationSender).send(ArgumentMatchers.anyString(),
-                        ArgumentMatchers.anyString(), ArgumentMatchers.anyString());
-
+    void 해지예고_연체시_직원에게_알림이_발송된다() {
         noticeService.issueOverdueNotices(LocalDate.now());
 
-        Notice n = noticeRepository.findByContractId(contractId).get(0);
-        assertThat(n.isDelivered()).isFalse();
-        assertThat(n.getAttempts()).isEqualTo(3);
-    }
-
-    @Test
-    void 첫_시도_실패_후_재시도에서_성공하면_발송됨으로_2회_기록된다() {
-        Mockito.doThrow(new RuntimeException("일시 실패"))
-                .doNothing()
-                .when(notificationSender).send(ArgumentMatchers.anyString(),
-                        ArgumentMatchers.anyString(), ArgumentMatchers.anyString());
-
-        noticeService.issueOverdueNotices(LocalDate.now());
-
-        Notice n = noticeRepository.findByContractId(contractId).get(0);
-        assertThat(n.isDelivered()).isTrue();
-        assertThat(n.getAttempts()).isEqualTo(2);
+        Mockito.verify(notificationSender).send(
+                ArgumentMatchers.eq(employeeEmail),
+                ArgumentMatchers.anyString(),
+                ArgumentMatchers.contains("해지예고"));
     }
 }

@@ -1,6 +1,7 @@
 package com.distribution.insurance.service;
 
 import com.distribution.insurance.domain.product.HealthInsuranceProduct;
+import com.distribution.insurance.domain.user.InsuranceEmployee;
 import com.distribution.insurance.domain.user.Policyholder;
 
 import java.time.LocalDate;
@@ -17,5 +18,9 @@ final class TestEntities {
 
     static HealthInsuranceProduct healthProduct() {
         return new HealthInsuranceProduct("실손의료", "설명", 30000, 120);
+    }
+
+    static InsuranceEmployee employee() {
+        return new InsuranceEmployee("김직원", "emp@test.com", "010-3333-4444", "pw", "심사팀", 0);
     }
 }
