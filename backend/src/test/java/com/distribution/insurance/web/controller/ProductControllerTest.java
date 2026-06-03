@@ -79,4 +79,13 @@ class ProductControllerTest {
         mockMvc.perform(get("/products").param("type", "HEALTH").param("minPremium", "-1"))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    void 최소가_최대보다_큰_보험료_범위는_400() throws Exception {
+        mockMvc.perform(get("/products")
+                        .param("type", "HEALTH")
+                        .param("minPremium", "50000")
+                        .param("maxPremium", "10000"))
+                .andExpect(status().isBadRequest());
+    }
 }
