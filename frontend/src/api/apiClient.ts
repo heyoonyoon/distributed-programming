@@ -3,11 +3,18 @@ import type {
   CarAccidentReportResponse,
   ConfirmReviewRequest,
   ConfirmReviewResponse,
+  AssignClaimRequest,
   AutoDebitRequest,
+  BenefitReviewDetail,
+  BenefitReviewSummary,
+  ConfirmBenefitReviewRequest,
+  ConfirmBenefitReviewResponse,
   ContractDetail,
   ContractSummary,
   CreateApplicationRequest,
   ApplicationCreated,
+  HealthClaimRequest,
+  HealthClaimResponse,
   LoginRequest,
   MyApplication,
   PayableContract,
@@ -18,6 +25,7 @@ import type {
   ProductDetail,
   ProductSummary,
   ProductType,
+  RetryBenefitPayoutResponse,
   ReviewApplicationDetail,
   UnpaidContract,
   UpdateProfileRequest,
@@ -166,6 +174,19 @@ function buildCarAccidentForm(body: CarAccidentReportRequest) {
   formData.append('vehicleNumber', body.vehicleNumber)
   formData.append('hasInjury', String(body.hasInjury))
   formData.append('injuredCount', String(body.injuredCount))
+  body.attachments.forEach((file) => formData.append('attachments', file))
+
+  return formData
+}
+
+function buildHealthClaimForm(body: HealthClaimRequest) {
+  const formData = new FormData()
+  formData.append('contractId', String(body.contractId))
+  formData.append('hospitalName', body.hospitalName)
+  formData.append('diagnosisCode', body.diagnosisCode)
+  formData.append('treatmentDate', body.treatmentDate)
+  formData.append('requestAmount', String(body.requestAmount))
+  formData.append('receiptAmount', String(body.receiptAmount))
   body.attachments.forEach((file) => formData.append('attachments', file))
 
   return formData
@@ -336,5 +357,64 @@ export const apiClient = {
     body: CarAccidentReportRequest,
   ): Promise<CarAccidentReportResponse> {
     return requestForm('/claims/car-accidents', buildCarAccidentForm(body), token)
+  },
+
+  async getBenefitReviews(token: string): Promise<BenefitReviewSummary[]> {
+    return request('/staff/benefit-reviews', {}, token)
+  },
+
+  async getBenefitReview(
+    token: string,
+    claimId: number,
+  ): Promise<BenefitReviewDetail> {
+    return request(`/staff/benefit-reviews/${claimId}`, {}, token)
+  },
+
+  async confirmBenefitReview(
+    token: string,
+    claimId: number,
+    body: ConfirmBenefitReviewRequest,
+  ): Promise<ConfirmBenefitReviewResponse> {
+    return request(
+      `/staff/benefit-reviews/${claimId}/confirm`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+      token,
+    )
+  },
+
+  async retryBenefitPayout(
+    token: string,
+    claimId: number,
+  ): Promise<RetryBenefitPayoutResponse | undefined> {
+    return request(
+      `/staff/benefit-reviews/${claimId}/retry`,
+      { method: 'POST' },
+      token,
+    )
+  },
+
+  async assignClaim(
+    token: string,
+    claimId: number,
+    body: AssignClaimRequest,
+  ): Promise<void> {
+    return request(
+      `/staff/claims/${claimId}/assign`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+      token,
+    )
+  },
+
+  async submitHealthClaim(
+    token: string,
+    body: HealthClaimRequest,
+  ): Promise<HealthClaimResponse> {
+    return requestForm('/claims/health', buildHealthClaimForm(body), token)
   },
 }

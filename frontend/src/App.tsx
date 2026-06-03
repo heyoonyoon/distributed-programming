@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   Bell,
   BriefcaseBusiness,
-  CalendarDays,
   Car,
   CheckCircle2,
   ClipboardCheck,
@@ -34,9 +33,14 @@ import './App.css'
 import type {
   AuthSession,
   CarAccidentReportResponse,
+  BenefitReviewDetail,
+  BenefitReviewResult,
+  BenefitReviewSummary,
+  ConfirmBenefitReviewResponse,
   ConfirmReviewResponse,
   ContractDetail,
   ContractSummary,
+  HealthClaimResponse,
   MyApplication,
   PayableContract,
   PaymentMethod,
@@ -58,23 +62,6 @@ const acceptedClaimFileTypes = new Set([
   'image/jpeg',
   'image/png',
 ])
-
-const claimHistory = [
-  {
-    id: 'CLM-2026-0104',
-    type: '의료보험 청구',
-    amount: '184,000원',
-    status: '지급 완료',
-    date: '2026.05.18',
-  },
-  {
-    id: 'CAR-2026-0031',
-    type: '자동차사고 접수',
-    amount: '심사 중',
-    status: '담당자 배정',
-    date: '2026.05.29',
-  },
-]
 
 const employees = [
   { name: '김심사', department: '지급심사팀', load: 3 },
@@ -99,12 +86,44 @@ function formatDate(value: string) {
   return new Date(value).toLocaleDateString('ko-KR')
 }
 
+function describeBenefitReviewResult(result: ConfirmBenefitReviewResponse) {
+  if (result.claimStatus === 'COMPLETED') {
+    return '지급 완료'
+  }
+
+  if (result.claimStatus === 'FAILED') {
+    return '지급 실패, 계좌 확인 후 재시도'
+  }
+
+  if (result.claimStatus === 'REJECTED') {
+    return '반려 완료'
+  }
+
+  return `청구 상태 ${result.claimStatus}`
+}
+
 function isAcceptedClaimFile(file: File) {
   if (acceptedClaimFileTypes.has(file.type)) {
     return true
   }
 
   return /\.(pdf|jpe?g|png)$/i.test(file.name)
+}
+
+function describeHealthClaimResult(result: HealthClaimResponse) {
+  if (result.complexity === 'COMPLEX') {
+    return '복잡한 청구로 접수되었습니다. 담당자 배정 후 심사를 진행합니다.'
+  }
+
+  if (result.status === 'COMPLETED') {
+    return '보험금이 지급되었습니다.'
+  }
+
+  if (result.status === 'FAILED') {
+    return '지급에 실패했습니다. 계좌 정보를 확인해 주세요.'
+  }
+
+  return '청구가 접수되었습니다.'
 }
 
 function LoginPage({
@@ -265,7 +284,11 @@ function EmployeeShell({
         <nav className="nav-list" aria-label="Employee navigation">
           <Link to="/employee/reviews">
             <ClipboardCheck size={18} />
-            Reviews
+            Enrollment
+          </Link>
+          <Link to="/employee/benefit-reviews">
+            <Receipt size={18} />
+            Benefit reviews
           </Link>
           <Link to="/employee/assignments">
             <Users size={18} />
@@ -961,20 +984,32 @@ function CustomerClaimsPage({
   token: string
   onUnauthorized: () => void
 }) {
-  const [claimMessage, setClaimMessage] = useState('')
   const [contracts, setContracts] = useState<ContractSummary[]>([])
-  const [selectedContractId, setSelectedContractId] = useState('')
+  const [selectedHealthContractId, setSelectedHealthContractId] = useState('')
+  const [hospitalName, setHospitalName] = useState('서울중앙병원')
+  const [diagnosisCode, setDiagnosisCode] = useState('J00')
+  const [treatmentDate, setTreatmentDate] = useState('2026-06-01')
+  const [requestAmount, setRequestAmount] = useState('184000')
+  const [receiptAmount, setReceiptAmount] = useState('184000')
+  const [healthAttachments, setHealthAttachments] = useState<File[]>([])
+  const [claimResult, setClaimResult] = useState<HealthClaimResponse | null>(null)
+  const [claimError, setClaimError] = useState('')
+  const [isClaimLoading, setClaimLoading] = useState(true)
+  const [isClaimSubmitting, setClaimSubmitting] = useState(false)
+  const [selectedCarContractId, setSelectedCarContractId] = useState('')
   const [accidentDate, setAccidentDate] = useState('2026-06-01')
   const [accidentLocation, setAccidentLocation] = useState('서울 강남구 역삼동')
   const [accidentType, setAccidentType] = useState('쌍방')
   const [vehicleNumber, setVehicleNumber] = useState('12가3456')
   const [hasInjury, setHasInjury] = useState(false)
   const [injuredCount, setInjuredCount] = useState('0')
-  const [attachments, setAttachments] = useState<File[]>([])
+  const [accidentAttachments, setAccidentAttachments] = useState<File[]>([])
   const [accidentResult, setAccidentResult] = useState<CarAccidentReportResponse | null>(null)
   const [accidentError, setAccidentError] = useState('')
-  const [isAccidentLoading, setAccidentLoading] = useState(true)
   const [isAccidentSubmitting, setAccidentSubmitting] = useState(false)
+  const healthContracts = contracts.filter(
+    (contract) => contract.productType === 'HEALTH' && contract.status === 'ACTIVE',
+  )
   const carContracts = contracts.filter(
     (contract) => contract.productType === 'CAR' && contract.status === 'ACTIVE',
   )
@@ -983,18 +1018,23 @@ function CustomerClaimsPage({
     let isMounted = true
 
     async function loadContracts() {
+      setClaimError('')
       setAccidentError('')
-      setAccidentLoading(true)
+      setClaimLoading(true)
 
       try {
         const list = await apiClient.getContracts(token)
+        const activeHealthContracts = list.filter(
+          (contract) => contract.productType === 'HEALTH' && contract.status === 'ACTIVE',
+        )
         const activeCarContracts = list.filter(
           (contract) => contract.productType === 'CAR' && contract.status === 'ACTIVE',
         )
 
         if (isMounted) {
           setContracts(list)
-          setSelectedContractId((current) => current || String(activeCarContracts[0]?.contractId ?? ''))
+          setSelectedHealthContractId((current) => current || String(activeHealthContracts[0]?.contractId ?? ''))
+          setSelectedCarContractId((current) => current || String(activeCarContracts[0]?.contractId ?? ''))
         }
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
@@ -1003,11 +1043,12 @@ function CustomerClaimsPage({
         }
 
         if (isMounted) {
+          setClaimError(err instanceof Error ? err.message : '계약 목록 조회에 실패했습니다.')
           setAccidentError(err instanceof Error ? err.message : '계약 목록 조회에 실패했습니다.')
         }
       } finally {
         if (isMounted) {
-          setAccidentLoading(false)
+          setClaimLoading(false)
         }
       }
     }
@@ -1019,9 +1060,27 @@ function CustomerClaimsPage({
     }
   }, [onUnauthorized, token])
 
-  function submitClaim(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setClaimMessage('청구 정보가 저장되었고, 간단한 청구로 판별되어 지급 처리가 진행됩니다.')
+  function changeHealthAttachments(files: FileList | null) {
+    const nextFiles = Array.from(files ?? [])
+    const invalidType = nextFiles.find((file) => !isAcceptedClaimFile(file))
+    const oversized = nextFiles.find((file) => file.size > maxClaimAttachmentSize)
+
+    setClaimResult(null)
+
+    if (invalidType) {
+      setHealthAttachments([])
+      setClaimError('지원하지 않는 파일 형식입니다. (허용: PDF, JPG, PNG)')
+      return
+    }
+
+    if (oversized) {
+      setHealthAttachments([])
+      setClaimError('파일 크기는 개당 10MB 이하여야 합니다.')
+      return
+    }
+
+    setClaimError('')
+    setHealthAttachments(nextFiles)
   }
 
   function changeAccidentAttachments(files: FileList | null) {
@@ -1032,19 +1091,63 @@ function CustomerClaimsPage({
     setAccidentResult(null)
 
     if (invalidType) {
-      setAttachments([])
+      setAccidentAttachments([])
       setAccidentError('지원하지 않는 파일 형식입니다. (허용: PDF, JPG, PNG)')
       return
     }
 
     if (oversized) {
-      setAttachments([])
+      setAccidentAttachments([])
       setAccidentError('파일 크기는 개당 10MB 이하여야 합니다.')
       return
     }
 
     setAccidentError('')
-    setAttachments(nextFiles)
+    setAccidentAttachments(nextFiles)
+  }
+
+  async function submitClaim(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setClaimError('')
+    setClaimResult(null)
+
+    const contractId = Number(selectedHealthContractId)
+    const parsedRequestAmount = Number(requestAmount)
+    const parsedReceiptAmount = Number(receiptAmount)
+
+    if (!contractId) {
+      setClaimError('청구할 의료보험 계약을 선택해 주세요.')
+      return
+    }
+
+    if (parsedRequestAmount <= 0 || parsedReceiptAmount <= 0) {
+      setClaimError('청구 금액과 영수증 금액은 0보다 커야 합니다.')
+      return
+    }
+
+    setClaimSubmitting(true)
+
+    try {
+      const response = await apiClient.submitHealthClaim(token, {
+        contractId,
+        hospitalName,
+        diagnosisCode,
+        treatmentDate,
+        requestAmount: parsedRequestAmount,
+        receiptAmount: parsedReceiptAmount,
+        attachments: healthAttachments,
+      })
+      setClaimResult(response)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+
+      setClaimError(err instanceof Error ? err.message : '의료보험 청구에 실패했습니다.')
+    } finally {
+      setClaimSubmitting(false)
+    }
   }
 
   async function submitAccident(event: FormEvent<HTMLFormElement>) {
@@ -1052,7 +1155,7 @@ function CustomerClaimsPage({
     setAccidentError('')
     setAccidentResult(null)
 
-    const contractId = Number(selectedContractId)
+    const contractId = Number(selectedCarContractId)
     const parsedInjuredCount = Number(injuredCount)
     const today = new Date().toISOString().slice(0, 10)
 
@@ -1092,7 +1195,7 @@ function CustomerClaimsPage({
         vehicleNumber,
         hasInjury,
         injuredCount: parsedInjuredCount,
-        attachments,
+        attachments: accidentAttachments,
       })
       setAccidentResult(response)
     } catch (err) {
@@ -1111,7 +1214,7 @@ function CustomerClaimsPage({
     <section className="page">
       <div className="page-header">
         <div>
-          <span className="eyebrow">UC03 / UC04 / UC05 / UC09</span>
+          <span className="eyebrow">UC05 / UC09 / UC17</span>
           <h1>청구 및 사고 접수</h1>
         </div>
       </div>
@@ -1120,23 +1223,96 @@ function CustomerClaimsPage({
         <form className="panel form-panel" onSubmit={submitClaim}>
           <div className="section-title">
             <HeartPulse size={18} />
-            <h2>의료보험 청구</h2>
+            <h2>청구 신청</h2>
           </div>
           <label>
+            계약
+            <select
+              disabled={isClaimLoading || healthContracts.length === 0}
+              value={selectedHealthContractId}
+              onChange={(event) => setSelectedHealthContractId(event.target.value)}
+            >
+              {healthContracts.map((contract) => (
+                <option key={contract.contractId} value={contract.contractId}>
+                  {contract.productName} · {formatDate(contract.startDate)} · 월{' '}
+                  {formatCurrency(contract.monthlyPremium)}
+                </option>
+              ))}
+              {healthContracts.length === 0 ? <option value="">선택 가능한 계약 없음</option> : null}
+            </select>
+          </label>
+          <label>
             병원명
-            <input name="hospitalName" defaultValue="서울중앙병원" />
+            <input
+              required
+              value={hospitalName}
+              onChange={(event) => setHospitalName(event.target.value)}
+            />
+          </label>
+          <label>
+            진단코드
+            <input
+              required
+              value={diagnosisCode}
+              onChange={(event) => setDiagnosisCode(event.target.value)}
+            />
           </label>
           <label>
             진료일
-            <input name="treatmentDate" type="date" defaultValue="2026-06-01" />
+            <input
+              required
+              type="date"
+              value={treatmentDate}
+              onChange={(event) => setTreatmentDate(event.target.value)}
+            />
           </label>
+          <div className="inline-fields">
+            <label>
+              청구 금액
+              <input
+                min="1"
+                required
+                type="number"
+                value={requestAmount}
+                onChange={(event) => setRequestAmount(event.target.value)}
+              />
+            </label>
+            <label>
+              영수증 금액
+              <input
+                min="1"
+                required
+                type="number"
+                value={receiptAmount}
+                onChange={(event) => setReceiptAmount(event.target.value)}
+              />
+            </label>
+          </div>
           <label>
-            청구 금액
-            <input name="requestAmount" defaultValue="184000" />
+            증빙 첨부
+            <input
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              multiple
+              type="file"
+              onChange={(event) => changeHealthAttachments(event.target.files)}
+            />
           </label>
-          {claimMessage ? <p className="form-success">{claimMessage}</p> : null}
-          <button className="primary-button" type="submit">
-            청구 신청
+          {healthAttachments.length > 0 ? (
+            <div className="attachment-list">
+              {healthAttachments.map((file) => (
+                <span key={`${file.name}-${file.size}`}>
+                  {file.name} · {(file.size / 1024 / 1024).toFixed(2)}MB
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {claimError ? <p className="form-error">{claimError}</p> : null}
+          <button
+            className="primary-button"
+            disabled={isClaimSubmitting || healthContracts.length === 0}
+            type="submit"
+          >
+            {isClaimSubmitting ? 'Submitting' : '청구 신청'}
             <Send size={18} />
           </button>
         </form>
@@ -1149,9 +1325,9 @@ function CustomerClaimsPage({
           <label>
             계약
             <select
-              disabled={isAccidentLoading || carContracts.length === 0}
-              value={selectedContractId}
-              onChange={(event) => setSelectedContractId(event.target.value)}
+              disabled={isClaimLoading || carContracts.length === 0}
+              value={selectedCarContractId}
+              onChange={(event) => setSelectedCarContractId(event.target.value)}
             >
               {carContracts.map((contract) => (
                 <option key={contract.contractId} value={contract.contractId}>
@@ -1226,9 +1402,9 @@ function CustomerClaimsPage({
               onChange={(event) => changeAccidentAttachments(event.target.files)}
             />
           </label>
-          {attachments.length > 0 ? (
+          {accidentAttachments.length > 0 ? (
             <div className="attachment-list">
-              {attachments.map((file) => (
+              {accidentAttachments.map((file) => (
                 <span key={`${file.name}-${file.size}`}>
                   {file.name} · {(file.size / 1024 / 1024).toFixed(2)}MB
                 </span>
@@ -1252,22 +1428,36 @@ function CustomerClaimsPage({
         </form>
       </div>
 
-      <section className="panel">
-        <div className="section-title">
-          <CalendarDays size={18} />
-          <h2>처리 현황 및 보상 이력</h2>
-        </div>
-        <div className="timeline-list">
-          {claimHistory.map((claim) => (
-            <article key={claim.id}>
-              <span>{claim.date}</span>
+      <section className="panel result-panel">
+          <div className="section-title">
+            <Receipt size={18} />
+            <h2>청구 결과</h2>
+          </div>
+          {claimResult ? (
+            <article className={`claim-result ${claimResult.status.toLowerCase()}`}>
+              <span className="badge">{claimResult.complexity}</span>
               <div>
-                <strong>{claim.type}</strong>
-                <p>{claim.id} · {claim.amount} · {claim.status}</p>
+                <h3>청구번호 {claimResult.claimId}</h3>
+                <p>{describeHealthClaimResult(claimResult)}</p>
               </div>
+              <strong>{claimResult.status}</strong>
             </article>
-          ))}
-        </div>
+          ) : (
+            <div className="empty-result">
+              <FileText size={28} />
+              <p>청구 신청 후 결과가 표시됩니다.</p>
+            </div>
+          )}
+          <div className="claim-rule-grid">
+            <article>
+              <strong>SIMPLE</strong>
+              <span>1,000,000원 미만 · 즉시지급</span>
+            </article>
+            <article>
+              <strong>COMPLEX</strong>
+              <span>1,000,000원 이상 · 심사대기</span>
+            </article>
+          </div>
       </section>
     </section>
   )
@@ -1619,6 +1809,314 @@ function EmployeeReviewsPage({
   )
 }
 
+function EmployeeBenefitReviewsPage({
+  token,
+  onUnauthorized,
+}: {
+  token: string
+  onUnauthorized: () => void
+}) {
+  const [reviews, setReviews] = useState<BenefitReviewSummary[]>([])
+  const [selectedReview, setSelectedReview] = useState<BenefitReviewDetail | null>(null)
+  const [reviewResult, setReviewResult] = useState<BenefitReviewResult>('APPROVED')
+  const [comment, setComment] = useState('정상 청구')
+  const [assignClaimId, setAssignClaimId] = useState('')
+  const [assignEmployeeId, setAssignEmployeeId] = useState('')
+  const [decision, setDecision] = useState<ConfirmBenefitReviewResponse | null>(null)
+  const [statusMessage, setStatusMessage] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setLoading] = useState(true)
+  const [isSubmitting, setSubmitting] = useState(false)
+  const [isRetrying, setRetrying] = useState(false)
+  const [isAssigning, setAssigning] = useState(false)
+  const canRetry =
+    selectedReview?.claimStatus === 'FAILED' || decision?.claimStatus === 'FAILED'
+  const metrics = useMemo(
+    () => [
+      { label: 'Assigned reviews', value: String(reviews.length), icon: ClipboardCheck },
+      {
+        label: 'Failed payout',
+        value: String(reviews.filter((review) => review.claimStatus === 'FAILED').length),
+        icon: AlertTriangle,
+      },
+      { label: 'Selected claim', value: selectedReview ? `#${selectedReview.claimId}` : '-', icon: Receipt },
+    ],
+    [reviews, selectedReview],
+  )
+
+  async function refreshBenefitReviews() {
+    setReviews(await apiClient.getBenefitReviews(token))
+  }
+
+  async function loadBenefitReviews() {
+    setError('')
+    setLoading(true)
+
+    try {
+      const list = await apiClient.getBenefitReviews(token)
+      setReviews(list)
+      if (list[0]) {
+        await selectBenefitReview(list[0].claimId)
+      } else {
+        setSelectedReview(null)
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '보험금 심사 목록 조회에 실패했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      loadBenefitReviews()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function selectBenefitReview(claimId: number) {
+    setError('')
+    setDecision(null)
+    setStatusMessage('')
+
+    try {
+      const detail = await apiClient.getBenefitReview(token, claimId)
+      setSelectedReview(detail)
+      setAssignClaimId(String(detail.claimId))
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      if (err instanceof ApiError && err.status === 409) {
+        setError('다른 담당자 처리 중입니다.')
+        return
+      }
+      setError(err instanceof Error ? err.message : '보험금 심사 상세 조회에 실패했습니다.')
+    }
+  }
+
+  async function confirmBenefitReview(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selectedReview) {
+      return
+    }
+
+    setError('')
+    setStatusMessage('')
+    setSubmitting(true)
+
+    try {
+      const response = await apiClient.confirmBenefitReview(token, selectedReview.claimId, {
+        result: reviewResult,
+        comment,
+      })
+      setDecision(response)
+      setStatusMessage(describeBenefitReviewResult(response))
+      await refreshBenefitReviews()
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '보험금 심사 확정에 실패했습니다.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function retryPayout() {
+    if (!selectedReview) {
+      return
+    }
+
+    setError('')
+    setStatusMessage('')
+    setRetrying(true)
+
+    try {
+      const response = await apiClient.retryBenefitPayout(token, selectedReview.claimId)
+      const claimStatus = response?.claimStatus ?? 'COMPLETED'
+      setStatusMessage(
+        claimStatus === 'COMPLETED'
+          ? '지급 재시도 완료'
+          : `지급 재시도 결과 ${claimStatus}`,
+      )
+      await refreshBenefitReviews()
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '지급 재시도에 실패했습니다.')
+    } finally {
+      setRetrying(false)
+    }
+  }
+
+  async function assignClaim(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const claimId = Number(assignClaimId)
+    const employeeId = Number(assignEmployeeId)
+
+    if (!claimId || !employeeId) {
+      setError('청구번호와 직원 ID를 입력해 주세요.')
+      return
+    }
+
+    setError('')
+    setStatusMessage('')
+    setAssigning(true)
+
+    try {
+      await apiClient.assignClaim(token, claimId, { employeeId })
+      setStatusMessage(`청구 ${claimId}번을 직원 ${employeeId}에게 재배정했습니다.`)
+      await refreshBenefitReviews()
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '담당자 재배정에 실패했습니다.')
+    } finally {
+      setAssigning(false)
+    }
+  }
+
+  return (
+    <section className="page">
+      <div className="page-header">
+        <div>
+          <span className="eyebrow">UC12 / UC14 / UC17</span>
+          <h1>보험금 지급 심사</h1>
+        </div>
+      </div>
+
+      <div className="metric-grid">
+        {metrics.map(({ label, value, icon: Icon }) => (
+          <article className="metric-card" key={label}>
+            <Icon size={20} />
+            <strong>{value}</strong>
+            <span>{label}</span>
+          </article>
+        ))}
+      </div>
+
+      <div className="split-layout">
+        <section className="panel">
+          <div className="section-title">
+            <ClipboardCheck size={18} />
+            <h2>배정된 심사</h2>
+          </div>
+          {isLoading ? <p>Loading benefit reviews...</p> : null}
+          <div className="review-list">
+            {reviews.map((review) => (
+              <button
+                className={review.claimId === selectedReview?.claimId ? 'is-selected' : ''}
+                key={review.claimId}
+                type="button"
+                onClick={() => selectBenefitReview(review.claimId)}
+              >
+                <strong>CLAIM-{review.claimId}</strong>
+                <span>{review.hospitalName} · {formatCurrency(review.requestAmount)}</span>
+                <small>{review.claimStatus}</small>
+              </button>
+            ))}
+            {reviews.length === 0 && !isLoading ? <p>배정된 심사 건이 없습니다.</p> : null}
+          </div>
+        </section>
+
+        <form className="panel" onSubmit={confirmBenefitReview}>
+          <div className="section-title">
+            <FileText size={18} />
+            <h2>심사 상세</h2>
+          </div>
+          {selectedReview ? (
+            <article className="detail-card">
+              <span className="badge">{selectedReview.claimStatus}</span>
+              <h3>청구번호 {selectedReview.claimId}</h3>
+              <p>
+                {selectedReview.hospitalName} · 진단코드 {selectedReview.diagnosisCode}
+              </p>
+              <p>
+                청구금액 {formatCurrency(selectedReview.requestAmount)} · 담당자{' '}
+                {selectedReview.assignedStaffId}
+              </p>
+              <label>
+                Result
+                <select
+                  value={reviewResult}
+                  onChange={(event) => setReviewResult(event.target.value as BenefitReviewResult)}
+                >
+                  <option value="APPROVED">APPROVED</option>
+                  <option value="REJECTED">REJECTED</option>
+                </select>
+              </label>
+              <label>
+                Comment
+                <input value={comment} onChange={(event) => setComment(event.target.value)} />
+              </label>
+              <div className="button-row">
+                <button className="primary-button" disabled={isSubmitting} type="submit">
+                  {isSubmitting ? 'Confirming' : '심사 확정'}
+                  <CheckCircle2 size={18} />
+                </button>
+                <button
+                  className="secondary-button"
+                  disabled={isRetrying || !canRetry}
+                  type="button"
+                  onClick={retryPayout}
+                >
+                  {isRetrying ? 'Retrying' : '지급 재시도'}
+                </button>
+              </div>
+            </article>
+          ) : (
+            <p>심사 건을 선택하세요.</p>
+          )}
+          {decision ? (
+            <p className={decision.claimStatus === 'FAILED' ? 'form-error' : 'form-success'}>
+              청구 {decision.claimId}번 {decision.result} · {statusMessage}
+            </p>
+          ) : null}
+          {statusMessage && !decision ? <p className="form-success">{statusMessage}</p> : null}
+          {error ? <p className="form-error">{error}</p> : null}
+        </form>
+      </div>
+
+      <form className="panel assignment-form" onSubmit={assignClaim}>
+        <div className="section-title">
+          <Users size={18} />
+          <h2>수동 재배정</h2>
+        </div>
+        <div className="inline-fields">
+          <label>
+            Claim ID
+            <input
+              value={assignClaimId}
+              onChange={(event) => setAssignClaimId(event.target.value)}
+            />
+          </label>
+          <label>
+            Employee ID
+            <input
+              value={assignEmployeeId}
+              onChange={(event) => setAssignEmployeeId(event.target.value)}
+            />
+          </label>
+        </div>
+        <button className="secondary-button" disabled={isAssigning} type="submit">
+          {isAssigning ? 'Assigning' : '담당자 변경'}
+        </button>
+      </form>
+    </section>
+  )
+}
+
 function EmployeeAssignmentsPage() {
   const [assigned, setAssigned] = useState('')
   const nextEmployee = employees.reduce((best, employee) =>
@@ -1747,6 +2245,15 @@ function App() {
                   path="/reviews"
                   element={
                     <EmployeeReviewsPage
+                      token={(session as AuthSession).token}
+                      onUnauthorized={handleUnauthorized}
+                    />
+                  }
+                />
+                <Route
+                  path="/benefit-reviews"
+                  element={
+                    <EmployeeBenefitReviewsPage
                       token={(session as AuthSession).token}
                       onUnauthorized={handleUnauthorized}
                     />

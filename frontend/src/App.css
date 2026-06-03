@@ -696,6 +696,82 @@ select:focus {
   margin: 0;
 }
 
+.result-panel {
+  align-content: start;
+}
+
+.claim-result {
+  display: grid;
+  gap: 14px;
+  border-radius: 14px;
+  padding: 18px;
+  background: #f5f5f7;
+}
+
+.claim-result h3 {
+  margin: 0 0 6px;
+  color: #1d1d1f;
+  font-size: 24px;
+}
+
+.claim-result > strong {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #05603a;
+  background: #ecfdf3;
+  font-size: 13px;
+}
+
+.claim-result.pending > strong,
+.claim-result.in_review > strong,
+.claim-result.approved > strong {
+  color: #7a4d00;
+  background: #fff7e6;
+}
+
+.claim-result.failed > strong,
+.claim-result.rejected > strong {
+  color: #b42318;
+  background: #fff1f0;
+}
+
+.empty-result {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  border: 1px dashed #d2d2d7;
+  border-radius: 14px;
+  padding: 24px;
+  color: #7a7a7a;
+  text-align: center;
+}
+
+.empty-result svg {
+  color: #0066cc;
+}
+
+.claim-rule-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.claim-rule-grid article {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 14px;
+  background: #fff;
+}
+
+.claim-rule-grid span {
+  color: #7a7a7a;
+  font-size: 14px;
+}
+
 .timeline-list {
   display: grid;
   gap: 10px;
@@ -803,6 +879,7 @@ select:focus {
   .split-layout,
   .inline-fields,
   .contract-detail-grid,
+  .claim-rule-grid,
   .employee-grid,
   .metric-grid {
     grid-template-columns: 1fr;

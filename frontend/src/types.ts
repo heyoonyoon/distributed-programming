@@ -5,6 +5,15 @@ export type ReviewResult = 'APPROVED' | 'CONDITIONAL' | 'REJECTED'
 export type ContractStatus = 'ACTIVE' | 'SUSPENDED' | 'TERMINATED'
 export type PaymentMethod = 'CARD' | 'TRANSFER' | 'AUTO_DEBIT'
 export type PaymentStatus = 'SUCCESS' | 'FAILED'
+export type ClaimStatus =
+  | 'PENDING'
+  | 'IN_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'COMPLETED'
+  | 'FAILED'
+export type BenefitReviewResult = 'APPROVED' | 'REJECTED'
+export type ClaimComplexity = 'SIMPLE' | 'COMPLEX'
 
 export type AuthSession = {
   token: string
@@ -188,4 +197,52 @@ export type CarAccidentReportRequest = {
 export type CarAccidentReportResponse = {
   reportId: number
   status: 'PENDING'
+}
+
+export type BenefitReviewSummary = {
+  claimId: number
+  requestAmount: number
+  hospitalName: string
+  claimStatus: ClaimStatus
+}
+
+export type BenefitReviewDetail = BenefitReviewSummary & {
+  diagnosisCode: string
+  assignedStaffId: number
+}
+
+export type ConfirmBenefitReviewRequest = {
+  result: BenefitReviewResult
+  comment: string
+}
+
+export type ConfirmBenefitReviewResponse = {
+  claimId: number
+  result: BenefitReviewResult
+  claimStatus: ClaimStatus
+}
+
+export type RetryBenefitPayoutResponse = {
+  claimId: number
+  claimStatus: ClaimStatus
+}
+
+export type AssignClaimRequest = {
+  employeeId: number
+}
+
+export type HealthClaimRequest = {
+  contractId: number
+  hospitalName: string
+  diagnosisCode: string
+  treatmentDate: string
+  requestAmount: number
+  receiptAmount: number
+  attachments: File[]
+}
+
+export type HealthClaimResponse = {
+  claimId: number
+  status: ClaimStatus
+  complexity: ClaimComplexity
 }
