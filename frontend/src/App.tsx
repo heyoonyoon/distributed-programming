@@ -280,8 +280,7 @@ function CustomerShell({
         </Link>
         <nav aria-label="고객 메뉴">
           <NavLink to="/customer/home">홈</NavLink>
-          <NavLink to="/customer/products">상품 조회</NavLink>
-          <NavLink to="/customer/apply">가입 신청</NavLink>
+          <NavLink to="/customer/products">상품/가입</NavLink>
           <NavLink to="/customer/applications">신청 내역</NavLink>
           <NavLink to="/customer/contracts">계약/납부</NavLink>
           <NavLink to="/customer/claims/health">의료청구</NavLink>
@@ -353,8 +352,7 @@ function EmployeeShell({
 
 function CustomerHomePage() {
   const actions = [
-    { label: '보험 상품 조회', icon: Search, path: '/customer/products' },
-    { label: '가입 신청', icon: FileText, path: '/customer/apply' },
+    { label: '상품 조회 및 가입 신청', icon: Search, path: '/customer/products' },
     { label: '신청 내역', icon: Receipt, path: '/customer/applications' },
     { label: '의료보험 청구', icon: HeartPulse, path: '/customer/claims/health' },
     { label: '자동차사고 접수', icon: Car, path: '/customer/claims/car-accident' },
@@ -395,7 +393,7 @@ function CustomerHomePage() {
   )
 }
 
-type CustomerContractView = 'products' | 'apply' | 'applications' | 'contracts'
+type CustomerContractView = 'products' | 'applications' | 'contracts'
 
 function CustomerContractsPage({
   token,
@@ -692,8 +690,7 @@ function CustomerContractsPage({
   }
 
   const pageMeta: Record<CustomerContractView, { eyebrow: string; title: string }> = {
-    products: { eyebrow: 'UC01', title: '보험 상품 조회' },
-    apply: { eyebrow: 'UC02', title: '가입 신청' },
+    products: { eyebrow: 'UC01 / UC02', title: '보험 상품 조회 및 가입 신청' },
     applications: { eyebrow: 'UC02', title: '가입 신청 내역' },
     contracts: { eyebrow: 'A-2 / A-3', title: '내 계약 및 보험료 납부' },
   }
@@ -707,7 +704,7 @@ function CustomerContractsPage({
         </div>
       </div>
 
-      {view === 'products' || view === 'apply' ? (
+      {view === 'products' ? (
       <div className="split-layout">
         <section className="panel">
           <div className="section-title">
@@ -773,8 +770,7 @@ function CustomerContractsPage({
           </div>
         </section>
 
-        {view === 'apply' ? (
-          <form className="panel form-panel" onSubmit={submitApplication}>
+        <form className="panel form-panel" onSubmit={submitApplication}>
           <div className="section-title">
             <FileText size={18} />
             <h2>상품 상세 및 가입 신청</h2>
@@ -842,37 +838,7 @@ function CustomerContractsPage({
           )}
           {error ? <p className="form-error">{error}</p> : null}
           {success ? <p className="form-success">{success}</p> : null}
-          </form>
-        ) : (
-          <section className="panel">
-            <div className="section-title">
-              <FileText size={18} />
-              <h2>상품 상세</h2>
-            </div>
-            {selectedProduct ? (
-              <article className="detail-card">
-                <span className="badge">{formatProductType(selectedProduct.productType)}</span>
-                <h3>{selectedProduct.productName}</h3>
-                <p>{selectedProduct.description}</p>
-                <strong>{selectedProduct.monthlyPremium.toLocaleString()}원 / 월</strong>
-                <ul>
-                  {selectedProduct.coverageItems.map((item) => (
-                    <li key={item.itemName}>
-                      <CheckCircle2 size={16} />
-                      {item.itemName} · 한도 {item.coverageLimit.toLocaleString()}원 · 자기부담 {item.deductible.toLocaleString()}원
-                    </li>
-                  ))}
-                </ul>
-                <Link className="primary-button" to="/customer/apply">
-                  이 상품으로 가입 신청
-                  <ArrowRight size={18} />
-                </Link>
-              </article>
-            ) : (
-              <p>상품을 먼저 조회하고 선택하세요.</p>
-            )}
-          </section>
-        )}
+        </form>
       </div>
       ) : null}
 
@@ -2565,13 +2531,7 @@ function App() {
                 />
                 <Route
                   path="/apply"
-                  element={
-                    <CustomerContractsPage
-                      token={session.token}
-                      onUnauthorized={handleUnauthorized}
-                      view="apply"
-                    />
-                  }
+                  element={<Navigate to="/customer/products" replace />}
                 />
                 <Route
                   path="/applications"
