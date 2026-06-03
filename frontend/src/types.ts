@@ -183,6 +183,22 @@ export type AutoDebitRequest = {
   withdrawalDay: number
 }
 
+export type CarAccidentReportRequest = {
+  contractId: number
+  accidentDate: string
+  accidentLocation: string
+  accidentType: string
+  vehicleNumber: string
+  hasInjury: boolean
+  injuredCount: number
+  attachments: File[]
+}
+
+export type CarAccidentReportResponse = {
+  reportId: number
+  status: 'PENDING'
+}
+
 export type BenefitReviewSummary = {
   claimId: number
   requestAmount: number

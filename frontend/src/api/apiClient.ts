@@ -1,4 +1,6 @@
 import type {
+  CarAccidentReportRequest,
+  CarAccidentReportResponse,
   ConfirmReviewRequest,
   ConfirmReviewResponse,
   AssignClaimRequest,
@@ -161,6 +163,20 @@ async function requestForm<T>(
   }
 
   return response.json() as Promise<T>
+}
+
+function buildCarAccidentForm(body: CarAccidentReportRequest) {
+  const formData = new FormData()
+  formData.append('contractId', String(body.contractId))
+  formData.append('accidentDate', body.accidentDate)
+  formData.append('accidentLocation', body.accidentLocation)
+  formData.append('accidentType', body.accidentType)
+  formData.append('vehicleNumber', body.vehicleNumber)
+  formData.append('hasInjury', String(body.hasInjury))
+  formData.append('injuredCount', String(body.injuredCount))
+  body.attachments.forEach((file) => formData.append('attachments', file))
+
+  return formData
 }
 
 function buildHealthClaimForm(body: HealthClaimRequest) {
@@ -334,6 +350,13 @@ export const apiClient = {
       },
       token,
     )
+  },
+
+  async submitCarAccidentReport(
+    token: string,
+    body: CarAccidentReportRequest,
+  ): Promise<CarAccidentReportResponse> {
+    return requestForm('/claims/car-accidents', buildCarAccidentForm(body), token)
   },
 
   async getBenefitReviews(token: string): Promise<BenefitReviewSummary[]> {

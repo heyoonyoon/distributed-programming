@@ -32,6 +32,7 @@ import { ApiError, apiClient, decodeUserType } from './api/apiClient'
 import './App.css'
 import type {
   AuthSession,
+  CarAccidentReportResponse,
   BenefitReviewDetail,
   BenefitReviewResult,
   BenefitReviewSummary,
@@ -984,37 +985,56 @@ function CustomerClaimsPage({
   onUnauthorized: () => void
 }) {
   const [contracts, setContracts] = useState<ContractSummary[]>([])
-  const [selectedContractId, setSelectedContractId] = useState('')
+  const [selectedHealthContractId, setSelectedHealthContractId] = useState('')
   const [hospitalName, setHospitalName] = useState('서울중앙병원')
   const [diagnosisCode, setDiagnosisCode] = useState('J00')
   const [treatmentDate, setTreatmentDate] = useState('2026-06-01')
   const [requestAmount, setRequestAmount] = useState('184000')
   const [receiptAmount, setReceiptAmount] = useState('184000')
-  const [attachments, setAttachments] = useState<File[]>([])
-  const [result, setResult] = useState<HealthClaimResponse | null>(null)
-  const [error, setError] = useState('')
-  const [isLoading, setLoading] = useState(true)
-  const [isSubmitting, setSubmitting] = useState(false)
+  const [healthAttachments, setHealthAttachments] = useState<File[]>([])
+  const [claimResult, setClaimResult] = useState<HealthClaimResponse | null>(null)
+  const [claimError, setClaimError] = useState('')
+  const [isClaimLoading, setClaimLoading] = useState(true)
+  const [isClaimSubmitting, setClaimSubmitting] = useState(false)
+  const [selectedCarContractId, setSelectedCarContractId] = useState('')
+  const [accidentDate, setAccidentDate] = useState('2026-06-01')
+  const [accidentLocation, setAccidentLocation] = useState('서울 강남구 역삼동')
+  const [accidentType, setAccidentType] = useState('쌍방')
+  const [vehicleNumber, setVehicleNumber] = useState('12가3456')
+  const [hasInjury, setHasInjury] = useState(false)
+  const [injuredCount, setInjuredCount] = useState('0')
+  const [accidentAttachments, setAccidentAttachments] = useState<File[]>([])
+  const [accidentResult, setAccidentResult] = useState<CarAccidentReportResponse | null>(null)
+  const [accidentError, setAccidentError] = useState('')
+  const [isAccidentSubmitting, setAccidentSubmitting] = useState(false)
   const healthContracts = contracts.filter(
     (contract) => contract.productType === 'HEALTH' && contract.status === 'ACTIVE',
+  )
+  const carContracts = contracts.filter(
+    (contract) => contract.productType === 'CAR' && contract.status === 'ACTIVE',
   )
 
   useEffect(() => {
     let isMounted = true
 
     async function loadContracts() {
-      setError('')
-      setLoading(true)
+      setClaimError('')
+      setAccidentError('')
+      setClaimLoading(true)
 
       try {
         const list = await apiClient.getContracts(token)
         const activeHealthContracts = list.filter(
           (contract) => contract.productType === 'HEALTH' && contract.status === 'ACTIVE',
         )
+        const activeCarContracts = list.filter(
+          (contract) => contract.productType === 'CAR' && contract.status === 'ACTIVE',
+        )
 
         if (isMounted) {
           setContracts(list)
-          setSelectedContractId((current) => current || String(activeHealthContracts[0]?.contractId ?? ''))
+          setSelectedHealthContractId((current) => current || String(activeHealthContracts[0]?.contractId ?? ''))
+          setSelectedCarContractId((current) => current || String(activeCarContracts[0]?.contractId ?? ''))
         }
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
@@ -1023,11 +1043,12 @@ function CustomerClaimsPage({
         }
 
         if (isMounted) {
-          setError(err instanceof Error ? err.message : '계약 목록 조회에 실패했습니다.')
+          setClaimError(err instanceof Error ? err.message : '계약 목록 조회에 실패했습니다.')
+          setAccidentError(err instanceof Error ? err.message : '계약 목록 조회에 실패했습니다.')
         }
       } finally {
         if (isMounted) {
-          setLoading(false)
+          setClaimLoading(false)
         }
       }
     }
@@ -1039,49 +1060,72 @@ function CustomerClaimsPage({
     }
   }, [onUnauthorized, token])
 
-  function changeAttachments(files: FileList | null) {
+  function changeHealthAttachments(files: FileList | null) {
     const nextFiles = Array.from(files ?? [])
     const invalidType = nextFiles.find((file) => !isAcceptedClaimFile(file))
     const oversized = nextFiles.find((file) => file.size > maxClaimAttachmentSize)
 
-    setResult(null)
+    setClaimResult(null)
 
     if (invalidType) {
-      setAttachments([])
-      setError('지원하지 않는 파일 형식입니다. (허용: PDF, JPG, PNG)')
+      setHealthAttachments([])
+      setClaimError('지원하지 않는 파일 형식입니다. (허용: PDF, JPG, PNG)')
       return
     }
 
     if (oversized) {
-      setAttachments([])
-      setError('파일 크기는 개당 10MB 이하여야 합니다.')
+      setHealthAttachments([])
+      setClaimError('파일 크기는 개당 10MB 이하여야 합니다.')
       return
     }
 
-    setError('')
-    setAttachments(nextFiles)
+    setClaimError('')
+    setHealthAttachments(nextFiles)
+  }
+
+  function changeAccidentAttachments(files: FileList | null) {
+    const nextFiles = Array.from(files ?? [])
+    const invalidType = nextFiles.find((file) => !isAcceptedClaimFile(file))
+    const oversized = nextFiles.find((file) => file.size > maxClaimAttachmentSize)
+
+    setAccidentResult(null)
+
+    if (invalidType) {
+      setAccidentAttachments([])
+      setAccidentError('지원하지 않는 파일 형식입니다. (허용: PDF, JPG, PNG)')
+      return
+    }
+
+    if (oversized) {
+      setAccidentAttachments([])
+      setAccidentError('파일 크기는 개당 10MB 이하여야 합니다.')
+      return
+    }
+
+    setAccidentError('')
+    setAccidentAttachments(nextFiles)
   }
 
   async function submitClaim(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setError('')
-    setResult(null)
+    setClaimError('')
+    setClaimResult(null)
 
-    const contractId = Number(selectedContractId)
+    const contractId = Number(selectedHealthContractId)
     const parsedRequestAmount = Number(requestAmount)
     const parsedReceiptAmount = Number(receiptAmount)
 
     if (!contractId) {
-      setError('청구할 의료보험 계약을 선택해 주세요.')
+      setClaimError('청구할 의료보험 계약을 선택해 주세요.')
       return
     }
 
     if (parsedRequestAmount <= 0 || parsedReceiptAmount <= 0) {
-      setError('청구 금액과 영수증 금액은 0보다 커야 합니다.')
+      setClaimError('청구 금액과 영수증 금액은 0보다 커야 합니다.')
       return
     }
 
-    setSubmitting(true)
+    setClaimSubmitting(true)
 
     try {
       const response = await apiClient.submitHealthClaim(token, {
@@ -1091,18 +1135,78 @@ function CustomerClaimsPage({
         treatmentDate,
         requestAmount: parsedRequestAmount,
         receiptAmount: parsedReceiptAmount,
-        attachments,
+        attachments: healthAttachments,
       })
-      setResult(response)
+      setClaimResult(response)
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         onUnauthorized()
         return
       }
 
-      setError(err instanceof Error ? err.message : '의료보험 청구에 실패했습니다.')
+      setClaimError(err instanceof Error ? err.message : '의료보험 청구에 실패했습니다.')
     } finally {
-      setSubmitting(false)
+      setClaimSubmitting(false)
+    }
+  }
+
+  async function submitAccident(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setAccidentError('')
+    setAccidentResult(null)
+
+    const contractId = Number(selectedCarContractId)
+    const parsedInjuredCount = Number(injuredCount)
+    const today = new Date().toISOString().slice(0, 10)
+
+    if (!contractId) {
+      setAccidentError('접수할 자동차보험 계약을 선택해 주세요.')
+      return
+    }
+
+    if (accidentDate > today) {
+      setAccidentError('사고 일자는 미래일 수 없습니다.')
+      return
+    }
+
+    if (parsedInjuredCount < 0) {
+      setAccidentError('부상자 수는 0 이상이어야 합니다.')
+      return
+    }
+
+    if (hasInjury && parsedInjuredCount < 1) {
+      setAccidentError('대인사고는 부상자 수를 1명 이상 입력해야 합니다.')
+      return
+    }
+
+    if (!hasInjury && parsedInjuredCount !== 0) {
+      setAccidentError('대인사고가 아니면 부상자 수는 0이어야 합니다.')
+      return
+    }
+
+    setAccidentSubmitting(true)
+
+    try {
+      const response = await apiClient.submitCarAccidentReport(token, {
+        contractId,
+        accidentDate,
+        accidentLocation,
+        accidentType,
+        vehicleNumber,
+        hasInjury,
+        injuredCount: parsedInjuredCount,
+        attachments: accidentAttachments,
+      })
+      setAccidentResult(response)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+
+      setAccidentError(err instanceof Error ? err.message : '자동차사고 접수에 실패했습니다.')
+    } finally {
+      setAccidentSubmitting(false)
     }
   }
 
@@ -1110,8 +1214,8 @@ function CustomerClaimsPage({
     <section className="page">
       <div className="page-header">
         <div>
-          <span className="eyebrow">UC05 / UC17</span>
-          <h1>의료보험 청구</h1>
+          <span className="eyebrow">UC05 / UC09 / UC17</span>
+          <h1>청구 및 사고 접수</h1>
         </div>
       </div>
 
@@ -1124,9 +1228,9 @@ function CustomerClaimsPage({
           <label>
             계약
             <select
-              disabled={isLoading || healthContracts.length === 0}
-              value={selectedContractId}
-              onChange={(event) => setSelectedContractId(event.target.value)}
+              disabled={isClaimLoading || healthContracts.length === 0}
+              value={selectedHealthContractId}
+              onChange={(event) => setSelectedHealthContractId(event.target.value)}
             >
               {healthContracts.map((contract) => (
                 <option key={contract.contractId} value={contract.contractId}>
@@ -1190,42 +1294,153 @@ function CustomerClaimsPage({
               accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
               multiple
               type="file"
-              onChange={(event) => changeAttachments(event.target.files)}
+              onChange={(event) => changeHealthAttachments(event.target.files)}
             />
           </label>
-          {attachments.length > 0 ? (
+          {healthAttachments.length > 0 ? (
             <div className="attachment-list">
-              {attachments.map((file) => (
+              {healthAttachments.map((file) => (
                 <span key={`${file.name}-${file.size}`}>
                   {file.name} · {(file.size / 1024 / 1024).toFixed(2)}MB
                 </span>
               ))}
             </div>
           ) : null}
-          {error ? <p className="form-error">{error}</p> : null}
+          {claimError ? <p className="form-error">{claimError}</p> : null}
           <button
             className="primary-button"
-            disabled={isSubmitting || healthContracts.length === 0}
+            disabled={isClaimSubmitting || healthContracts.length === 0}
             type="submit"
           >
-            {isSubmitting ? 'Submitting' : '청구 신청'}
+            {isClaimSubmitting ? 'Submitting' : '청구 신청'}
             <Send size={18} />
           </button>
         </form>
 
-        <section className="panel result-panel">
+        <form className="panel form-panel" onSubmit={submitAccident}>
+          <div className="section-title">
+            <Car size={18} />
+            <h2>자동차사고 접수</h2>
+          </div>
+          <label>
+            계약
+            <select
+              disabled={isClaimLoading || carContracts.length === 0}
+              value={selectedCarContractId}
+              onChange={(event) => setSelectedCarContractId(event.target.value)}
+            >
+              {carContracts.map((contract) => (
+                <option key={contract.contractId} value={contract.contractId}>
+                  {contract.productName} · {formatDate(contract.startDate)}
+                </option>
+              ))}
+              {carContracts.length === 0 ? <option value="">선택 가능한 계약 없음</option> : null}
+            </select>
+          </label>
+          <label>
+            사고 일자
+            <input
+              required
+              type="date"
+              value={accidentDate}
+              onChange={(event) => setAccidentDate(event.target.value)}
+            />
+          </label>
+          <label>
+            사고 장소
+            <input
+              required
+              value={accidentLocation}
+              onChange={(event) => setAccidentLocation(event.target.value)}
+            />
+          </label>
+          <label>
+            사고 유형
+            <input
+              required
+              value={accidentType}
+              onChange={(event) => setAccidentType(event.target.value)}
+            />
+          </label>
+          <label>
+            차량 번호
+            <input
+              required
+              value={vehicleNumber}
+              onChange={(event) => setVehicleNumber(event.target.value)}
+            />
+          </label>
+          <label className="toggle-row">
+            <input
+              checked={hasInjury}
+              type="checkbox"
+              onChange={(event) => {
+                setHasInjury(event.target.checked)
+                setInjuredCount(event.target.checked ? '1' : '0')
+              }}
+            />
+            대인사고
+          </label>
+          {hasInjury ? (
+            <label>
+              부상자 수
+              <input
+                min="1"
+                required
+                type="number"
+                value={injuredCount}
+                onChange={(event) => setInjuredCount(event.target.value)}
+              />
+            </label>
+          ) : null}
+          <label>
+            현장 사진/증빙
+            <input
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              multiple
+              type="file"
+              onChange={(event) => changeAccidentAttachments(event.target.files)}
+            />
+          </label>
+          {accidentAttachments.length > 0 ? (
+            <div className="attachment-list">
+              {accidentAttachments.map((file) => (
+                <span key={`${file.name}-${file.size}`}>
+                  {file.name} · {(file.size / 1024 / 1024).toFixed(2)}MB
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {accidentResult ? (
+            <p className="form-success">
+              자동차사고 접수번호 {accidentResult.reportId}번이 {accidentResult.status} 상태로 접수되었습니다.
+            </p>
+          ) : null}
+          {accidentError ? <p className="form-error">{accidentError}</p> : null}
+          <button
+            className="primary-button"
+            disabled={isAccidentSubmitting || carContracts.length === 0}
+            type="submit"
+          >
+            {isAccidentSubmitting ? 'Submitting' : '접수하기'}
+            <Send size={18} />
+          </button>
+        </form>
+      </div>
+
+      <section className="panel result-panel">
           <div className="section-title">
             <Receipt size={18} />
             <h2>청구 결과</h2>
           </div>
-          {result ? (
-            <article className={`claim-result ${result.status.toLowerCase()}`}>
-              <span className="badge">{result.complexity}</span>
+          {claimResult ? (
+            <article className={`claim-result ${claimResult.status.toLowerCase()}`}>
+              <span className="badge">{claimResult.complexity}</span>
               <div>
-                <h3>청구번호 {result.claimId}</h3>
-                <p>{describeHealthClaimResult(result)}</p>
+                <h3>청구번호 {claimResult.claimId}</h3>
+                <p>{describeHealthClaimResult(claimResult)}</p>
               </div>
-              <strong>{result.status}</strong>
+              <strong>{claimResult.status}</strong>
             </article>
           ) : (
             <div className="empty-result">
@@ -1243,8 +1458,7 @@ function CustomerClaimsPage({
               <span>1,000,000원 이상 · 심사대기</span>
             </article>
           </div>
-        </section>
-      </div>
+      </section>
     </section>
   )
 }
