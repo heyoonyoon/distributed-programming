@@ -22,8 +22,11 @@ public class ProfileController {
 
     @GetMapping("/me")
     public ProfileResponse me(@AuthenticationPrincipal Long userId) {
-        Policyholder p = (Policyholder) userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        if (!(userRepository.findById(userId).orElseThrow(
+                () -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
+                instanceof Policyholder p)) {
+            throw new IllegalStateException("가입자(Policyholder)만 조회할 수 있습니다.");
+        }
         return ProfileResponse.from(p);
     }
 

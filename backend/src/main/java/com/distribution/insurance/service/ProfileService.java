@@ -27,8 +27,11 @@ public class ProfileService {
         if (!identityVerification.verify(userId)) {
             throw new IllegalStateException("본인 인증에 실패하였습니다.");
         }
-        Policyholder policyholder = (Policyholder) userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        if (!(userRepository.findById(userId).orElseThrow(
+                () -> new IllegalArgumentException("사용자를 찾을 수 없습니다."))
+                instanceof Policyholder policyholder)) {
+            throw new IllegalStateException("개인정보 수정은 가입자(Policyholder)만 가능합니다.");
+        }
 
         policyholder.updateContact(email, phone);
         policyholder.updateProfile(address, bankAccount);
