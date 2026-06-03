@@ -1,5 +1,6 @@
 package com.distribution.insurance.repository;
 
+import com.distribution.insurance.domain.claim.ClaimStatus;
 import com.distribution.insurance.domain.review.BenefitPaymentReview;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +20,8 @@ public interface BenefitPaymentReviewRepository extends JpaRepository<BenefitPay
     /** claim을 join fetch — requireOwned/detail의 LazyInitializationException 방지. */
     @Query("select r from BenefitPaymentReview r join fetch r.claim where r.claim.id = :claimId")
     Optional<BenefitPaymentReview> findByClaimIdWithClaim(@Param("claimId") Long claimId);
+
+    /** 미배정(담당자 없음) 보상심사 건 — 수동 배정 대상 목록(UC14 A1). claim join fetch. */
+    @Query("select r from BenefitPaymentReview r join fetch r.claim c where r.assignedStaffId is null and c.status = :status")
+    List<BenefitPaymentReview> findUnassignedWithClaim(@Param("status") ClaimStatus status);
 }
