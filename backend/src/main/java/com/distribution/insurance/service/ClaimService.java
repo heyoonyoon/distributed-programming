@@ -6,7 +6,9 @@ import com.distribution.insurance.domain.claim.HealthInsuranceClaim;
 import com.distribution.insurance.domain.contract.ContractStatus;
 import com.distribution.insurance.domain.contract.InsuranceContract;
 import com.distribution.insurance.domain.product.HealthInsuranceProduct;
+import com.distribution.insurance.domain.review.BenefitPaymentReview;
 import com.distribution.insurance.domain.user.Policyholder;
+import com.distribution.insurance.repository.BenefitPaymentReviewRepository;
 import com.distribution.insurance.repository.ClaimRepository;
 import com.distribution.insurance.repository.ContractRepository;
 import org.hibernate.Hibernate;
@@ -26,17 +28,23 @@ public class ClaimService {
     private final BenefitPayoutService payoutService;
     private final NotificationSender notificationSender;
     private final int complexThreshold;
+    private final BenefitPaymentReviewRepository reviewRepository;
+    private final StaffAssignmentService staffAssignmentService;
 
     public ClaimService(ClaimRepository claimRepository,
                         ContractRepository contractRepository,
                         BenefitPayoutService payoutService,
                         NotificationSender notificationSender,
-                        @Value("${insurance.claim.complex-threshold:1000000}") int complexThreshold) {
+                        @Value("${insurance.claim.complex-threshold:1000000}") int complexThreshold,
+                        BenefitPaymentReviewRepository reviewRepository,
+                        StaffAssignmentService staffAssignmentService) {
         this.claimRepository = claimRepository;
         this.contractRepository = contractRepository;
         this.payoutService = payoutService;
         this.notificationSender = notificationSender;
         this.complexThreshold = complexThreshold;
+        this.reviewRepository = reviewRepository;
+        this.staffAssignmentService = staffAssignmentService;
     }
 
     @Transactional
@@ -71,8 +79,11 @@ public class ClaimService {
         if (complexity == ClaimComplexity.SIMPLE) {
             payoutService.pay(claim);
         } else {
+            BenefitPaymentReview review = reviewRepository.save(new BenefitPaymentReview(claim));
+            staffAssignmentService.assignAutomatically(review);   // 직원 없으면 IllegalStateException → 롤백
+            claim.markInReview();
             notificationSender.send(ph.getEmail(), ph.getPhone(),
-                    "청구가 접수되었습니다. 복잡한 청구로 담당자 배정 후 심사를 진행합니다.");
+                    "청구가 접수되었습니다. 담당자 배정 후 심사를 진행합니다.");
         }
         return claim;
     }

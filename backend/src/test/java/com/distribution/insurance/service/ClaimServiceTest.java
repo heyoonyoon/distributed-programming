@@ -4,6 +4,7 @@ import com.distribution.insurance.domain.claim.*;
 import com.distribution.insurance.domain.contract.InsuranceContract;
 import com.distribution.insurance.domain.product.CarInsuranceProduct;
 import com.distribution.insurance.domain.product.HealthInsuranceProduct;
+import com.distribution.insurance.domain.user.InsuranceEmployee;
 import com.distribution.insurance.domain.user.Policyholder;
 import com.distribution.insurance.repository.*;
 import org.junit.jupiter.api.Test;
@@ -50,7 +51,8 @@ class ClaimServiceTest {
     }
 
     @Test
-    void 임계값_이상이면_COMPLEX이고_PENDING으로_남는다() {
+    void 임계값_이상이면_COMPLEX이고_심사배정_후_IN_REVIEW가_된다() {
+        userRepository.save(new InsuranceEmployee("직원", "emp" + System.nanoTime() + "@t.com", "010", "pw", "심사팀", 0));
         Policyholder p = ph("110-123-456789");
         InsuranceContract c = healthContract(p);
 
@@ -59,11 +61,12 @@ class ClaimServiceTest {
 
         assertThat(claim.getComplexity()).isEqualTo(ClaimComplexity.COMPLEX);
         assertThat(claimRepository.findById(claim.getId()).orElseThrow().getStatus())
-                .isEqualTo(ClaimStatus.PENDING);
+                .isEqualTo(ClaimStatus.IN_REVIEW);
     }
 
     @Test
     void 임계값과_정확히_같으면_COMPLEX이다() {
+        userRepository.save(new InsuranceEmployee("직원", "emp" + System.nanoTime() + "@t.com", "010", "pw", "심사팀", 0));
         Policyholder p = ph("110-123-456789");
         InsuranceContract c = healthContract(p);
 
@@ -72,7 +75,7 @@ class ClaimServiceTest {
 
         assertThat(claim.getComplexity()).isEqualTo(ClaimComplexity.COMPLEX);
         assertThat(claimRepository.findById(claim.getId()).orElseThrow().getStatus())
-                .isEqualTo(ClaimStatus.PENDING);
+                .isEqualTo(ClaimStatus.IN_REVIEW);
     }
 
     @Test
