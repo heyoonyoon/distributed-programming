@@ -88,6 +88,36 @@ function formatDate(value: string) {
   return new Date(value).toLocaleDateString('ko-KR')
 }
 
+function formatProductType(value: ProductType) {
+  return value === 'HEALTH' ? '의료보험' : '자동차보험'
+}
+
+function formatClaimType(value: string) {
+  return value === 'HEALTH' ? '의료' : '자동차'
+}
+
+function formatContractStatus(value: string) {
+  const labels: Record<string, string> = {
+    ACTIVE: '정상',
+    SUSPENDED: '정지',
+    TERMINATED: '해지',
+    PENDING: '대기',
+    APPROVED: '승인',
+    REJECTED: '거절',
+    CANCELLED: '취소',
+    COMPLETED: '완료',
+    FAILED: '실패',
+    IN_REVIEW: '심사중',
+    SIMPLE: '간편',
+    COMPLEX: '심사필요',
+    CARD: '카드',
+    TRANSFER: '계좌이체',
+    AUTO_DEBIT: '자동이체',
+  }
+
+  return labels[value] ?? value
+}
+
 function formatInputDate(date: Date) {
   return date.toISOString().slice(0, 10)
 }
@@ -174,20 +204,20 @@ function LoginPage({
           <div className="mark">
             <ShieldCheck size={28} />
           </div>
-          <h1>Insurance System</h1>
+          <h1>보험 업무 시스템</h1>
           <p>고객 포털과 보험사 직원 업무 화면을 분리한 데모 환경입니다.</p>
         </div>
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="account-switch">
             <button type="button" onClick={() => setEmail('hong@test.com')}>
-              Policyholder
+              가입자
             </button>
             <button type="button" onClick={() => setEmail('staff@test.com')}>
-              InsuranceEmployee
+              직원
             </button>
           </div>
           <label>
-            Email
+            이메일
             <input
               autoComplete="email"
               value={email}
@@ -196,7 +226,7 @@ function LoginPage({
             />
           </label>
           <label>
-            Password
+            비밀번호
             <input
               autoComplete="current-password"
               value={password}
@@ -206,7 +236,7 @@ function LoginPage({
           </label>
           {error ? <p className="form-error">{error}</p> : null}
           <button className="primary-button" disabled={isSubmitting} type="submit">
-            {isSubmitting ? 'Signing in' : 'Sign in'}
+            {isSubmitting ? '로그인 중' : '로그인'}
             <ArrowRight size={18} />
           </button>
         </form>
@@ -231,23 +261,26 @@ function CustomerShell({
   return (
     <div className="customer-shell">
       <header className="customer-nav">
-        <Link className="brand" to="/customer/home" aria-label="Customer home">
+        <Link className="brand" to="/customer/home" aria-label="고객 홈">
           <ShieldCheck size={22} />
-          <span>Insurance</span>
+          <span>보험</span>
         </Link>
-        <nav aria-label="Customer navigation">
-          <Link to="/customer/home">Home</Link>
-          <Link to="/customer/contracts">Contracts</Link>
-          <Link to="/customer/claims/health">Health claim</Link>
-          <Link to="/customer/claims/car-accident">Car accident</Link>
-          <Link to="/customer/claims/status">Status</Link>
-          <Link to="/customer/claims/history">History</Link>
-          <Link to="/customer/claims/benefit-analysis">Analysis</Link>
-          <Link to="/customer/profile">Profile</Link>
+        <nav aria-label="고객 메뉴">
+          <Link to="/customer/home">홈</Link>
+          <Link to="/customer/products">상품 조회</Link>
+          <Link to="/customer/apply">가입 신청</Link>
+          <Link to="/customer/applications">신청 내역</Link>
+          <Link to="/customer/contracts">계약/납부</Link>
+          <Link to="/customer/claims/health">의료청구</Link>
+          <Link to="/customer/claims/car-accident">사고접수</Link>
+          <Link to="/customer/claims/status">보상현황</Link>
+          <Link to="/customer/claims/history">보상이력</Link>
+          <Link to="/customer/claims/benefit-analysis">실익분석</Link>
+          <Link to="/customer/profile">내 정보</Link>
         </nav>
         <button className="text-button" type="button" onClick={onLogout}>
           <LogOut size={17} />
-          Logout
+          로그아웃
         </button>
       </header>
       <main className="customer-content">{children}</main>
@@ -271,32 +304,32 @@ function EmployeeShell({
   return (
     <div className="employee-shell">
       <aside className="sidebar">
-        <Link className="brand" to="/employee/reviews" aria-label="Review queue">
+        <Link className="brand" to="/employee/reviews" aria-label="심사 대기 목록">
           <BriefcaseBusiness size={22} />
-          <span>Employee</span>
+          <span>직원</span>
         </Link>
-        <nav className="nav-list" aria-label="Employee navigation">
+        <nav className="nav-list" aria-label="직원 메뉴">
           <Link to="/employee/reviews">
             <ClipboardCheck size={18} />
-            Enrollment
+            가입 심사
           </Link>
           <Link to="/employee/benefit-reviews">
             <Receipt size={18} />
-            Benefit reviews
+            보험금 심사
           </Link>
           <Link to="/employee/assignments">
             <Users size={18} />
-            Assignments
+            담당자 배정
           </Link>
         </nav>
         <div className="sidebar-footer">
           <div>
             <strong>보험사 직원</strong>
-            <span>InsuranceEmployee</span>
+            <span>직원 포털</span>
           </div>
           <button className="icon-button" type="button" onClick={onLogout}>
             <LogOut size={18} />
-            <span className="sr-only">Logout</span>
+            <span className="sr-only">로그아웃</span>
           </button>
         </div>
       </aside>
@@ -307,7 +340,9 @@ function EmployeeShell({
 
 function CustomerHomePage() {
   const actions = [
-    { label: '보험 상품 조회', icon: Search, path: '/customer/contracts' },
+    { label: '보험 상품 조회', icon: Search, path: '/customer/products' },
+    { label: '가입 신청', icon: FileText, path: '/customer/apply' },
+    { label: '신청 내역', icon: Receipt, path: '/customer/applications' },
     { label: '의료보험 청구', icon: HeartPulse, path: '/customer/claims/health' },
     { label: '자동차사고 접수', icon: Car, path: '/customer/claims/car-accident' },
     { label: '보상 현황', icon: ClipboardCheck, path: '/customer/claims/status' },
@@ -318,7 +353,7 @@ function CustomerHomePage() {
   return (
     <section className="customer-home">
       <div className="customer-hero">
-        <span className="eyebrow">Policyholder portal</span>
+        <span className="eyebrow">가입자 포털</span>
         <h1>고객님, 필요한 보험 업무를 바로 처리하세요.</h1>
         <p>계약 확인, 청구 접수, 보험료 납부를 고객용 화면에서 진행합니다.</p>
       </div>
@@ -347,12 +382,16 @@ function CustomerHomePage() {
   )
 }
 
+type CustomerContractView = 'products' | 'apply' | 'applications' | 'contracts'
+
 function CustomerContractsPage({
   token,
   onUnauthorized,
+  view,
 }: {
   token: string
   onUnauthorized: () => void
+  view: CustomerContractView
 }) {
   const [productType, setProductType] = useState<ProductType>('HEALTH')
   const [keyword, setKeyword] = useState('')
@@ -630,15 +669,23 @@ function CustomerContractsPage({
     }
   }
 
+  const pageMeta: Record<CustomerContractView, { eyebrow: string; title: string }> = {
+    products: { eyebrow: 'UC01', title: '보험 상품 조회' },
+    apply: { eyebrow: 'UC02', title: '가입 신청' },
+    applications: { eyebrow: 'UC02', title: '가입 신청 내역' },
+    contracts: { eyebrow: 'A-2 / A-3', title: '내 계약 및 보험료 납부' },
+  }
+
   return (
     <section className="page">
       <div className="page-header">
         <div>
-          <span className="eyebrow">UC01 / UC02 / A-2 / A-3</span>
-          <h1>상품 조회 및 가입 신청</h1>
+          <span className="eyebrow">{pageMeta[view].eyebrow}</span>
+          <h1>{pageMeta[view].title}</h1>
         </div>
       </div>
 
+      {view === 'products' || view === 'apply' ? (
       <div className="split-layout">
         <section className="panel">
           <div className="section-title">
@@ -651,23 +698,23 @@ function CustomerContractsPage({
           }}>
             <div className="account-switch">
               <button type="button" onClick={() => setProductType('HEALTH')}>
-                HEALTH
+                의료보험
               </button>
               <button type="button" onClick={() => setProductType('CAR')}>
-                CAR
+                자동차보험
               </button>
             </div>
             <label>
-              Keyword
+              검색어
               <input value={keyword} onChange={(event) => setKeyword(event.target.value)} />
             </label>
             <div className="inline-fields">
               <label>
-                Min
+                최소 보험료
                 <input value={minPremium} onChange={(event) => setMinPremium(event.target.value)} />
               </label>
               <label>
-                Max
+                최대 보험료
                 <input value={maxPremium} onChange={(event) => setMaxPremium(event.target.value)} />
               </label>
             </div>
@@ -676,7 +723,7 @@ function CustomerContractsPage({
             </button>
           </form>
           <div className="product-tabs">
-            {isLoading ? <p>Loading products...</p> : null}
+            {isLoading ? <p>상품을 불러오는 중입니다.</p> : null}
             {products.map((product) => (
               <button
                 className={product.id === selectedProduct?.id ? 'is-selected' : ''}
@@ -691,7 +738,8 @@ function CustomerContractsPage({
           </div>
         </section>
 
-        <form className="panel form-panel" onSubmit={submitApplication}>
+        {view === 'apply' ? (
+          <form className="panel form-panel" onSubmit={submitApplication}>
           <div className="section-title">
             <FileText size={18} />
             <h2>상품 상세 및 가입 신청</h2>
@@ -699,7 +747,7 @@ function CustomerContractsPage({
           {selectedProduct ? (
             <>
               <article className="detail-card">
-                <span className="badge">{selectedProduct.productType}</span>
+                <span className="badge">{formatProductType(selectedProduct.productType)}</span>
                 <h3>{selectedProduct.productName}</h3>
                 <p>{selectedProduct.description}</p>
                 <strong>{selectedProduct.monthlyPremium.toLocaleString()}원 / 월</strong>
@@ -759,9 +807,41 @@ function CustomerContractsPage({
           )}
           {error ? <p className="form-error">{error}</p> : null}
           {success ? <p className="form-success">{success}</p> : null}
-        </form>
+          </form>
+        ) : (
+          <section className="panel">
+            <div className="section-title">
+              <FileText size={18} />
+              <h2>상품 상세</h2>
+            </div>
+            {selectedProduct ? (
+              <article className="detail-card">
+                <span className="badge">{formatProductType(selectedProduct.productType)}</span>
+                <h3>{selectedProduct.productName}</h3>
+                <p>{selectedProduct.description}</p>
+                <strong>{selectedProduct.monthlyPremium.toLocaleString()}원 / 월</strong>
+                <ul>
+                  {selectedProduct.coverageItems.map((item) => (
+                    <li key={item.itemName}>
+                      <CheckCircle2 size={16} />
+                      {item.itemName} · 한도 {item.coverageLimit.toLocaleString()}원 · 자기부담 {item.deductible.toLocaleString()}원
+                    </li>
+                  ))}
+                </ul>
+                <Link className="primary-button" to="/customer/apply">
+                  이 상품으로 가입 신청
+                  <ArrowRight size={18} />
+                </Link>
+              </article>
+            ) : (
+              <p>조회된 상품이 없습니다.</p>
+            )}
+          </section>
+        )}
       </div>
+      ) : null}
 
+      {view === 'applications' ? (
       <section className="panel">
         <div className="section-title">
           <Receipt size={18} />
@@ -773,7 +853,7 @@ function CustomerContractsPage({
               <FileText size={20} />
               <div>
                 <strong>{application.productName}</strong>
-                <span>신청번호 {application.applicationId} · {application.status}</span>
+                <span>신청번호 {application.applicationId} · {formatContractStatus(application.status)}</span>
                 <small>{new Date(application.appliedAt).toLocaleString()}</small>
               </div>
               {application.status === 'PENDING' ? (
@@ -790,13 +870,15 @@ function CustomerContractsPage({
           {applications.length === 0 ? <p>가입 신청 내역이 없습니다.</p> : null}
         </div>
       </section>
+      ) : null}
 
+      {view === 'contracts' ? (
       <section className="panel">
         <div className="section-title">
           <Download size={18} />
           <h2>내 계약 및 보험료 납부</h2>
         </div>
-        {isContractLoading ? <p>Loading contracts...</p> : null}
+        {isContractLoading ? <p>계약 정보를 불러오는 중입니다.</p> : null}
         <div className="contract-workspace">
           <div className="customer-list compact">
             {contracts.map((contract) => (
@@ -809,7 +891,7 @@ function CustomerContractsPage({
                     {formatCurrency(contract.monthlyPremium)}
                   </span>
                   <small>
-                    {contract.productType} · {contract.status}
+                    {formatProductType(contract.productType)} · {formatContractStatus(contract.status)}
                   </small>
                 </div>
                 <button
@@ -831,8 +913,8 @@ function CustomerContractsPage({
                 <h3>{selectedContract?.productName ?? '계약을 선택하세요'}</h3>
                 {selectedContract ? (
                   <p>
-                    계약번호 {selectedContract.contractId} · 자동이체{' '}
-                    {selectedContract.paymentMethod}
+                    계약번호 {selectedContract.contractId} · 납부 방법{' '}
+                    {formatContractStatus(selectedContract.paymentMethod)}
                   </p>
                 ) : null}
               </div>
@@ -904,18 +986,18 @@ function CustomerContractsPage({
                 </div>
                 <div className="inline-fields">
                   <label>
-                    Method
+                    납부 방법
                     <select
                       value={paymentMethod}
                       onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
                     >
-                      <option value="CARD">CARD</option>
-                      <option value="TRANSFER">TRANSFER</option>
-                      <option value="AUTO_DEBIT">AUTO_DEBIT</option>
+                      <option value="CARD">카드</option>
+                      <option value="TRANSFER">계좌이체</option>
+                      <option value="AUTO_DEBIT">자동이체</option>
                     </select>
                   </label>
                   <label>
-                    Payment info
+                    결제 정보
                     <input
                       value={paymentInfo}
                       onChange={(event) => setPaymentInfo(event.target.value)}
@@ -927,7 +1009,7 @@ function CustomerContractsPage({
                   disabled={isPaymentSubmitting}
                   type="submit"
                 >
-                  {isPaymentSubmitting ? 'Processing' : '납부하기'}
+                  {isPaymentSubmitting ? '처리 중' : '납부하기'}
                   <CreditCard size={18} />
                 </button>
               </form>
@@ -936,18 +1018,18 @@ function CustomerContractsPage({
                 <div>
                   <span className="badge">자동이체</span>
                   <h3>출금 계좌 등록</h3>
-                  <p>등록 후 계약 상세의 납부 방법이 AUTO_DEBIT로 표시됩니다.</p>
+                  <p>등록 후 계약 상세의 납부 방법이 자동이체로 표시됩니다.</p>
                 </div>
                 <div className="inline-fields">
                   <label>
-                    Account
+                    계좌번호
                     <input
                       value={autoDebitAccount}
                       onChange={(event) => setAutoDebitAccount(event.target.value)}
                     />
                   </label>
                   <label>
-                    Withdrawal day
+                    출금일
                     <input
                       min="1"
                       max="31"
@@ -962,13 +1044,14 @@ function CustomerContractsPage({
                   disabled={isAutoDebitSubmitting}
                   type="submit"
                 >
-                  {isAutoDebitSubmitting ? 'Registering' : '자동이체 등록'}
+                  {isAutoDebitSubmitting ? '등록 중' : '자동이체 등록'}
                 </button>
               </form>
             </div>
           ) : null}
         </div>
       </section>
+      ) : null}
     </section>
   )
 }
@@ -1418,7 +1501,7 @@ function CustomerClaimsPage({
             disabled={isClaimSubmitting || healthContracts.length === 0}
             type="submit"
           >
-            {isClaimSubmitting ? 'Submitting' : '청구 신청'}
+            {isClaimSubmitting ? '접수 중' : '청구 신청'}
             <Send size={18} />
           </button>
         </form>
@@ -1429,12 +1512,12 @@ function CustomerClaimsPage({
         </div>
         {claimResult ? (
           <article className={`claim-result ${claimResult.status.toLowerCase()}`}>
-            <span className="badge">{claimResult.complexity}</span>
+            <span className="badge">{formatContractStatus(claimResult.complexity)}</span>
             <div>
               <h3>청구번호 {claimResult.claimId}</h3>
               <p>{describeHealthClaimResult(claimResult)}</p>
             </div>
-            <strong>{claimResult.status}</strong>
+            <strong>{formatContractStatus(claimResult.status)}</strong>
           </article>
         ) : (
           <div className="empty-result">
@@ -1444,11 +1527,11 @@ function CustomerClaimsPage({
         )}
         <div className="claim-rule-grid">
           <article>
-            <strong>SIMPLE</strong>
+            <strong>간편 청구</strong>
             <span>1,000,000원 미만 · 즉시지급</span>
           </article>
           <article>
-            <strong>COMPLEX</strong>
+            <strong>심사 청구</strong>
             <span>1,000,000원 이상 · 심사대기</span>
           </article>
         </div>
@@ -1553,7 +1636,7 @@ function CustomerClaimsPage({
           ) : null}
           {accidentResult ? (
             <p className="form-success">
-              자동차사고 접수번호 {accidentResult.reportId}번이 {accidentResult.status} 상태로 접수되었습니다.
+              자동차사고 접수번호 {accidentResult.reportId}번이 {formatContractStatus(accidentResult.status)} 상태로 접수되었습니다.
             </p>
           ) : null}
           {accidentError ? <p className="form-error">{accidentError}</p> : null}
@@ -1562,7 +1645,7 @@ function CustomerClaimsPage({
             disabled={isAccidentSubmitting || carContracts.length === 0}
             type="submit"
           >
-            {isAccidentSubmitting ? 'Submitting' : '접수하기'}
+            {isAccidentSubmitting ? '접수 중' : '접수하기'}
             <Send size={18} />
           </button>
         </form>
@@ -1574,15 +1657,17 @@ function CustomerClaimsPage({
           <ClipboardCheck size={18} />
           <h2>보상 처리 현황</h2>
         </div>
-        {isQueryLoading ? <p>Loading claim status...</p> : null}
+        {isQueryLoading ? <p>보상 현황을 불러오는 중입니다.</p> : null}
         <div className="claim-table">
           {statusClaims.map((claim) => (
             <article key={`${claim.claimType}-${claim.claimId}`}>
-              <strong>{claim.claimType}-{claim.claimId}</strong>
+              <strong>{formatClaimType(claim.claimType)}-{claim.claimId}</strong>
               <span>{formatDate(claim.claimDate)}</span>
               <span>{formatCurrency(claim.requestAmount)}</span>
               <span>{formatCurrency(claim.paidAmount)}</span>
-              <span className={`status-badge ${claim.status.toLowerCase()}`}>{claim.status}</span>
+              <span className={`status-badge ${claim.status.toLowerCase()}`}>
+                {formatContractStatus(claim.status)}
+              </span>
             </article>
           ))}
           {statusClaims.length === 0 && !isQueryLoading ? <p>진행 중인 보상 건이 없습니다.</p> : null}
@@ -1598,7 +1683,7 @@ function CustomerClaimsPage({
         </div>
         <form className="inline-fields" onSubmit={loadHistory}>
           <label>
-            From
+            시작일
             <input
               type="date"
               value={historyFrom}
@@ -1606,7 +1691,7 @@ function CustomerClaimsPage({
             />
           </label>
           <label>
-            To
+            종료일
             <input
               type="date"
               value={historyTo}
@@ -1614,17 +1699,19 @@ function CustomerClaimsPage({
             />
           </label>
           <button className="secondary-button" disabled={isHistoryLoading} type="submit">
-            {isHistoryLoading ? 'Loading' : '조회'}
+            {isHistoryLoading ? '조회 중' : '조회'}
           </button>
         </form>
         <div className="claim-table">
           {historyClaims.map((claim) => (
             <article key={`${claim.claimType}-${claim.claimId}`}>
-              <strong>{claim.claimType}-{claim.claimId}</strong>
+              <strong>{formatClaimType(claim.claimType)}-{claim.claimId}</strong>
               <span>{formatDate(claim.claimDate)}</span>
               <span>{formatCurrency(claim.requestAmount)}</span>
               <span>{formatCurrency(claim.paidAmount)}</span>
-              <span className={`status-badge ${claim.status.toLowerCase()}`}>{claim.status}</span>
+              <span className={`status-badge ${claim.status.toLowerCase()}`}>
+                {formatContractStatus(claim.status)}
+              </span>
             </article>
           ))}
           {historyClaims.length === 0 && !isQueryLoading && !isHistoryLoading ? <p>조회 기간의 보상 이력이 없습니다.</p> : null}
@@ -1640,21 +1727,21 @@ function CustomerClaimsPage({
         </div>
         <form className="analysis-form" onSubmit={loadBenefitAnalysis}>
           <label>
-            Contract
+            계약
             <select
               value={selectedAnalysisContractId}
               onChange={(event) => setSelectedAnalysisContractId(event.target.value)}
             >
               {contracts.map((contract) => (
                 <option key={contract.contractId} value={contract.contractId}>
-                  {contract.productName} · {contract.productType}
+                  {contract.productName} · {formatProductType(contract.productType)}
                 </option>
               ))}
               {contracts.length === 0 ? <option value="">선택 가능한 계약 없음</option> : null}
             </select>
           </label>
           <button className="secondary-button" disabled={isAnalysisLoading || contracts.length === 0} type="submit">
-            {isAnalysisLoading ? 'Analyzing' : '분석'}
+            {isAnalysisLoading ? '분석 중' : '분석'}
           </button>
         </form>
         {benefitAnalysis ? (
@@ -1733,7 +1820,7 @@ function ProfilePage({
   }, [onUnauthorized, token])
 
   if (isLoading) {
-    return <section className="page">Loading profile...</section>
+    return <section className="page">내 정보를 불러오는 중입니다.</section>
   }
 
   if (!profile) {
@@ -1741,7 +1828,7 @@ function ProfilePage({
       <section className="page">
         <div className="page-header">
           <div>
-            <span className="eyebrow">GET /me</span>
+            <span className="eyebrow">내 정보 조회</span>
             <h1>마이페이지</h1>
           </div>
         </div>
@@ -1784,7 +1871,7 @@ function ProfilePage({
     <section className="page">
       <div className="page-header">
         <div>
-          <span className="eyebrow">GET /me · UC06 PUT /me/profile</span>
+          <span className="eyebrow">UC06 내 정보 수정</span>
           <h1>마이페이지</h1>
         </div>
       </div>
@@ -1799,29 +1886,29 @@ function ProfilePage({
 
       <form className="profile-form" key={profile.email} onSubmit={handleSubmit}>
         <label>
-          Name
+          이름
           <input name="name" value={profile.name} disabled />
         </label>
         <label>
-          Email
+          이메일
           <input name="email" defaultValue={profile.email} type="email" />
         </label>
         <label>
-          Phone
+          전화번호
           <input name="phone" defaultValue={profile.phone} />
         </label>
         <label>
-          Address
+          주소
           <input name="address" defaultValue={profile.address} />
         </label>
         <label>
-          Bank account
+          계좌번호
           <input name="bankAccount" defaultValue={profile.bankAccount} />
         </label>
         {error ? <p className="form-error">{error}</p> : null}
         {status ? <p className="form-success">{status}</p> : null}
         <button className="primary-button" disabled={isSaving} type="submit">
-          {isSaving ? 'Saving' : 'Save changes'}
+          {isSaving ? '저장 중' : '변경사항 저장'}
           <BadgeCheck size={18} />
         </button>
       </form>
@@ -1845,13 +1932,13 @@ function EmployeeReviewsPage({
   const [error, setError] = useState('')
   const metrics = useMemo(
     () => [
-      { label: 'Pending applications', value: String(pendingReviews.length), icon: ClipboardCheck },
+      { label: '대기 신청', value: String(pendingReviews.length), icon: ClipboardCheck },
       {
-        label: 'Car underwriting',
+        label: '자동차 심사',
         value: String(pendingReviews.filter((review) => review.productName.includes('드라이브') || review.productName.includes('자동차')).length),
         icon: Bell,
       },
-      { label: 'Ready to confirm', value: selectedReview ? '1' : '0', icon: Users },
+      { label: '선택 건', value: selectedReview ? '1' : '0', icon: Users },
     ],
     [pendingReviews, selectedReview],
   )
@@ -1948,7 +2035,7 @@ function EmployeeReviewsPage({
                 type="button"
                 onClick={() => selectReview(review.applicationId)}
               >
-                <strong>APP-{review.applicationId}</strong>
+                <strong>신청-{review.applicationId}</strong>
                 <span>{review.productName} · {review.applicantName}</span>
                 <small>{new Date(review.appliedAt).toLocaleString()} · {review.basePremium.toLocaleString()}원</small>
               </button>
@@ -1964,7 +2051,7 @@ function EmployeeReviewsPage({
           </div>
           {selectedReview ? (
             <article className="detail-card">
-              <span className="badge">Application {selectedReview.applicationId}</span>
+              <span className="badge">신청 {selectedReview.applicationId}</span>
               <h3>{selectedReview.applicantName}</h3>
               <p>{selectedReview.productName} · 기본 보험료 {selectedReview.basePremium.toLocaleString()}원</p>
               <p>생년월일 {selectedReview.birthDate} · 주민등록번호 {selectedReview.ssn}</p>
@@ -1993,26 +2080,26 @@ function EmployeeReviewsPage({
                 </div>
               ) : null}
               <label>
-                ReviewResult
+                심사 결과
                 <select value={reviewResult} onChange={(event) => setReviewResult(event.target.value as ReviewResult)}>
-                  <option value="APPROVED">APPROVED</option>
-                  <option value="CONDITIONAL">CONDITIONAL</option>
-                  <option value="REJECTED">REJECTED</option>
+                  <option value="APPROVED">승인</option>
+                  <option value="CONDITIONAL">조건부 승인</option>
+                  <option value="REJECTED">거절</option>
                 </select>
               </label>
               {reviewResult === 'CONDITIONAL' ? (
                 <label>
-                  Surcharge rate
+                  할증률
                   <input value={surchargeRate} onChange={(event) => setSurchargeRate(event.target.value)} />
                 </label>
               ) : null}
               <label>
-                Comment
+                심사 의견
                 <input value={comment} onChange={(event) => setComment(event.target.value)} />
               </label>
               {decision ? (
                 <p className="form-success">
-                  심사 {decision.reviewId}번 {decision.result} · 최종 월 보험료 {decision.adjustedPremium.toLocaleString()}원
+                  심사 {decision.reviewId}번 {formatContractStatus(decision.result)} · 최종 월 보험료 {decision.adjustedPremium.toLocaleString()}원
                 </p>
               ) : null}
               {error ? <p className="form-error">{error}</p> : null}
@@ -2054,13 +2141,13 @@ function EmployeeBenefitReviewsPage({
     selectedReview?.claimStatus === 'FAILED' || decision?.claimStatus === 'FAILED'
   const metrics = useMemo(
     () => [
-      { label: 'Assigned reviews', value: String(reviews.length), icon: ClipboardCheck },
+      { label: '배정 심사', value: String(reviews.length), icon: ClipboardCheck },
       {
-        label: 'Failed payout',
+        label: '지급 실패',
         value: String(reviews.filter((review) => review.claimStatus === 'FAILED').length),
         icon: AlertTriangle,
       },
-      { label: 'Selected claim', value: selectedReview ? `#${selectedReview.claimId}` : '-', icon: Receipt },
+      { label: '선택 청구', value: selectedReview ? `#${selectedReview.claimId}` : '-', icon: Receipt },
     ],
     [reviews, selectedReview],
   )
@@ -2165,7 +2252,7 @@ function EmployeeBenefitReviewsPage({
       setStatusMessage(
         claimStatus === 'COMPLETED'
           ? '지급 재시도 완료'
-          : `지급 재시도 결과 ${claimStatus}`,
+          : `지급 재시도 결과 ${formatContractStatus(claimStatus)}`,
       )
       await refreshBenefitReviews()
     } catch (err) {
@@ -2185,7 +2272,7 @@ function EmployeeBenefitReviewsPage({
     const employeeId = Number(assignEmployeeId)
 
     if (!claimId || !employeeId) {
-      setError('청구번호와 직원 ID를 입력해 주세요.')
+      setError('청구번호와 직원번호를 입력해 주세요.')
       return
     }
 
@@ -2233,7 +2320,7 @@ function EmployeeBenefitReviewsPage({
             <ClipboardCheck size={18} />
             <h2>배정된 심사</h2>
           </div>
-          {isLoading ? <p>Loading benefit reviews...</p> : null}
+          {isLoading ? <p>보험금 심사 목록을 불러오는 중입니다.</p> : null}
           <div className="review-list">
             {reviews.map((review) => (
               <button
@@ -2242,9 +2329,9 @@ function EmployeeBenefitReviewsPage({
                 type="button"
                 onClick={() => selectBenefitReview(review.claimId)}
               >
-                <strong>CLAIM-{review.claimId}</strong>
+                <strong>청구-{review.claimId}</strong>
                 <span>{review.hospitalName} · {formatCurrency(review.requestAmount)}</span>
-                <small>{review.claimStatus}</small>
+                <small>{formatContractStatus(review.claimStatus)}</small>
               </button>
             ))}
             {reviews.length === 0 && !isLoading ? <p>배정된 심사 건이 없습니다.</p> : null}
@@ -2258,7 +2345,7 @@ function EmployeeBenefitReviewsPage({
           </div>
           {selectedReview ? (
             <article className="detail-card">
-              <span className="badge">{selectedReview.claimStatus}</span>
+              <span className="badge">{formatContractStatus(selectedReview.claimStatus)}</span>
               <h3>청구번호 {selectedReview.claimId}</h3>
               <p>
                 {selectedReview.hospitalName} · 진단코드 {selectedReview.diagnosisCode}
@@ -2268,22 +2355,22 @@ function EmployeeBenefitReviewsPage({
                 {selectedReview.assignedStaffId}
               </p>
               <label>
-                Result
+                심사 결과
                 <select
                   value={reviewResult}
                   onChange={(event) => setReviewResult(event.target.value as BenefitReviewResult)}
                 >
-                  <option value="APPROVED">APPROVED</option>
-                  <option value="REJECTED">REJECTED</option>
+                  <option value="APPROVED">승인</option>
+                  <option value="REJECTED">거절</option>
                 </select>
               </label>
               <label>
-                Comment
+                심사 의견
                 <input value={comment} onChange={(event) => setComment(event.target.value)} />
               </label>
               <div className="button-row">
                 <button className="primary-button" disabled={isSubmitting} type="submit">
-                  {isSubmitting ? 'Confirming' : '심사 확정'}
+                  {isSubmitting ? '확정 중' : '심사 확정'}
                   <CheckCircle2 size={18} />
                 </button>
                 <button
@@ -2292,7 +2379,7 @@ function EmployeeBenefitReviewsPage({
                   type="button"
                   onClick={retryPayout}
                 >
-                  {isRetrying ? 'Retrying' : '지급 재시도'}
+                  {isRetrying ? '재시도 중' : '지급 재시도'}
                 </button>
               </div>
             </article>
@@ -2301,7 +2388,7 @@ function EmployeeBenefitReviewsPage({
           )}
           {decision ? (
             <p className={decision.claimStatus === 'FAILED' ? 'form-error' : 'form-success'}>
-              청구 {decision.claimId}번 {decision.result} · {statusMessage}
+              청구 {decision.claimId}번 {formatContractStatus(decision.result)} · {statusMessage}
             </p>
           ) : null}
           {statusMessage && !decision ? <p className="form-success">{statusMessage}</p> : null}
@@ -2316,14 +2403,14 @@ function EmployeeBenefitReviewsPage({
         </div>
         <div className="inline-fields">
           <label>
-            Claim ID
+            청구번호
             <input
               value={assignClaimId}
               onChange={(event) => setAssignClaimId(event.target.value)}
             />
           </label>
           <label>
-            Employee ID
+            직원번호
             <input
               value={assignEmployeeId}
               onChange={(event) => setAssignEmployeeId(event.target.value)}
@@ -2331,7 +2418,7 @@ function EmployeeBenefitReviewsPage({
           </label>
         </div>
         <button className="secondary-button" disabled={isAssigning} type="submit">
-          {isAssigning ? 'Assigning' : '담당자 변경'}
+          {isAssigning ? '변경 중' : '담당자 변경'}
         </button>
       </form>
     </section>
@@ -2349,7 +2436,7 @@ function EmployeeAssignmentsPage() {
       <div className="page-header">
         <div>
           <span className="eyebrow">UC14</span>
-          <h1>담당자 지정</h1>
+          <h1>담당자 배정</h1>
         </div>
       </div>
       <section className="workflow-band">
@@ -2424,11 +2511,42 @@ function App() {
               <Routes>
                 <Route path="/home" element={<CustomerHomePage />} />
                 <Route
+                  path="/products"
+                  element={
+                    <CustomerContractsPage
+                      token={session.token}
+                      onUnauthorized={handleUnauthorized}
+                      view="products"
+                    />
+                  }
+                />
+                <Route
+                  path="/apply"
+                  element={
+                    <CustomerContractsPage
+                      token={session.token}
+                      onUnauthorized={handleUnauthorized}
+                      view="apply"
+                    />
+                  }
+                />
+                <Route
+                  path="/applications"
+                  element={
+                    <CustomerContractsPage
+                      token={session.token}
+                      onUnauthorized={handleUnauthorized}
+                      view="applications"
+                    />
+                  }
+                />
+                <Route
                   path="/contracts"
                   element={
                     <CustomerContractsPage
                       token={session.token}
                       onUnauthorized={handleUnauthorized}
+                      view="contracts"
                     />
                   }
                 />
