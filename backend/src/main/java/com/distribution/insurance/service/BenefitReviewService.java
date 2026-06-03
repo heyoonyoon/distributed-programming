@@ -28,7 +28,7 @@ public class BenefitReviewService {
 
     @Transactional(readOnly = true)
     public List<BenefitPaymentReview> assignedReviews(Long staffId) {
-        return reviewRepository.findByAssignedStaffId(staffId).stream()
+        return reviewRepository.findByAssignedStaffIdWithClaim(staffId).stream()
                 .filter(r -> r.getResult() == null)
                 .toList();
     }
