@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
-/** 자동차사고 접수(UC09). 접수번호 발급 + 직원·가입자 알림 후 보상심사 큐로 진입(ADR 0009). */
+/** 자동차사고 접수(UC09). 접수번호 발급 + 직원·가입자 알림 + 미배정 보상심사 review 생성(ADR 0009). 담당자는 수동 배정(UC14 A1). */
 @Service
 public class CarAccidentService {
 
@@ -28,20 +28,17 @@ public class CarAccidentService {
     private final UserRepository userRepository;
     private final NotificationSender notificationSender;
     private final BenefitPaymentReviewRepository reviewRepository;
-    private final StaffAssignmentService assignmentService;
 
     public CarAccidentService(CarAccidentReportRepository reportRepository,
                               ContractRepository contractRepository,
                               UserRepository userRepository,
                               NotificationSender notificationSender,
-                              BenefitPaymentReviewRepository reviewRepository,
-                              StaffAssignmentService assignmentService) {
+                              BenefitPaymentReviewRepository reviewRepository) {
         this.reportRepository = reportRepository;
         this.contractRepository = contractRepository;
         this.userRepository = userRepository;
         this.notificationSender = notificationSender;
         this.reviewRepository = reviewRepository;
-        this.assignmentService = assignmentService;
     }
 
     @Transactional
@@ -66,9 +63,8 @@ public class CarAccidentService {
         attachments.forEach(report::addAttachment);
         reportRepository.save(report);
 
-        // 자동차사고도 보상심사 큐로 진입(ADR 0009): review 생성·자동배정 후 심사중 전이
-        BenefitPaymentReview review = reviewRepository.save(new BenefitPaymentReview(report));
-        assignmentService.assignAutomatically(review);
+        // 자동차사고는 보상심사 review만 미배정으로 생성(ADR 0009). 담당자 지정은 관리자 수동 배정(UC14 A1).
+        reviewRepository.save(new BenefitPaymentReview(report));
         report.markInReview();
 
         // 직원 전원에게 접수 알림(UC09 step6)
