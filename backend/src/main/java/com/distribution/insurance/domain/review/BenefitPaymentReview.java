@@ -16,7 +16,7 @@ public class BenefitPaymentReview extends Review {
     private Long assignedStaffId;   // InsuranceEmployee.id (용어 적응: diagram의 assignedStaffId)
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "claim_id", unique = true, nullable = false)
+    @JoinColumn(name = "claim_id", unique = true)
     private HealthInsuranceClaim claim;
 
     public BenefitPaymentReview(HealthInsuranceClaim claim) {
