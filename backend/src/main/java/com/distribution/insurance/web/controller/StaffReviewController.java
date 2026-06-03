@@ -43,7 +43,8 @@ public class StaffReviewController {
     public BenefitReviewResultResponse confirm(@AuthenticationPrincipal Long staffId,
                                                @PathVariable Long claimId,
                                                @Valid @RequestBody ConfirmBenefitReviewRequest request) {
-        BenefitPaymentReview review = reviewService.confirm(staffId, claimId, request.result(), request.comment());
+        BenefitPaymentReview review = reviewService.confirm(
+                staffId, claimId, request.result(), request.comment(), request.payoutAmount());
         return BenefitReviewResultResponse.from(review);
     }
 

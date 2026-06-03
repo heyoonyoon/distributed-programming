@@ -2,6 +2,7 @@ package com.distribution.insurance.web.controller;
 
 import com.distribution.insurance.domain.claim.HealthInsuranceClaim;
 import com.distribution.insurance.domain.contract.InsuranceContract;
+import com.distribution.insurance.domain.product.CarInsuranceProduct;
 import com.distribution.insurance.domain.product.HealthInsuranceProduct;
 import com.distribution.insurance.domain.user.InsuranceEmployee;
 import com.distribution.insurance.domain.user.Policyholder;
@@ -11,12 +12,17 @@ import com.distribution.insurance.repository.BenefitPaymentRepository;
 import com.distribution.insurance.service.ClaimService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -27,6 +33,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class StaffReviewControllerTest {
+
+    @TempDir static Path uploadDir;
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        registry.add("insurance.upload.dir", () -> uploadDir.toString());
+    }
 
     @Autowired MockMvc mockMvc;
     @Autowired ClaimService claimService;
@@ -96,5 +109,49 @@ class StaffReviewControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))))
                 .andExpect(jsonPath("$[0].claimId").value(claim.getId()));
+    }
+
+    @Test
+    void 자동차사고가_보상심사_목록에_뜨고_금액입력으로_승인된다() throws Exception {
+        InsuranceEmployee staff = emp("car-staff@t.com");
+        Policyholder ph = userRepository.save(new Policyholder("홍", "car-ph" + System.nanoTime() + "@t.com", "010", "pw",
+                "900101-1234567", LocalDate.of(1990, 1, 1), "주소", "110-123-456789"));
+        var product = productRepository.save(new CarInsuranceProduct("자동차", "대물", 50000, "SEDAN", "ALL"));
+        InsuranceContract contract = contractRepository.save(new InsuranceContract(ph, product, 50000, LocalDate.now()));
+        String phToken = jwtTokenProvider.createToken(ph.getId(), "POLICYHOLDER");
+        String staffToken = jwtTokenProvider.createToken(staff.getId(), "EMPLOYEE");
+
+        MockMultipartFile photo = new MockMultipartFile("attachments", "scene.jpg", "image/jpeg", new byte[]{1, 2});
+
+        // 자동차 사고 접수 → claimId 추출
+        String responseBody = mockMvc.perform(multipart("/claims/car-accidents")
+                        .file(photo)
+                        .param("contractId", String.valueOf(contract.getId()))
+                        .param("accidentDate", LocalDate.now().toString())
+                        .param("accidentLocation", "서울 강남")
+                        .param("accidentType", "쌍방")
+                        .param("vehicleNumber", "12가3456")
+                        .param("hasInjury", "true")
+                        .param("injuredCount", "2")
+                        .header("Authorization", "Bearer " + phToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        // reportId 파싱 (응답: {"reportId":N, "status":"IN_REVIEW"})
+        long claimId = Long.parseLong(responseBody.replaceAll(".*\"reportId\":(\\d+).*", "$1"));
+
+        // 보상심사 목록에 CAR_ACCIDENT 항목이 있어야 한다
+        mockMvc.perform(get("/staff/benefit-reviews")
+                        .header("Authorization", "Bearer " + staffToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.claimId == " + claimId + ")].claimType",
+                        hasItem("CAR_ACCIDENT")));
+
+        // payoutAmount 포함 승인
+        mockMvc.perform(post("/staff/benefit-reviews/" + claimId + "/confirm")
+                        .header("Authorization", "Bearer " + staffToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"result\":\"APPROVED\",\"comment\":\"정상\",\"payoutAmount\":3000000}"))
+                .andExpect(status().isOk());
     }
 }

@@ -95,7 +95,7 @@ HealthInsuranceProduct 계약에 대한 의료보험 청구. 청구금액으로 
 _Avoid_: 의료청구, 의료비청구, medical claim
 
 **CarAccidentReport**:
-CarInsuranceProduct 계약에 대한 자동차사고 접수 건. 접수번호 발급·직원 알림까지가 현재 범위(심사·지급 흐름 없음).
+CarInsuranceProduct 계약에 대한 자동차사고 접수 건. 접수 시 BenefitPaymentReview가 생성되어 담당자에게 배정되며, 승인 시 담당자가 사정한 보험금이 지급된다(접수 시점엔 청구금액 미정).
 _Avoid_: 사고접수, 사고접수건, accident report(단독), car claim
 
 **ClaimStatus**:
@@ -107,7 +107,7 @@ HealthInsuranceClaim의 복잡도. SIMPLE(간단 — 즉시 지급), COMPLEX(복
 _Avoid_: 복잡도, 난이도, complexity(단독)
 
 **BenefitPaymentReview**:
-COMPLEX 의료보험 청구에 대한 보험금 지급 심사. Review 추상 부모를 상속하며 배정된 InsuranceEmployee(담당자)가 확정한다. 승인 시 BenefitPayment를 소유한다(composition). 결과는 기존 ReviewResult를 쓰되 CONDITIONAL은 사용하지 않는다.
+보험금 지급 심사. COMPLEX 의료보험 청구와 자동차사고 접수 건(CarAccidentReport)을 대상으로 하며, 어느 Claim이든 참조할 수 있다. Review 추상 부모를 상속하며 배정된 InsuranceEmployee(담당자)가 확정한다. 자동차사고는 승인 시 담당자가 지급할 보험금을 직접 사정해 입력한다. 승인 시 BenefitPayment를 소유한다(composition). 결과는 기존 ReviewResult를 쓰되 CONDITIONAL은 사용하지 않는다.
 _Avoid_: 지급심사, 보험금심사, benefit review, payout review
 
 **BenefitPayment**:

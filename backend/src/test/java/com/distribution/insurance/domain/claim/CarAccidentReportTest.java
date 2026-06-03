@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 class CarAccidentReportTest {
 
@@ -30,6 +30,24 @@ class CarAccidentReportTest {
         assertThat(report.isHasInjury()).isTrue();
         assertThat(report.getInjuredCount()).isEqualTo(2);
         assertThat(report.getRequestAmount()).isEqualTo(0);
+    }
+
+    private CarAccidentReport sampleReport() {
+        return new CarAccidentReport(null, java.time.LocalDate.now(), "서울", "단독", "12가3456", false, 0);
+    }
+
+    @Test
+    void assessPayout는_사정금액을_청구금액으로_기록한다() {
+        CarAccidentReport report = sampleReport();
+        report.assessPayout(3_000_000);
+        assertThat(report.getRequestAmount()).isEqualTo(3_000_000);
+    }
+
+    @Test
+    void assessPayout에_0이하면_400성_예외() {
+        CarAccidentReport report = sampleReport();
+        assertThatThrownBy(() -> report.assessPayout(0))
+                .isInstanceOf(com.distribution.insurance.service.InvalidRequestException.class);
     }
 
     @Test

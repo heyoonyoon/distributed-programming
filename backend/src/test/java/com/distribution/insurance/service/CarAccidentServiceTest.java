@@ -27,6 +27,7 @@ class CarAccidentServiceTest {
     @Autowired ContractRepository contractRepository;
     @Autowired ProductRepository productRepository;
     @Autowired UserRepository userRepository;
+    @Autowired BenefitPaymentReviewRepository reviewRepository;
 
     private Policyholder ph(String acct) {
         return userRepository.save(new Policyholder("홍", "h" + System.nanoTime() + "@t.com", "010", "pw",
@@ -39,8 +40,9 @@ class CarAccidentServiceTest {
     }
 
     @Test
-    void 접수하면_PENDING으로_저장되고_접수번호가_발급된다() {
-        userRepository.save(new InsuranceEmployee("직원", "e@t.com", "010", "pw", "사고팀", 0));
+    void 접수하면_review가_생성되고_담당자에_배정되어_IN_REVIEW가_된다() {
+        InsuranceEmployee staff = userRepository.save(
+                new InsuranceEmployee("직원", "e@t.com", "010", "pw", "사고팀", 0));
         Policyholder p = ph("110-123-456789");
         InsuranceContract c = carContract(p);
 
@@ -49,7 +51,9 @@ class CarAccidentServiceTest {
 
         assertThat(report.getId()).isNotNull();
         assertThat(reportRepository.findById(report.getId()).orElseThrow().getStatus())
-                .isEqualTo(ClaimStatus.PENDING);
+                .isEqualTo(ClaimStatus.IN_REVIEW);
+        var review = reviewRepository.findByClaimId(report.getId()).orElseThrow();
+        assertThat(review.getAssignedStaffId()).isEqualTo(staff.getId());
     }
 
     @Test

@@ -38,6 +38,14 @@ public class CarAccidentReport extends Claim {
         this.injuredCount = injuredCount;
     }
 
+    /** 담당자가 사정한 지급 보험금을 기록한다(승인 시). 금액은 0보다 커야 한다. */
+    public void assessPayout(int amount) {
+        if (amount <= 0) {
+            throw new com.distribution.insurance.service.InvalidRequestException("사정 보험금은 0보다 커야 합니다.");
+        }
+        recordAssessedAmount(amount);
+    }
+
     public void addAttachment(ClaimAttachment attachment) {
         this.attachments.add(attachment);
     }

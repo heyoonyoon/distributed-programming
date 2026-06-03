@@ -64,6 +64,6 @@ class CarAccidentControllerTest {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.reportId").exists())
-                .andExpect(jsonPath("$.status").value("PENDING"));
+                .andExpect(jsonPath("$.status").value("IN_REVIEW"));
     }
 }

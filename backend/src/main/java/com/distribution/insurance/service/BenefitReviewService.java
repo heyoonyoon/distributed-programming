@@ -1,6 +1,7 @@
 package com.distribution.insurance.service;
 
-import com.distribution.insurance.domain.claim.HealthInsuranceClaim;
+import com.distribution.insurance.domain.claim.CarAccidentReport;
+import com.distribution.insurance.domain.claim.Claim;
 import com.distribution.insurance.domain.review.BenefitPaymentReview;
 import com.distribution.insurance.domain.review.ReviewResult;
 import com.distribution.insurance.domain.user.Policyholder;
@@ -39,12 +40,16 @@ public class BenefitReviewService {
     }
 
     @Transactional
-    public BenefitPaymentReview confirm(Long staffId, Long claimId, ReviewResult result, String comment) {
+    public BenefitPaymentReview confirm(Long staffId, Long claimId, ReviewResult result, String comment, Integer payoutAmount) {
         BenefitPaymentReview review = requireOwned(staffId, claimId);
         if (review.getResult() != null) {
             throw new IllegalStateTransitionException("이미 확정된 심사입니다.");
         }
-        HealthInsuranceClaim claim = review.getClaim();
+        Claim claim = review.getClaim();
+        boolean carApprove = result == ReviewResult.APPROVED && claim instanceof CarAccidentReport;
+        if (carApprove && (payoutAmount == null || payoutAmount <= 0)) {
+            throw new InvalidRequestException("자동차사고 승인 시 지급 보험금(payoutAmount)은 0보다 커야 합니다.");
+        }
 
         review.confirm(result, comment);
         Policyholder ph = claim.getContract().getPolicyholder();
@@ -54,10 +59,19 @@ public class BenefitReviewService {
             notificationSender.send(ph.getEmail(), ph.getPhone(),
                     "보험금 지급 심사 결과: 반려. 사유: " + comment);
         } else {   // APPROVED
+            if (claim instanceof CarAccidentReport car) {
+                car.assessPayout(payoutAmount);   // 직원이 사정한 금액을 청구금액으로 기록
+            }
             claim.markApproved();
             payoutService.pay(claim);   // 지급 성공 → COMPLETED, 실패 → FAILED + 직원 알림
         }
         return review;
+    }
+
+    /** 금액이 이미 확정된 건(의료 복잡 청구 등)의 확정. */
+    @Transactional
+    public BenefitPaymentReview confirm(Long staffId, Long claimId, ReviewResult result, String comment) {
+        return confirm(staffId, claimId, result, comment, null);
     }
 
     /** 송금 실패(FAILED) 건 재시도(UC17 E1-3). 배정된 담당자만 재시도 가능. */
