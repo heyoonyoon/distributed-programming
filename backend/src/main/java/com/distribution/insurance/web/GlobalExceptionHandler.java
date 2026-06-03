@@ -40,9 +40,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("잘못된 요청 파라미터입니다.");
     }
 
-    /** 제약 위반(음수 보험료 등) → 400 */
+    /** 제약 위반(음수 보험료 등) → 400. 내부 파라미터 경로 노출 없이 일반 메시지 반환. */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<String> handleConstraintViolation(ConstraintViolationException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("잘못된 요청 파라미터입니다.");
     }
 }
