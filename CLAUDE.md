@@ -1,0 +1,76 @@
+# CLAUDE.md
+
+보험(insurance) 모노레포. 한 레포에 백엔드(Spring)와 프론트엔드(React)를 함께 둔다.
+
+## 레포 구조
+```
+insurance/
+├── CLAUDE.md
+├── docs/                 ← 공용 도메인 문서 (백/프론트 둘 다 참고)
+├── backend/              ← Spring Boot 4 / Java 21 (com.distribution.insurance)
+└── frontend/             ← React (추후 생성)
+```
+
+백엔드 스택: Spring Data JPA, Spring Security, Validation, Spring MVC, MySQL, Lombok, JUnit5.
+백엔드 테스트 실행: `cd backend && ./gradlew test`.
+
+## 개발 방법론 (DDD + Superpowers + grill-with-docs)
+
+이 프로젝트는 아래 파이프라인을 따른다. 발산 → 취조(수렴) → 계획 → 구현 순서이며,
+각 단계는 정해진 위치에 산출물을 남긴다.
+
+```
+brainstorming → grill-with-docs → writing-plans → executing-plans → finishing-a-development-branch
+   (spec)         (CONTEXT/ADR)      (plan)          (구현·TDD)
+```
+
+### 1. brainstorming (superpowers)
+- 아이디어를 발산하고 설계를 확정한다.
+- 산출물: 검증·승인된 설계 문서 → `docs/superpowers/specs/YYYY-MM-DD-<주제>-design.md` (git 커밋).
+- 하드 게이트: 설계를 제시하고 사용자가 승인하기 전까지 코드/스캐폴딩 금지.
+- 끝나면 자동으로 writing-plans로 넘어가려 하므로, **여기서 멈추고 먼저 grill-with-docs를 실행한다.**
+
+### 2. grill-with-docs (취조 / 수렴)
+- brainstorming이 만든 spec을 도메인 모델(유스케이스·클래스 다이어그램)에 대고 한 질문씩 취조한다.
+- 도메인 모델 참고 문서: `docs/usecases/` (UC01~UC17), `docs/class_diagram/` (00_overview ~ 07_external, total_class_diagram).
+- 산출물(이것만 수정한다):
+  - `CONTEXT.md` (루트) — 순수 용어집(glossary). 구현 디테일·스펙 금지. 용어 1~2문장 정의 + `_Avoid_:` 동의어.
+  - `docs/adr/NNNN-<slug>.md` — 되돌리기 어렵고 / 맥락 없으면 의아하고 / 진짜 트레이드오프인 결정만 기록.
+- **grill은 spec과 plan 문서를 고치지 않는다.** 취조로 결정이 바뀌면 사용자/Claude가 직접 spec에 반영한다.
+- 취조 종료 후 반드시: 바뀐 결정을 spec 문서에 반영한다.
+
+### 3. writing-plans (superpowers)
+- 확정된 spec으로 TDD 구조의 단계별 구현 계획서를 만든다.
+- 산출물: `docs/superpowers/plans/YYYY-MM-DD-<기능명>.md`.
+- **writing-plans는 자동으로 CONTEXT.md/ADR을 읽지 않는다.** 호출 시 항상 다음을 준수하도록 명시한다:
+  - `CONTEXT.md`의 용어를 코드 네이밍에 그대로 사용 (동의어 혼용 금지. 예: Policyholder로 정했으면 account/user 금지).
+  - `docs/adr/`의 결정을 위반하지 않음.
+- 각 task는 bite-sized step(테스트 작성 → 실패 확인 → 최소 구현 → 통과 확인 → 커밋)으로 구성된다.
+
+### 4. executing-plans (superpowers)
+- plan 문서를 실행 대본으로 삼아 step을 그대로 따라간다 = TDD 자동 수행.
+- 막히면 추측하지 말고 멈추고 사용자에게 질문한다.
+- main/master에서 직접 구현 시작 금지 — 브랜치/worktree에서 작업.
+
+### 5. TDD (test-driven-development) — 철칙
+- **실패하는 테스트 없이 프로덕션 코드 금지.** 테스트보다 코드를 먼저 썼으면 지우고 다시 시작.
+- Red(실패 테스트) → Verify Red(실패 확인) → Green(최소 구현) → Verify Green → Refactor.
+- 보험 도메인 규칙(만기·갱신·청구 조건 등)은 클래스 다이어그램 관계를 테스트로 먼저 박는다.
+- 테스트 실행: `cd backend && ./gradlew test`.
+
+### 6. 마무리
+- 완료 선언 전 verification-before-completion 또는 `/verify`로 실제 동작 확인.
+- 리뷰는 `/code-review`, 브랜치 마무리는 finishing-a-development-branch.
+
+## 문서 위치 규약 (프로젝트 루트 기준)
+- `CONTEXT.md` — 루트
+- `docs/usecases/UC01.md` ~ `UC17.md` — 유스케이스 시나리오
+- `docs/class_diagram/` — 클래스 다이어그램(00_overview가 인덱스, total_class_diagram이 전체)
+- `docs/adr/NNNN-<slug>.md` — 결정 기록
+- `docs/superpowers/specs/` — 설계 문서(spec)
+- `docs/superpowers/plans/` — 구현 계획서(plan)
+
+## 항상 지킬 것
+- 코드/문서 네이밍은 `CONTEXT.md` 용어집을 단일 출처로 따른다.
+- 계획 수립 시 CONTEXT.md 용어 + docs/adr 결정을 항상 준수한다(자동 아님 — 명시적으로 적용).
+- 커밋·푸시는 사용자가 요청할 때만 한다.
