@@ -8,6 +8,7 @@ import com.distribution.insurance.domain.product.HealthInsuranceProduct;
 import com.distribution.insurance.domain.user.Policyholder;
 import com.distribution.insurance.repository.ClaimRepository;
 import com.distribution.insurance.repository.ContractRepository;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +48,7 @@ public class ClaimService {
         if (!contract.getPolicyholder().getId().equals(policyholderId)) {
             throw new IllegalStateException("본인 계약에만 청구할 수 있습니다.");
         }
-        if (!(contract.getProduct() instanceof HealthInsuranceProduct)) {
+        if (!(Hibernate.unproxy(contract.getProduct()) instanceof HealthInsuranceProduct)) {
             throw new InvalidRequestException("의료보험 계약이 아닙니다.");
         }
 
