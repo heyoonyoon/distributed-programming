@@ -2,6 +2,9 @@ export type UserType = 'POLICYHOLDER' | 'EMPLOYEE'
 export type ProductType = 'HEALTH' | 'CAR'
 export type ApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
 export type ReviewResult = 'APPROVED' | 'CONDITIONAL' | 'REJECTED'
+export type ContractStatus = 'ACTIVE' | 'SUSPENDED' | 'TERMINATED'
+export type PaymentMethod = 'CARD' | 'TRANSFER' | 'AUTO_DEBIT'
+export type PaymentStatus = 'SUCCESS' | 'FAILED'
 
 export type AuthSession = {
   token: string
@@ -121,4 +124,52 @@ export type ConfirmReviewResponse = {
   result: ReviewResult
   surchargeRate: number
   adjustedPremium: number
+}
+
+export type ContractSummary = {
+  contractId: number
+  productName: string
+  productType: ProductType
+  startDate: string
+  endDate: string
+  monthlyPremium: number
+  status: ContractStatus
+}
+
+export type ContractDetail = ContractSummary & {
+  paymentMethod: PaymentMethod | '미등록'
+  coverageItems: CoverageItem[]
+}
+
+export type UnpaidContract = {
+  contractId: number
+  productName: string
+  dueDate: string
+  unpaidPrincipal: number
+  overdueDays: number
+  overdueInterest: number
+}
+
+export type PayableContract = {
+  contractId: number
+  productName: string
+  dueDate: string
+  amount: number
+}
+
+export type PaymentRequest = {
+  method: PaymentMethod
+  paymentInfo: string
+}
+
+export type PaymentResponse = {
+  paymentId: number
+  status: PaymentStatus
+  amount: number
+  reason: string | null
+}
+
+export type AutoDebitRequest = {
+  account: string
+  withdrawalDay: number
 }
