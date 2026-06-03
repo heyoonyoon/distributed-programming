@@ -42,7 +42,8 @@ brainstorming → grill-with-docs → writing-plans → executing-plans → fini
 ### 3. writing-plans (superpowers)
 - 확정된 spec으로 TDD 구조의 단계별 구현 계획서를 만든다.
 - 산출물: `docs/superpowers/plans/YYYY-MM-DD-<기능명>.md`.
-- **writing-plans는 자동으로 CONTEXT.md/ADR을 읽지 않는다.** 호출 시 항상 다음을 준수하도록 명시한다:
+- **writing-plans는 자동으로 spec/CONTEXT.md/ADR을 읽지 않는다.** 호출 시 항상 아래 3개를 먼저 읽고 준수하도록 명시한다:
+  - `docs/superpowers/specs/`의 해당 spec 문서 — 계획의 단일 입력(범위·도메인 모델·API·에러규약·테스트 전략).
   - `CONTEXT.md`의 용어를 코드 네이밍에 그대로 사용 (동의어 혼용 금지. 예: Policyholder로 정했으면 account/user 금지).
   - `docs/adr/`의 결정을 위반하지 않음.
 - 각 task는 bite-sized step(테스트 작성 → 실패 확인 → 최소 구현 → 통과 확인 → 커밋)으로 구성된다.
