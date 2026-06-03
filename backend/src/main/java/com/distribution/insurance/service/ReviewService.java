@@ -2,6 +2,7 @@ package com.distribution.insurance.service;
 
 import com.distribution.insurance.domain.application.ApplicationStatus;
 import com.distribution.insurance.domain.application.InsuranceApplication;
+import com.distribution.insurance.domain.contract.InsuranceContract;
 import com.distribution.insurance.domain.product.CarInsuranceProduct;
 import com.distribution.insurance.domain.review.AccidentHistory;
 import org.hibernate.Hibernate;
@@ -15,6 +16,7 @@ import com.distribution.insurance.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -77,9 +79,9 @@ public class ReviewService {
             app.markApproved();
             // ADR 0005: 승인 시 같은 트랜잭션에서 계약 생성.
             // ADR 0003: monthlyPremium은 결과 분기 없이 adjustedPremium 한 필드만 읽는다.
-            contractRepository.save(new com.distribution.insurance.domain.contract.InsuranceContract(
+            contractRepository.save(new InsuranceContract(
                     app.getApplicant(), app.getProduct(),
-                    review.getAdjustedPremium(), java.time.LocalDate.now()));
+                    review.getAdjustedPremium(), LocalDate.now()));
         }
         reviewRepository.save(review);
 

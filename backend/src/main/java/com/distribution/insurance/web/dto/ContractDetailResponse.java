@@ -27,7 +27,7 @@ public record ContractDetailResponse(
                 .toList();
         return new ContractDetailResponse(
                 c.getId(), c.getProduct().getProductName(),
-                ContractSummaryResponse.typeOf(c.getProduct()),
+                ProductTypeMapper.typeOf(c.getProduct()),
                 c.getStartDate(), c.getEndDate(), c.getMonthlyPremium(), c.getStatus().name(),
                 "미등록", items);  // 이슈 B에서 실제 결제수단으로 대체
     }
