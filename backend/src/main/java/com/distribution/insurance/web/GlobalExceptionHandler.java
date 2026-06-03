@@ -1,6 +1,8 @@
 package com.distribution.insurance.web;
 
 import com.distribution.insurance.service.DuplicateEmailException;
+import com.distribution.insurance.service.IllegalStateTransitionException;
+import com.distribution.insurance.service.InvalidRequestException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,5 +46,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<String> handleConstraintViolation(ConstraintViolationException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("잘못된 요청 파라미터입니다.");
+    }
+
+    /** 도메인 검증 실패(종류-추가정보 불일치, 할증 규칙 위반 등) → 400. */
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<String> handleInvalidRequest(InvalidRequestException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    }
+
+    /** 허용되지 않은 상태 전이(비PENDING 취소·재심사) → 409. */
+    @ExceptionHandler(IllegalStateTransitionException.class)
+    public ResponseEntity<String> handleStateTransition(IllegalStateTransitionException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
     }
 }
