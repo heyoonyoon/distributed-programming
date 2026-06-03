@@ -40,7 +40,7 @@ class CarAccidentServiceTest {
     }
 
     @Test
-    void 접수하면_미배정_review가_생성되고_IN_REVIEW가_된다() {
+    void 접수하면_미배정_review가_생성되고_PENDING_상태다() {
         Policyholder p = ph("110-123-456789");
         InsuranceContract c = carContract(p);
 
@@ -49,7 +49,7 @@ class CarAccidentServiceTest {
 
         assertThat(report.getId()).isNotNull();
         assertThat(reportRepository.findById(report.getId()).orElseThrow().getStatus())
-                .isEqualTo(ClaimStatus.IN_REVIEW);
+                .isEqualTo(ClaimStatus.PENDING);   // 배정 전이므로 접수(대기) 상태
         var review = reviewRepository.findByClaimId(report.getId()).orElseThrow();
         assertThat(review.getAssignedStaffId()).isNull();   // 수동 배정 전이므로 미배정
     }

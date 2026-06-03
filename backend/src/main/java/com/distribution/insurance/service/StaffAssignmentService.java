@@ -52,6 +52,12 @@ public class StaffAssignmentService {
         }
 
         bind(review, staff);
+
+        // 최초 배정 시 접수(PENDING) → 심사중(IN_REVIEW)으로 전이. 재배정(이미 IN_REVIEW)은 그대로.
+        var claim = review.getClaim();
+        if (claim.getStatus() == com.distribution.insurance.domain.claim.ClaimStatus.PENDING) {
+            claim.markInReview();
+        }
     }
 
     private void bind(BenefitPaymentReview review, InsuranceEmployee staff) {

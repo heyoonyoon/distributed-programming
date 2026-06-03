@@ -63,9 +63,9 @@ public class CarAccidentService {
         attachments.forEach(report::addAttachment);
         reportRepository.save(report);
 
-        // 자동차사고는 보상심사 review만 미배정으로 생성(ADR 0009). 담당자 지정은 관리자 수동 배정(UC14 A1).
+        // 자동차사고는 보상심사 review만 미배정·접수(PENDING) 상태로 생성(ADR 0009).
+        // 담당자 수동 배정(UC14 A1) 시점에 심사중(IN_REVIEW)으로 전이된다.
         reviewRepository.save(new BenefitPaymentReview(report));
-        report.markInReview();
 
         // 직원 전원에게 접수 알림(UC09 step6)
         for (InsuranceEmployee staff : userRepository.findAllEmployees()) {

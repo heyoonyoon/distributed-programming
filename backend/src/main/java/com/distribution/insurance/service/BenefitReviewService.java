@@ -34,11 +34,11 @@ public class BenefitReviewService {
                 .toList();
     }
 
-    /** 미배정 보상심사 건(수동 배정 대상). assignedStaffId=null && status=IN_REVIEW. */
+    /** 미배정 보상심사 건(수동 배정 대상). assignedStaffId=null && status=PENDING(접수, 배정 전). */
     @Transactional(readOnly = true)
     public List<BenefitPaymentReview> unassignedReviews() {
         return reviewRepository.findUnassignedWithClaim(
-                com.distribution.insurance.domain.claim.ClaimStatus.IN_REVIEW);
+                com.distribution.insurance.domain.claim.ClaimStatus.PENDING);
     }
 
     @Transactional(readOnly = true)
