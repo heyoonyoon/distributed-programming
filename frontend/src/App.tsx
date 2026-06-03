@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   Bell,
   BriefcaseBusiness,
+  CalendarDays,
   Car,
   CheckCircle2,
   ClipboardCheck,
@@ -32,7 +33,9 @@ import { ApiError, apiClient, decodeUserType } from './api/apiClient'
 import './App.css'
 import type {
   AuthSession,
+  BenefitAnalysis,
   CarAccidentReportResponse,
+  ClaimListItem,
   BenefitReviewDetail,
   BenefitReviewResult,
   BenefitReviewSummary,
@@ -84,6 +87,10 @@ function formatCurrency(value: number) {
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString('ko-KR')
+}
+
+function formatInputDate(date: Date) {
+  return date.toISOString().slice(0, 10)
 }
 
 function describeBenefitReviewResult(result: ConfirmBenefitReviewResponse) {
@@ -1007,6 +1014,22 @@ function CustomerClaimsPage({
   const [accidentResult, setAccidentResult] = useState<CarAccidentReportResponse | null>(null)
   const [accidentError, setAccidentError] = useState('')
   const [isAccidentSubmitting, setAccidentSubmitting] = useState(false)
+  const today = useMemo(() => new Date(), [])
+  const oneYearAgo = useMemo(() => {
+    const date = new Date(today)
+    date.setFullYear(date.getFullYear() - 1)
+    return date
+  }, [today])
+  const [statusClaims, setStatusClaims] = useState<ClaimListItem[]>([])
+  const [historyClaims, setHistoryClaims] = useState<ClaimListItem[]>([])
+  const [historyFrom, setHistoryFrom] = useState(formatInputDate(oneYearAgo))
+  const [historyTo, setHistoryTo] = useState(formatInputDate(today))
+  const [selectedAnalysisContractId, setSelectedAnalysisContractId] = useState('')
+  const [benefitAnalysis, setBenefitAnalysis] = useState<BenefitAnalysis | null>(null)
+  const [queryError, setQueryError] = useState('')
+  const [isQueryLoading, setQueryLoading] = useState(true)
+  const [isHistoryLoading, setHistoryLoading] = useState(false)
+  const [isAnalysisLoading, setAnalysisLoading] = useState(false)
   const healthContracts = contracts.filter(
     (contract) => contract.productType === 'HEALTH' && contract.status === 'ACTIVE',
   )
@@ -1035,6 +1058,7 @@ function CustomerClaimsPage({
           setContracts(list)
           setSelectedHealthContractId((current) => current || String(activeHealthContracts[0]?.contractId ?? ''))
           setSelectedCarContractId((current) => current || String(activeCarContracts[0]?.contractId ?? ''))
+          setSelectedAnalysisContractId((current) => current || String(list[0]?.contractId ?? ''))
         }
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
@@ -1059,6 +1083,37 @@ function CustomerClaimsPage({
       isMounted = false
     }
   }, [onUnauthorized, token])
+
+  async function loadClaimQueries() {
+    setQueryError('')
+    setQueryLoading(true)
+
+    try {
+      const [statusList, historyList] = await Promise.all([
+        apiClient.getClaimStatus(token),
+        apiClient.getClaimHistory(token, { from: historyFrom, to: historyTo }),
+      ])
+
+      setStatusClaims(statusList)
+      setHistoryClaims(historyList)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+
+      setQueryError(err instanceof Error ? err.message : '보상 조회에 실패했습니다.')
+    } finally {
+      setQueryLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      loadClaimQueries()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function changeHealthAttachments(files: FileList | null) {
     const nextFiles = Array.from(files ?? [])
@@ -1207,6 +1262,55 @@ function CustomerClaimsPage({
       setAccidentError(err instanceof Error ? err.message : '자동차사고 접수에 실패했습니다.')
     } finally {
       setAccidentSubmitting(false)
+    }
+  }
+
+  async function loadHistory(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault()
+    setQueryError('')
+    setHistoryLoading(true)
+
+    try {
+      setHistoryClaims(await apiClient.getClaimHistory(token, {
+        from: historyFrom,
+        to: historyTo,
+      }))
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+
+      setQueryError(err instanceof Error ? err.message : '보상 이력 조회에 실패했습니다.')
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  async function loadBenefitAnalysis(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setQueryError('')
+    setBenefitAnalysis(null)
+
+    const contractId = Number(selectedAnalysisContractId)
+    if (!contractId) {
+      setQueryError('분석할 계약을 선택해 주세요.')
+      return
+    }
+
+    setAnalysisLoading(true)
+
+    try {
+      setBenefitAnalysis(await apiClient.getBenefitAnalysis(token, contractId))
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+
+      setQueryError(err instanceof Error ? err.message : '실익 분석 조회에 실패했습니다.')
+    } finally {
+      setAnalysisLoading(false)
     }
   }
 
@@ -1429,35 +1533,142 @@ function CustomerClaimsPage({
       </div>
 
       <section className="panel result-panel">
-          <div className="section-title">
-            <Receipt size={18} />
-            <h2>청구 결과</h2>
-          </div>
-          {claimResult ? (
-            <article className={`claim-result ${claimResult.status.toLowerCase()}`}>
-              <span className="badge">{claimResult.complexity}</span>
-              <div>
-                <h3>청구번호 {claimResult.claimId}</h3>
-                <p>{describeHealthClaimResult(claimResult)}</p>
-              </div>
-              <strong>{claimResult.status}</strong>
-            </article>
-          ) : (
-            <div className="empty-result">
-              <FileText size={28} />
-              <p>청구 신청 후 결과가 표시됩니다.</p>
+        <div className="section-title">
+          <Receipt size={18} />
+          <h2>청구 결과</h2>
+        </div>
+        {claimResult ? (
+          <article className={`claim-result ${claimResult.status.toLowerCase()}`}>
+            <span className="badge">{claimResult.complexity}</span>
+            <div>
+              <h3>청구번호 {claimResult.claimId}</h3>
+              <p>{describeHealthClaimResult(claimResult)}</p>
             </div>
-          )}
-          <div className="claim-rule-grid">
+            <strong>{claimResult.status}</strong>
+          </article>
+        ) : (
+          <div className="empty-result">
+            <FileText size={28} />
+            <p>청구 신청 후 결과가 표시됩니다.</p>
+          </div>
+        )}
+        <div className="claim-rule-grid">
+          <article>
+            <strong>SIMPLE</strong>
+            <span>1,000,000원 미만 · 즉시지급</span>
+          </article>
+          <article>
+            <strong>COMPLEX</strong>
+            <span>1,000,000원 이상 · 심사대기</span>
+          </article>
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <ClipboardCheck size={18} />
+          <h2>보상 처리 현황</h2>
+        </div>
+        {isQueryLoading ? <p>Loading claim status...</p> : null}
+        <div className="claim-table">
+          {statusClaims.map((claim) => (
+            <article key={`${claim.claimType}-${claim.claimId}`}>
+              <strong>{claim.claimType}-{claim.claimId}</strong>
+              <span>{formatDate(claim.claimDate)}</span>
+              <span>{formatCurrency(claim.requestAmount)}</span>
+              <span>{formatCurrency(claim.paidAmount)}</span>
+              <span className={`status-badge ${claim.status.toLowerCase()}`}>{claim.status}</span>
+            </article>
+          ))}
+          {statusClaims.length === 0 && !isQueryLoading ? <p>진행 중인 보상 건이 없습니다.</p> : null}
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <CalendarDays size={18} />
+          <h2>보상 이력</h2>
+        </div>
+        <form className="inline-fields" onSubmit={loadHistory}>
+          <label>
+            From
+            <input
+              type="date"
+              value={historyFrom}
+              onChange={(event) => setHistoryFrom(event.target.value)}
+            />
+          </label>
+          <label>
+            To
+            <input
+              type="date"
+              value={historyTo}
+              onChange={(event) => setHistoryTo(event.target.value)}
+            />
+          </label>
+          <button className="secondary-button" disabled={isHistoryLoading} type="submit">
+            {isHistoryLoading ? 'Loading' : '조회'}
+          </button>
+        </form>
+        <div className="claim-table">
+          {historyClaims.map((claim) => (
+            <article key={`${claim.claimType}-${claim.claimId}`}>
+              <strong>{claim.claimType}-{claim.claimId}</strong>
+              <span>{formatDate(claim.claimDate)}</span>
+              <span>{formatCurrency(claim.requestAmount)}</span>
+              <span>{formatCurrency(claim.paidAmount)}</span>
+              <span className={`status-badge ${claim.status.toLowerCase()}`}>{claim.status}</span>
+            </article>
+          ))}
+          {historyClaims.length === 0 && !isQueryLoading && !isHistoryLoading ? <p>조회 기간의 보상 이력이 없습니다.</p> : null}
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="section-title">
+          <BadgeCheck size={18} />
+          <h2>실익 분석</h2>
+        </div>
+        <form className="analysis-form" onSubmit={loadBenefitAnalysis}>
+          <label>
+            Contract
+            <select
+              value={selectedAnalysisContractId}
+              onChange={(event) => setSelectedAnalysisContractId(event.target.value)}
+            >
+              {contracts.map((contract) => (
+                <option key={contract.contractId} value={contract.contractId}>
+                  {contract.productName} · {contract.productType}
+                </option>
+              ))}
+              {contracts.length === 0 ? <option value="">선택 가능한 계약 없음</option> : null}
+            </select>
+          </label>
+          <button className="secondary-button" disabled={isAnalysisLoading || contracts.length === 0} type="submit">
+            {isAnalysisLoading ? 'Analyzing' : '분석'}
+          </button>
+        </form>
+        {benefitAnalysis ? (
+          <div className="analysis-grid">
             <article>
-              <strong>SIMPLE</strong>
-              <span>1,000,000원 미만 · 즉시지급</span>
+              <span>총납입</span>
+              <strong>{formatCurrency(benefitAnalysis.totalPaidPremium)}</strong>
             </article>
             <article>
-              <strong>COMPLEX</strong>
-              <span>1,000,000원 이상 · 심사대기</span>
+              <span>총수령</span>
+              <strong>{formatCurrency(benefitAnalysis.totalReceivedBenefit)}</strong>
+            </article>
+            <article>
+              <span>실익</span>
+              <strong>{formatCurrency(benefitAnalysis.profit)}</strong>
+            </article>
+            <article>
+              <span>실익률</span>
+              <strong>{benefitAnalysis.profitRate.toFixed(2)}</strong>
             </article>
           </div>
+        ) : null}
+        {queryError ? <p className="form-error">{queryError}</p> : null}
       </section>
     </section>
   )

@@ -14,6 +14,7 @@ export type ClaimStatus =
   | 'FAILED'
 export type BenefitReviewResult = 'APPROVED' | 'REJECTED'
 export type ClaimComplexity = 'SIMPLE' | 'COMPLEX'
+export type ClaimType = 'HEALTH' | 'CAR'
 
 export type AuthSession = {
   token: string
@@ -245,4 +246,20 @@ export type HealthClaimResponse = {
   claimId: number
   status: ClaimStatus
   complexity: ClaimComplexity
+}
+
+export type ClaimListItem = {
+  claimId: number
+  claimType: ClaimType
+  claimDate: string
+  requestAmount: number
+  paidAmount: number
+  status: ClaimStatus
+}
+
+export type BenefitAnalysis = {
+  totalPaidPremium: number
+  totalReceivedBenefit: number
+  profit: number
+  profitRate: number
 }
