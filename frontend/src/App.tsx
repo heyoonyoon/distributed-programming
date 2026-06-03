@@ -510,13 +510,8 @@ function CustomerContractsPage({
       setContracts(contractList)
       setUnpaidContracts(unpaidList)
       setPayableContracts(payableList)
-
-      if (contractList[0]) {
-        await loadContractDetail(contractList[0].contractId)
-      } else {
-        setSelectedContract(null)
-        setSelectedUnpaid(null)
-      }
+      setSelectedContract(null)
+      setSelectedUnpaid(null)
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         onUnauthorized()
@@ -913,20 +908,18 @@ function CustomerContractsPage({
             {contracts.length === 0 ? <p>유효한 계약이 없습니다.</p> : null}
           </div>
 
-          <div className="contract-detail-grid">
-            <section className="payment-box">
-              <div>
-                <span className="badge">계약 상세</span>
-                <h3>{selectedContract?.productName ?? '계약을 선택하세요'}</h3>
-                {selectedContract ? (
+          {selectedContract ? (
+            <>
+              <div className="contract-detail-grid">
+                <section className="payment-box">
+                  <div>
+                    <span className="badge">계약 상세</span>
+                    <h3>{selectedContract.productName}</h3>
                   <p>
                     계약번호 {selectedContract.contractId} · 납부 방법{' '}
                     {formatContractStatus(selectedContract.paymentMethod)}
                   </p>
-                ) : null}
-              </div>
-              {selectedContract ? (
-                <>
+                  </div>
                   <ul className="coverage-list">
                     {selectedContract.coverageItems.map((item) => (
                       <li key={item.itemName}>
@@ -944,43 +937,39 @@ function CustomerContractsPage({
                     계약서 다운로드
                     <Download size={16} />
                   </button>
-                </>
-              ) : null}
-            </section>
+                </section>
 
-            <section className="payment-box">
-              <div>
-                <span className="badge">미납/연체</span>
-                <h3>
-                  {selectedUnpaid
-                    ? formatCurrency(selectedUnpaid.unpaidPrincipal)
-                    : '연체 없음'}
-                </h3>
-                <p>
-                  {selectedUnpaid
-                    ? `기한 ${formatDate(selectedUnpaid.dueDate)} · ${selectedUnpaid.overdueDays}일 연체 · 이자 ${formatCurrency(selectedUnpaid.overdueInterest)}`
-                    : '선택한 계약에 표시할 연체 내역이 없습니다.'}
-                </p>
+                <section className="payment-box">
+                  <div>
+                    <span className="badge">미납/연체</span>
+                    <h3>
+                      {selectedUnpaid
+                        ? formatCurrency(selectedUnpaid.unpaidPrincipal)
+                        : '연체 없음'}
+                    </h3>
+                    <p>
+                      {selectedUnpaid
+                        ? `기한 ${formatDate(selectedUnpaid.dueDate)} · ${selectedUnpaid.overdueDays}일 연체 · 이자 ${formatCurrency(selectedUnpaid.overdueInterest)}`
+                        : '선택한 계약에 표시할 연체 내역이 없습니다.'}
+                    </p>
+                  </div>
+                  <div className="unpaid-strip">
+                    {unpaidContracts.map((contract) => (
+                      <button
+                        type="button"
+                        key={contract.contractId}
+                        onClick={() => loadContractDetail(contract.contractId)}
+                      >
+                        <AlertTriangle size={16} />
+                        <span>{contract.productName}</span>
+                        <strong>{formatCurrency(contract.unpaidPrincipal)}</strong>
+                      </button>
+                    ))}
+                    {unpaidContracts.length === 0 ? <span>전체 연체 내역 없음</span> : null}
+                  </div>
+                </section>
               </div>
-              <div className="unpaid-strip">
-                {unpaidContracts.map((contract) => (
-                  <button
-                    type="button"
-                    key={contract.contractId}
-                    onClick={() => loadContractDetail(contract.contractId)}
-                  >
-                    <AlertTriangle size={16} />
-                    <span>{contract.productName}</span>
-                    <strong>{formatCurrency(contract.unpaidPrincipal)}</strong>
-                  </button>
-                ))}
-                {unpaidContracts.length === 0 ? <span>전체 연체 내역 없음</span> : null}
-              </div>
-            </section>
-          </div>
-
-          {selectedContract ? (
-            <div className="contract-detail-grid">
+              <div className="contract-detail-grid">
               <form className="payment-box" onSubmit={submitPayment}>
                 <div>
                   <span className="badge">보험료 납부</span>
@@ -1055,7 +1044,16 @@ function CustomerContractsPage({
                 </button>
               </form>
             </div>
-          ) : null}
+            </>
+          ) : (
+            <section className="payment-box">
+              <div>
+                <span className="badge">계약 선택</span>
+                <h3>계약을 선택하세요</h3>
+                <p>계약 목록에서 상세보기를 누르면 계약 상세, 미납/연체, 납부 기능이 표시됩니다.</p>
+              </div>
+            </section>
+          )}
         </div>
       </section>
       ) : null}
