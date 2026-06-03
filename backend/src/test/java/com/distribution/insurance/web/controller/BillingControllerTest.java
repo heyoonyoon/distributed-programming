@@ -35,7 +35,7 @@ class BillingControllerTest {
     @Autowired PasswordEncoder encoder;
     @Autowired JwtTokenProvider tokenProvider;
 
-    Long ownerId; String ownerToken; Long contractId;
+    Long ownerId; String ownerToken; String otherToken; Long contractId;
 
     @BeforeEach
     void setUp() {
@@ -49,6 +49,11 @@ class BillingControllerTest {
                 "900101-1234567", LocalDate.of(1990, 1, 1), "주소", "계좌"));
         ownerId = owner.getId();
         ownerToken = tokenProvider.createToken(ownerId, "POLICYHOLDER");
+
+        Policyholder other = userRepository.save(new Policyholder(
+                "타인", "other@test.com", "010-2222-2222", encoder.encode("pw"),
+                "880202-2345678", LocalDate.of(1988, 2, 2), "주소2", "계좌2"));
+        otherToken = tokenProvider.createToken(other.getId(), "POLICYHOLDER");
 
         HealthInsuranceProduct product = productRepository.save(
                 new HealthInsuranceProduct("실손의료", "설명", 30000, 120));
@@ -104,11 +109,18 @@ class BillingControllerTest {
                 .andExpect(jsonPath("$.reason").isNotEmpty());
     }
 
+    private int unpaidPrincipal(String token) throws Exception {
+        return com.jayway.jsonpath.JsonPath.read(
+                mockMvc.perform(get("/contracts/" + contractId + "/unpaid")
+                                .header("Authorization", "Bearer " + token))
+                        .andExpect(status().isOk())
+                        .andReturn().getResponse().getContentAsString(),
+                "$.unpaidPrincipal");
+    }
+
     @Test
     void 성공_납부_후_미납회차가_하나_줄어든다() throws Exception {
-        String before = mockMvc.perform(get("/contracts/" + contractId + "/unpaid")
-                        .header("Authorization", "Bearer " + ownerToken))
-                .andReturn().getResponse().getContentAsString();
+        int before = unpaidPrincipal(ownerToken);
 
         mockMvc.perform(post("/contracts/" + contractId + "/payments")
                         .header("Authorization", "Bearer " + ownerToken)
@@ -116,11 +128,49 @@ class BillingControllerTest {
                         .content("{\"method\":\"TRANSFER\",\"paymentInfo\":\"110-222-333\"}"))
                 .andExpect(status().isOk());
 
-        String after = mockMvc.perform(get("/contracts/" + contractId + "/unpaid")
-                        .header("Authorization", "Bearer " + ownerToken))
-                .andReturn().getResponse().getContentAsString();
+        int after = unpaidPrincipal(ownerToken);
 
-        org.assertj.core.api.Assertions.assertThat(before).isNotEqualTo(after);
+        // FIFO로 한 회차(월 보험료 30000)만 정산되어 미납 원금이 정확히 그만큼 줄어든다.
+        org.assertj.core.api.Assertions.assertThat(after).isEqualTo(before - 30000);
+    }
+
+    @Test
+    void 결제실패는_미납금액을_줄이지_않는다() throws Exception {
+        int before = unpaidPrincipal(ownerToken);
+
+        mockMvc.perform(post("/contracts/" + contractId + "/payments")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"method\":\"CARD\",\"paymentInfo\":\"1234-5678-9012-0000\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("FAILED"));
+
+        int after = unpaidPrincipal(ownerToken);
+
+        org.assertj.core.api.Assertions.assertThat(after).isEqualTo(before);
+    }
+
+    @Test
+    void 타인_토큰으로_미납조회는_403() throws Exception {
+        mockMvc.perform(get("/contracts/" + contractId + "/unpaid")
+                        .header("Authorization", "Bearer " + otherToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 타인_토큰으로_납부는_403() throws Exception {
+        mockMvc.perform(post("/contracts/" + contractId + "/payments")
+                        .header("Authorization", "Bearer " + otherToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"method\":\"TRANSFER\",\"paymentInfo\":\"110-222-333\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 없는_계약_미납조회는_404() throws Exception {
+        mockMvc.perform(get("/contracts/999999/unpaid")
+                        .header("Authorization", "Bearer " + ownerToken))
+                .andExpect(status().isNotFound());
     }
 
     @Test

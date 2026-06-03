@@ -11,6 +11,13 @@ public final class BillingCalculator {
 
     private BillingCalculator() {}
 
+    /**
+     * 회차 규약: installment k(0-based)의 납부기한은 start.plusMonths(k)이다.
+     * 1회차(k=0)의 기한은 계약 시작일(start)과 같다.
+     * dueCount는 기한이 asOf 이하인 회차의 1-based 개수다.
+     * 미납을 FIFO로 처리하므로, 가장 오래된 미납 회차의 index는 successCount이고
+     * 그 기한은 start.plusMonths(successCount)이다.
+     */
     public static BillingStatus compute(InsuranceContract contract, long successCount, LocalDate asOf) {
         LocalDate start = contract.getStartDate();
         int totalInstallments = (int) ChronoUnit.MONTHS.between(start, contract.getEndDate());
