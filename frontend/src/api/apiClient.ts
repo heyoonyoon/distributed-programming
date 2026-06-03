@@ -1,7 +1,12 @@
 import type {
   ConfirmReviewRequest,
   ConfirmReviewResponse,
+  AssignClaimRequest,
   AutoDebitRequest,
+  BenefitReviewDetail,
+  BenefitReviewSummary,
+  ConfirmBenefitReviewRequest,
+  ConfirmBenefitReviewResponse,
   ContractDetail,
   ContractSummary,
   CreateApplicationRequest,
@@ -16,6 +21,7 @@ import type {
   ProductDetail,
   ProductSummary,
   ProductType,
+  RetryBenefitPayoutResponse,
   ReviewApplicationDetail,
   UnpaidContract,
   UpdateProfileRequest,
@@ -287,6 +293,58 @@ export const apiClient = {
   ): Promise<void> {
     return request(
       `/contracts/${id}/auto-debit`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+      token,
+    )
+  },
+
+  async getBenefitReviews(token: string): Promise<BenefitReviewSummary[]> {
+    return request('/staff/benefit-reviews', {}, token)
+  },
+
+  async getBenefitReview(
+    token: string,
+    claimId: number,
+  ): Promise<BenefitReviewDetail> {
+    return request(`/staff/benefit-reviews/${claimId}`, {}, token)
+  },
+
+  async confirmBenefitReview(
+    token: string,
+    claimId: number,
+    body: ConfirmBenefitReviewRequest,
+  ): Promise<ConfirmBenefitReviewResponse> {
+    return request(
+      `/staff/benefit-reviews/${claimId}/confirm`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+      token,
+    )
+  },
+
+  async retryBenefitPayout(
+    token: string,
+    claimId: number,
+  ): Promise<RetryBenefitPayoutResponse | undefined> {
+    return request(
+      `/staff/benefit-reviews/${claimId}/retry`,
+      { method: 'POST' },
+      token,
+    )
+  },
+
+  async assignClaim(
+    token: string,
+    claimId: number,
+    body: AssignClaimRequest,
+  ): Promise<void> {
+    return request(
+      `/staff/claims/${claimId}/assign`,
       {
         method: 'POST',
         body: JSON.stringify(body),

@@ -5,6 +5,14 @@ export type ReviewResult = 'APPROVED' | 'CONDITIONAL' | 'REJECTED'
 export type ContractStatus = 'ACTIVE' | 'SUSPENDED' | 'TERMINATED'
 export type PaymentMethod = 'CARD' | 'TRANSFER' | 'AUTO_DEBIT'
 export type PaymentStatus = 'SUCCESS' | 'FAILED'
+export type ClaimStatus =
+  | 'PENDING'
+  | 'IN_REVIEW'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'COMPLETED'
+  | 'FAILED'
+export type BenefitReviewResult = 'APPROVED' | 'REJECTED'
 
 export type AuthSession = {
   token: string
@@ -172,4 +180,36 @@ export type PaymentResponse = {
 export type AutoDebitRequest = {
   account: string
   withdrawalDay: number
+}
+
+export type BenefitReviewSummary = {
+  claimId: number
+  requestAmount: number
+  hospitalName: string
+  claimStatus: ClaimStatus
+}
+
+export type BenefitReviewDetail = BenefitReviewSummary & {
+  diagnosisCode: string
+  assignedStaffId: number
+}
+
+export type ConfirmBenefitReviewRequest = {
+  result: BenefitReviewResult
+  comment: string
+}
+
+export type ConfirmBenefitReviewResponse = {
+  claimId: number
+  result: BenefitReviewResult
+  claimStatus: ClaimStatus
+}
+
+export type RetryBenefitPayoutResponse = {
+  claimId: number
+  claimStatus: ClaimStatus
+}
+
+export type AssignClaimRequest = {
+  employeeId: number
 }

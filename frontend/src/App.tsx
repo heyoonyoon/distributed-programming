@@ -33,6 +33,10 @@ import { ApiError, apiClient, decodeUserType } from './api/apiClient'
 import './App.css'
 import type {
   AuthSession,
+  BenefitReviewDetail,
+  BenefitReviewResult,
+  BenefitReviewSummary,
+  ConfirmBenefitReviewResponse,
   ConfirmReviewResponse,
   ContractDetail,
   ContractSummary,
@@ -89,6 +93,22 @@ function formatCurrency(value: number) {
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString('ko-KR')
+}
+
+function describeBenefitReviewResult(result: ConfirmBenefitReviewResponse) {
+  if (result.claimStatus === 'COMPLETED') {
+    return '지급 완료'
+  }
+
+  if (result.claimStatus === 'FAILED') {
+    return '지급 실패, 계좌 확인 후 재시도'
+  }
+
+  if (result.claimStatus === 'REJECTED') {
+    return '반려 완료'
+  }
+
+  return `청구 상태 ${result.claimStatus}`
 }
 
 function LoginPage({
@@ -249,7 +269,11 @@ function EmployeeShell({
         <nav className="nav-list" aria-label="Employee navigation">
           <Link to="/employee/reviews">
             <ClipboardCheck size={18} />
-            Reviews
+            Enrollment
+          </Link>
+          <Link to="/employee/benefit-reviews">
+            <Receipt size={18} />
+            Benefit reviews
           </Link>
           <Link to="/employee/assignments">
             <Users size={18} />
@@ -1378,6 +1402,314 @@ function EmployeeReviewsPage({
   )
 }
 
+function EmployeeBenefitReviewsPage({
+  token,
+  onUnauthorized,
+}: {
+  token: string
+  onUnauthorized: () => void
+}) {
+  const [reviews, setReviews] = useState<BenefitReviewSummary[]>([])
+  const [selectedReview, setSelectedReview] = useState<BenefitReviewDetail | null>(null)
+  const [reviewResult, setReviewResult] = useState<BenefitReviewResult>('APPROVED')
+  const [comment, setComment] = useState('정상 청구')
+  const [assignClaimId, setAssignClaimId] = useState('')
+  const [assignEmployeeId, setAssignEmployeeId] = useState('')
+  const [decision, setDecision] = useState<ConfirmBenefitReviewResponse | null>(null)
+  const [statusMessage, setStatusMessage] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setLoading] = useState(true)
+  const [isSubmitting, setSubmitting] = useState(false)
+  const [isRetrying, setRetrying] = useState(false)
+  const [isAssigning, setAssigning] = useState(false)
+  const canRetry =
+    selectedReview?.claimStatus === 'FAILED' || decision?.claimStatus === 'FAILED'
+  const metrics = useMemo(
+    () => [
+      { label: 'Assigned reviews', value: String(reviews.length), icon: ClipboardCheck },
+      {
+        label: 'Failed payout',
+        value: String(reviews.filter((review) => review.claimStatus === 'FAILED').length),
+        icon: AlertTriangle,
+      },
+      { label: 'Selected claim', value: selectedReview ? `#${selectedReview.claimId}` : '-', icon: Receipt },
+    ],
+    [reviews, selectedReview],
+  )
+
+  async function refreshBenefitReviews() {
+    setReviews(await apiClient.getBenefitReviews(token))
+  }
+
+  async function loadBenefitReviews() {
+    setError('')
+    setLoading(true)
+
+    try {
+      const list = await apiClient.getBenefitReviews(token)
+      setReviews(list)
+      if (list[0]) {
+        await selectBenefitReview(list[0].claimId)
+      } else {
+        setSelectedReview(null)
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '보험금 심사 목록 조회에 실패했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      loadBenefitReviews()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function selectBenefitReview(claimId: number) {
+    setError('')
+    setDecision(null)
+    setStatusMessage('')
+
+    try {
+      const detail = await apiClient.getBenefitReview(token, claimId)
+      setSelectedReview(detail)
+      setAssignClaimId(String(detail.claimId))
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      if (err instanceof ApiError && err.status === 409) {
+        setError('다른 담당자 처리 중입니다.')
+        return
+      }
+      setError(err instanceof Error ? err.message : '보험금 심사 상세 조회에 실패했습니다.')
+    }
+  }
+
+  async function confirmBenefitReview(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selectedReview) {
+      return
+    }
+
+    setError('')
+    setStatusMessage('')
+    setSubmitting(true)
+
+    try {
+      const response = await apiClient.confirmBenefitReview(token, selectedReview.claimId, {
+        result: reviewResult,
+        comment,
+      })
+      setDecision(response)
+      setStatusMessage(describeBenefitReviewResult(response))
+      await refreshBenefitReviews()
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '보험금 심사 확정에 실패했습니다.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function retryPayout() {
+    if (!selectedReview) {
+      return
+    }
+
+    setError('')
+    setStatusMessage('')
+    setRetrying(true)
+
+    try {
+      const response = await apiClient.retryBenefitPayout(token, selectedReview.claimId)
+      const claimStatus = response?.claimStatus ?? 'COMPLETED'
+      setStatusMessage(
+        claimStatus === 'COMPLETED'
+          ? '지급 재시도 완료'
+          : `지급 재시도 결과 ${claimStatus}`,
+      )
+      await refreshBenefitReviews()
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '지급 재시도에 실패했습니다.')
+    } finally {
+      setRetrying(false)
+    }
+  }
+
+  async function assignClaim(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const claimId = Number(assignClaimId)
+    const employeeId = Number(assignEmployeeId)
+
+    if (!claimId || !employeeId) {
+      setError('청구번호와 직원 ID를 입력해 주세요.')
+      return
+    }
+
+    setError('')
+    setStatusMessage('')
+    setAssigning(true)
+
+    try {
+      await apiClient.assignClaim(token, claimId, { employeeId })
+      setStatusMessage(`청구 ${claimId}번을 직원 ${employeeId}에게 재배정했습니다.`)
+      await refreshBenefitReviews()
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '담당자 재배정에 실패했습니다.')
+    } finally {
+      setAssigning(false)
+    }
+  }
+
+  return (
+    <section className="page">
+      <div className="page-header">
+        <div>
+          <span className="eyebrow">UC12 / UC14 / UC17</span>
+          <h1>보험금 지급 심사</h1>
+        </div>
+      </div>
+
+      <div className="metric-grid">
+        {metrics.map(({ label, value, icon: Icon }) => (
+          <article className="metric-card" key={label}>
+            <Icon size={20} />
+            <strong>{value}</strong>
+            <span>{label}</span>
+          </article>
+        ))}
+      </div>
+
+      <div className="split-layout">
+        <section className="panel">
+          <div className="section-title">
+            <ClipboardCheck size={18} />
+            <h2>배정된 심사</h2>
+          </div>
+          {isLoading ? <p>Loading benefit reviews...</p> : null}
+          <div className="review-list">
+            {reviews.map((review) => (
+              <button
+                className={review.claimId === selectedReview?.claimId ? 'is-selected' : ''}
+                key={review.claimId}
+                type="button"
+                onClick={() => selectBenefitReview(review.claimId)}
+              >
+                <strong>CLAIM-{review.claimId}</strong>
+                <span>{review.hospitalName} · {formatCurrency(review.requestAmount)}</span>
+                <small>{review.claimStatus}</small>
+              </button>
+            ))}
+            {reviews.length === 0 && !isLoading ? <p>배정된 심사 건이 없습니다.</p> : null}
+          </div>
+        </section>
+
+        <form className="panel" onSubmit={confirmBenefitReview}>
+          <div className="section-title">
+            <FileText size={18} />
+            <h2>심사 상세</h2>
+          </div>
+          {selectedReview ? (
+            <article className="detail-card">
+              <span className="badge">{selectedReview.claimStatus}</span>
+              <h3>청구번호 {selectedReview.claimId}</h3>
+              <p>
+                {selectedReview.hospitalName} · 진단코드 {selectedReview.diagnosisCode}
+              </p>
+              <p>
+                청구금액 {formatCurrency(selectedReview.requestAmount)} · 담당자{' '}
+                {selectedReview.assignedStaffId}
+              </p>
+              <label>
+                Result
+                <select
+                  value={reviewResult}
+                  onChange={(event) => setReviewResult(event.target.value as BenefitReviewResult)}
+                >
+                  <option value="APPROVED">APPROVED</option>
+                  <option value="REJECTED">REJECTED</option>
+                </select>
+              </label>
+              <label>
+                Comment
+                <input value={comment} onChange={(event) => setComment(event.target.value)} />
+              </label>
+              <div className="button-row">
+                <button className="primary-button" disabled={isSubmitting} type="submit">
+                  {isSubmitting ? 'Confirming' : '심사 확정'}
+                  <CheckCircle2 size={18} />
+                </button>
+                <button
+                  className="secondary-button"
+                  disabled={isRetrying || !canRetry}
+                  type="button"
+                  onClick={retryPayout}
+                >
+                  {isRetrying ? 'Retrying' : '지급 재시도'}
+                </button>
+              </div>
+            </article>
+          ) : (
+            <p>심사 건을 선택하세요.</p>
+          )}
+          {decision ? (
+            <p className={decision.claimStatus === 'FAILED' ? 'form-error' : 'form-success'}>
+              청구 {decision.claimId}번 {decision.result} · {statusMessage}
+            </p>
+          ) : null}
+          {statusMessage && !decision ? <p className="form-success">{statusMessage}</p> : null}
+          {error ? <p className="form-error">{error}</p> : null}
+        </form>
+      </div>
+
+      <form className="panel assignment-form" onSubmit={assignClaim}>
+        <div className="section-title">
+          <Users size={18} />
+          <h2>수동 재배정</h2>
+        </div>
+        <div className="inline-fields">
+          <label>
+            Claim ID
+            <input
+              value={assignClaimId}
+              onChange={(event) => setAssignClaimId(event.target.value)}
+            />
+          </label>
+          <label>
+            Employee ID
+            <input
+              value={assignEmployeeId}
+              onChange={(event) => setAssignEmployeeId(event.target.value)}
+            />
+          </label>
+        </div>
+        <button className="secondary-button" disabled={isAssigning} type="submit">
+          {isAssigning ? 'Assigning' : '담당자 변경'}
+        </button>
+      </form>
+    </section>
+  )
+}
+
 function EmployeeAssignmentsPage() {
   const [assigned, setAssigned] = useState('')
   const nextEmployee = employees.reduce((best, employee) =>
@@ -1498,6 +1830,15 @@ function App() {
                   path="/reviews"
                   element={
                     <EmployeeReviewsPage
+                      token={(session as AuthSession).token}
+                      onUnauthorized={handleUnauthorized}
+                    />
+                  }
+                />
+                <Route
+                  path="/benefit-reviews"
+                  element={
+                    <EmployeeBenefitReviewsPage
                       token={(session as AuthSession).token}
                       onUnauthorized={handleUnauthorized}
                     />
