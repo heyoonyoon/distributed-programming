@@ -772,6 +772,80 @@ select:focus {
   font-size: 14px;
 }
 
+.claim-table {
+  display: grid;
+  gap: 10px;
+}
+
+.claim-table article {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 1fr 1fr auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 14px;
+  background: #fff;
+}
+
+.claim-table span {
+  color: #333;
+  font-size: 14px;
+}
+
+.status-badge {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #7a4d00;
+  background: #fff7e6;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-badge.completed {
+  color: #05603a;
+  background: #ecfdf3;
+}
+
+.status-badge.failed,
+.status-badge.rejected {
+  color: #b42318;
+  background: #fff1f0;
+}
+
+.analysis-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.analysis-grid article {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 16px;
+  background: #fff;
+}
+
+.analysis-grid span {
+  color: #7a7a7a;
+  font-size: 13px;
+}
+
+.analysis-grid strong {
+  color: #1d1d1f;
+  font-size: 22px;
+}
+
 .timeline-list {
   display: grid;
   gap: 10px;
@@ -880,6 +954,9 @@ select:focus {
   .inline-fields,
   .contract-detail-grid,
   .claim-rule-grid,
+  .claim-table article,
+  .analysis-form,
+  .analysis-grid,
   .employee-grid,
   .metric-grid {
     grid-template-columns: 1fr;

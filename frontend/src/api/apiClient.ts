@@ -7,8 +7,10 @@ import type {
   AutoDebitRequest,
   BenefitReviewDetail,
   BenefitReviewSummary,
+  BenefitAnalysis,
   ConfirmBenefitReviewRequest,
   ConfirmBenefitReviewResponse,
+  ClaimListItem,
   ContractDetail,
   ContractSummary,
   CreateApplicationRequest,
@@ -416,5 +418,34 @@ export const apiClient = {
     body: HealthClaimRequest,
   ): Promise<HealthClaimResponse> {
     return requestForm('/claims/health', buildHealthClaimForm(body), token)
+  },
+
+  async getClaimStatus(token: string): Promise<ClaimListItem[]> {
+    return request('/claims/status', {}, token)
+  },
+
+  async getClaimHistory(
+    token: string,
+    params: { from?: string; to?: string } = {},
+  ): Promise<ClaimListItem[]> {
+    const query = new URLSearchParams()
+
+    if (params.from) {
+      query.set('from', params.from)
+    }
+    if (params.to) {
+      query.set('to', params.to)
+    }
+
+    const suffix = query.toString() ? `?${query.toString()}` : ''
+    return request(`/claims/history${suffix}`, {}, token)
+  },
+
+  async getBenefitAnalysis(
+    token: string,
+    contractId: number,
+  ): Promise<BenefitAnalysis> {
+    const query = new URLSearchParams({ contractId: String(contractId) })
+    return request(`/claims/benefit-analysis?${query.toString()}`, {}, token)
   },
 }
