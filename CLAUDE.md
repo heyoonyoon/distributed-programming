@@ -62,12 +62,11 @@ brainstorming → grill-with-docs → writing-plans → executing-plans → fini
 
 ### 6. 마무리
 - 완료 선언 전 verification-before-completion 또는 `/verify`로 실제 동작 확인.
-- 코드 리뷰는 **2단계**로 한다(순서 엄수):
-  1. **superpowers:requesting-code-review** 를 먼저 수행한다(Claude 셀프/서브에이전트 리뷰, superpowers 파이프라인 정석).
-  2. 그 지적사항을 반영한 뒤, **Codex로 최종 교차 리뷰**를 수행한다(다른 모델의 second opinion).
-     - 플러그인(`openai/codex-plugin-cc`) 설치 시 `/codex:review`(또는 `/codex:adversarial-review`).
-     - 플러그인 없이도 `codex exec`에 `git diff main...HEAD`를 물려 직접 리뷰 가능.
-- 위 2단계 리뷰가 끝난 후 finishing-a-development-branch 로 브랜치를 마무리한다.
+- 코드 리뷰는 **Codex 교차 리뷰 1단계**로 한다:
+  - 모든 태스크가 끝난 뒤 `codex exec`에 `git diff main...HEAD`를 물려 리뷰.
+  - 플러그인(`openai/codex-plugin-cc`) 설치 시 `/codex:review`(또는 `/codex:adversarial-review`).
+  - (**superpowers:requesting-code-review 별도 수행 불필요** — 태스크별 2단계 리뷰(spec·품질)가 이미 커버. 최종 Claude 리뷰는 중복이라 제거.)
+- Codex 리뷰가 끝난 후 finishing-a-development-branch 로 브랜치를 마무리한다.
 
 ## 문서 위치 규약 (프로젝트 루트 기준)
 - `CONTEXT.md` — 루트
