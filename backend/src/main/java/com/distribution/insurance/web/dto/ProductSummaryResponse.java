@@ -1,5 +1,6 @@
 package com.distribution.insurance.web.dto;
 
+import com.distribution.insurance.domain.product.CarInsuranceProduct;
 import com.distribution.insurance.domain.product.CoverageItem;
 import com.distribution.insurance.domain.product.HealthInsuranceProduct;
 import com.distribution.insurance.domain.product.InsuranceProduct;
@@ -21,6 +22,9 @@ public record ProductSummaryResponse(
     }
 
     static String typeOf(InsuranceProduct product) {
-        return product instanceof HealthInsuranceProduct ? "HEALTH" : "CAR";
+        if (product instanceof HealthInsuranceProduct) return "HEALTH";
+        if (product instanceof CarInsuranceProduct) return "CAR";
+        throw new IllegalStateException(
+                "알 수 없는 상품 종류: " + product.getClass().getSimpleName());
     }
 }
