@@ -52,14 +52,15 @@ public abstract class Claim {
         this.status = ClaimStatus.REJECTED;
     }
 
+    /** 지급 완료. SIMPLE은 PENDING에서, COMPLEX는 APPROVED에서 진입(ADR 0006/0007). */
     public void markCompleted() {
-        if (status == ClaimStatus.COMPLETED) {
-            throw new IllegalStateTransitionException("이미 지급 완료된 청구입니다.");
-        }
+        requireOneOf(ClaimStatus.PENDING, ClaimStatus.APPROVED);
         this.status = ClaimStatus.COMPLETED;
     }
 
+    /** 지급 실패(UC17 E1). 송금 시도는 PENDING(SIMPLE) 또는 APPROVED(COMPLEX)에서만 일어난다. */
     public void markFailed() {
+        requireOneOf(ClaimStatus.PENDING, ClaimStatus.APPROVED);
         this.status = ClaimStatus.FAILED;
     }
 
@@ -68,5 +69,15 @@ public abstract class Claim {
             throw new IllegalStateTransitionException(
                     "현재 상태(" + status + ")에서 허용되지 않는 전이입니다.");
         }
+    }
+
+    private void requireOneOf(ClaimStatus... allowed) {
+        for (ClaimStatus s : allowed) {
+            if (this.status == s) {
+                return;
+            }
+        }
+        throw new IllegalStateTransitionException(
+                "현재 상태(" + status + ")에서 허용되지 않는 전이입니다.");
     }
 }

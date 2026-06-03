@@ -26,7 +26,7 @@ public class BenefitPayment {
     private PaymentStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "claim_id")
+    @JoinColumn(name = "claim_id", nullable = false)
     private Claim claim;
 
     private BenefitPayment(Claim claim, int paidAmount, String bankAccount, PaymentStatus status) {

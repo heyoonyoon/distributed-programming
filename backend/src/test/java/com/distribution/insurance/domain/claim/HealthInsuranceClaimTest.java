@@ -53,4 +53,32 @@ class HealthInsuranceClaimTest {
         claim.markCompleted();
         assertThatThrownBy(claim::markCompleted).isInstanceOf(IllegalStateTransitionException.class);
     }
+
+    @Test
+    void COMPLEX_전이체인은_PENDING_IN_REVIEW_APPROVED_COMPLETED로_간다() {
+        HealthInsuranceClaim claim = new HealthInsuranceClaim(
+                contract(), 2000000, "서울병원", "S00", LocalDate.now(), 2000000, ClaimComplexity.COMPLEX);
+        claim.markInReview();
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.IN_REVIEW);
+        claim.markApproved();
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.APPROVED);
+        claim.markCompleted();
+        assertThat(claim.getStatus()).isEqualTo(ClaimStatus.COMPLETED);
+    }
+
+    @Test
+    void PENDING에서_바로_승인하면_예외() {
+        HealthInsuranceClaim claim = new HealthInsuranceClaim(
+                contract(), 2000000, "서울병원", "S00", LocalDate.now(), 2000000, ClaimComplexity.COMPLEX);
+        assertThatThrownBy(claim::markApproved).isInstanceOf(IllegalStateTransitionException.class);
+    }
+
+    @Test
+    void 반려된_건을_지급완료하면_예외() {
+        HealthInsuranceClaim claim = new HealthInsuranceClaim(
+                contract(), 2000000, "서울병원", "S00", LocalDate.now(), 2000000, ClaimComplexity.COMPLEX);
+        claim.markInReview();
+        claim.markRejected();
+        assertThatThrownBy(claim::markCompleted).isInstanceOf(IllegalStateTransitionException.class);
+    }
 }
