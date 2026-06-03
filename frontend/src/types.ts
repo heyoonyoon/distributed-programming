@@ -12,6 +12,7 @@ export type ClaimStatus =
   | 'REJECTED'
   | 'COMPLETED'
   | 'FAILED'
+export type BenefitReviewResult = 'APPROVED' | 'REJECTED'
 export type ClaimComplexity = 'SIMPLE' | 'COMPLEX'
 
 export type AuthSession = {
@@ -180,6 +181,38 @@ export type PaymentResponse = {
 export type AutoDebitRequest = {
   account: string
   withdrawalDay: number
+}
+
+export type BenefitReviewSummary = {
+  claimId: number
+  requestAmount: number
+  hospitalName: string
+  claimStatus: ClaimStatus
+}
+
+export type BenefitReviewDetail = BenefitReviewSummary & {
+  diagnosisCode: string
+  assignedStaffId: number
+}
+
+export type ConfirmBenefitReviewRequest = {
+  result: BenefitReviewResult
+  comment: string
+}
+
+export type ConfirmBenefitReviewResponse = {
+  claimId: number
+  result: BenefitReviewResult
+  claimStatus: ClaimStatus
+}
+
+export type RetryBenefitPayoutResponse = {
+  claimId: number
+  claimStatus: ClaimStatus
+}
+
+export type AssignClaimRequest = {
+  employeeId: number
 }
 
 export type HealthClaimRequest = {
