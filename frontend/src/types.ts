@@ -13,6 +13,7 @@ export type ClaimStatus =
   | 'COMPLETED'
   | 'FAILED'
 export type BenefitReviewResult = 'APPROVED' | 'REJECTED'
+export type ClaimComplexity = 'SIMPLE' | 'COMPLEX'
 
 export type AuthSession = {
   token: string
@@ -212,4 +213,20 @@ export type RetryBenefitPayoutResponse = {
 
 export type AssignClaimRequest = {
   employeeId: number
+}
+
+export type HealthClaimRequest = {
+  contractId: number
+  hospitalName: string
+  diagnosisCode: string
+  treatmentDate: string
+  requestAmount: number
+  receiptAmount: number
+  attachments: File[]
+}
+
+export type HealthClaimResponse = {
+  claimId: number
+  status: ClaimStatus
+  complexity: ClaimComplexity
 }

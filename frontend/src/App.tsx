@@ -4,7 +4,6 @@ import {
   BadgeCheck,
   Bell,
   BriefcaseBusiness,
-  CalendarDays,
   Car,
   CheckCircle2,
   ClipboardCheck,
@@ -40,6 +39,7 @@ import type {
   ConfirmReviewResponse,
   ContractDetail,
   ContractSummary,
+  HealthClaimResponse,
   MyApplication,
   PayableContract,
   PaymentMethod,
@@ -55,22 +55,12 @@ import type {
 
 const tokenKey = 'insurance.authToken'
 
-const claimHistory = [
-  {
-    id: 'CLM-2026-0104',
-    type: '의료보험 청구',
-    amount: '184,000원',
-    status: '지급 완료',
-    date: '2026.05.18',
-  },
-  {
-    id: 'CAR-2026-0031',
-    type: '자동차사고 접수',
-    amount: '심사 중',
-    status: '담당자 배정',
-    date: '2026.05.29',
-  },
-]
+const maxClaimAttachmentSize = 10 * 1024 * 1024
+const acceptedClaimFileTypes = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+])
 
 const employees = [
   { name: '김심사', department: '지급심사팀', load: 3 },
@@ -109,6 +99,30 @@ function describeBenefitReviewResult(result: ConfirmBenefitReviewResponse) {
   }
 
   return `청구 상태 ${result.claimStatus}`
+}
+
+function isAcceptedClaimFile(file: File) {
+  if (acceptedClaimFileTypes.has(file.type)) {
+    return true
+  }
+
+  return /\.(pdf|jpe?g|png)$/i.test(file.name)
+}
+
+function describeHealthClaimResult(result: HealthClaimResponse) {
+  if (result.complexity === 'COMPLEX') {
+    return '복잡한 청구로 접수되었습니다. 담당자 배정 후 심사를 진행합니다.'
+  }
+
+  if (result.status === 'COMPLETED') {
+    return '보험금이 지급되었습니다.'
+  }
+
+  if (result.status === 'FAILED') {
+    return '지급에 실패했습니다. 계좌 정보를 확인해 주세요.'
+  }
+
+  return '청구가 접수되었습니다.'
 }
 
 function LoginPage({
@@ -962,26 +976,142 @@ function CustomerContractsPage({
   )
 }
 
-function CustomerClaimsPage() {
-  const [claimMessage, setClaimMessage] = useState('')
-  const [accidentMessage, setAccidentMessage] = useState('')
+function CustomerClaimsPage({
+  token,
+  onUnauthorized,
+}: {
+  token: string
+  onUnauthorized: () => void
+}) {
+  const [contracts, setContracts] = useState<ContractSummary[]>([])
+  const [selectedContractId, setSelectedContractId] = useState('')
+  const [hospitalName, setHospitalName] = useState('서울중앙병원')
+  const [diagnosisCode, setDiagnosisCode] = useState('J00')
+  const [treatmentDate, setTreatmentDate] = useState('2026-06-01')
+  const [requestAmount, setRequestAmount] = useState('184000')
+  const [receiptAmount, setReceiptAmount] = useState('184000')
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [result, setResult] = useState<HealthClaimResponse | null>(null)
+  const [error, setError] = useState('')
+  const [isLoading, setLoading] = useState(true)
+  const [isSubmitting, setSubmitting] = useState(false)
+  const healthContracts = contracts.filter(
+    (contract) => contract.productType === 'HEALTH' && contract.status === 'ACTIVE',
+  )
 
-  function submitClaim(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setClaimMessage('청구 정보가 저장되었고, 간단한 청구로 판별되어 지급 처리가 진행됩니다.')
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadContracts() {
+      setError('')
+      setLoading(true)
+
+      try {
+        const list = await apiClient.getContracts(token)
+        const activeHealthContracts = list.filter(
+          (contract) => contract.productType === 'HEALTH' && contract.status === 'ACTIVE',
+        )
+
+        if (isMounted) {
+          setContracts(list)
+          setSelectedContractId((current) => current || String(activeHealthContracts[0]?.contractId ?? ''))
+        }
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          onUnauthorized()
+          return
+        }
+
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : '계약 목록 조회에 실패했습니다.')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadContracts()
+
+    return () => {
+      isMounted = false
+    }
+  }, [onUnauthorized, token])
+
+  function changeAttachments(files: FileList | null) {
+    const nextFiles = Array.from(files ?? [])
+    const invalidType = nextFiles.find((file) => !isAcceptedClaimFile(file))
+    const oversized = nextFiles.find((file) => file.size > maxClaimAttachmentSize)
+
+    setResult(null)
+
+    if (invalidType) {
+      setAttachments([])
+      setError('지원하지 않는 파일 형식입니다. (허용: PDF, JPG, PNG)')
+      return
+    }
+
+    if (oversized) {
+      setAttachments([])
+      setError('파일 크기는 개당 10MB 이하여야 합니다.')
+      return
+    }
+
+    setError('')
+    setAttachments(nextFiles)
   }
 
-  function submitAccident(event: FormEvent<HTMLFormElement>) {
+  async function submitClaim(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setAccidentMessage('자동차사고 접수 번호 CAR-2026-0042가 발급되었습니다.')
+    setError('')
+    setResult(null)
+
+    const contractId = Number(selectedContractId)
+    const parsedRequestAmount = Number(requestAmount)
+    const parsedReceiptAmount = Number(receiptAmount)
+
+    if (!contractId) {
+      setError('청구할 의료보험 계약을 선택해 주세요.')
+      return
+    }
+
+    if (parsedRequestAmount <= 0 || parsedReceiptAmount <= 0) {
+      setError('청구 금액과 영수증 금액은 0보다 커야 합니다.')
+      return
+    }
+
+    setSubmitting(true)
+
+    try {
+      const response = await apiClient.submitHealthClaim(token, {
+        contractId,
+        hospitalName,
+        diagnosisCode,
+        treatmentDate,
+        requestAmount: parsedRequestAmount,
+        receiptAmount: parsedReceiptAmount,
+        attachments,
+      })
+      setResult(response)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+
+      setError(err instanceof Error ? err.message : '의료보험 청구에 실패했습니다.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
     <section className="page">
       <div className="page-header">
         <div>
-          <span className="eyebrow">UC03 / UC04 / UC05 / UC09</span>
-          <h1>청구 및 사고 접수</h1>
+          <span className="eyebrow">UC05 / UC17</span>
+          <h1>의료보험 청구</h1>
         </div>
       </div>
 
@@ -989,69 +1119,132 @@ function CustomerClaimsPage() {
         <form className="panel form-panel" onSubmit={submitClaim}>
           <div className="section-title">
             <HeartPulse size={18} />
-            <h2>의료보험 청구</h2>
+            <h2>청구 신청</h2>
           </div>
           <label>
+            계약
+            <select
+              disabled={isLoading || healthContracts.length === 0}
+              value={selectedContractId}
+              onChange={(event) => setSelectedContractId(event.target.value)}
+            >
+              {healthContracts.map((contract) => (
+                <option key={contract.contractId} value={contract.contractId}>
+                  {contract.productName} · {formatDate(contract.startDate)} · 월{' '}
+                  {formatCurrency(contract.monthlyPremium)}
+                </option>
+              ))}
+              {healthContracts.length === 0 ? <option value="">선택 가능한 계약 없음</option> : null}
+            </select>
+          </label>
+          <label>
             병원명
-            <input name="hospitalName" defaultValue="서울중앙병원" />
+            <input
+              required
+              value={hospitalName}
+              onChange={(event) => setHospitalName(event.target.value)}
+            />
+          </label>
+          <label>
+            진단코드
+            <input
+              required
+              value={diagnosisCode}
+              onChange={(event) => setDiagnosisCode(event.target.value)}
+            />
           </label>
           <label>
             진료일
-            <input name="treatmentDate" type="date" defaultValue="2026-06-01" />
+            <input
+              required
+              type="date"
+              value={treatmentDate}
+              onChange={(event) => setTreatmentDate(event.target.value)}
+            />
           </label>
-          <label>
-            청구 금액
-            <input name="requestAmount" defaultValue="184000" />
-          </label>
-          {claimMessage ? <p className="form-success">{claimMessage}</p> : null}
-          <button className="primary-button" type="submit">
-            청구 신청
-            <Send size={18} />
-          </button>
-        </form>
-
-        <form className="panel form-panel" onSubmit={submitAccident}>
-          <div className="section-title">
-            <Car size={18} />
-            <h2>자동차사고 접수</h2>
+          <div className="inline-fields">
+            <label>
+              청구 금액
+              <input
+                min="1"
+                required
+                type="number"
+                value={requestAmount}
+                onChange={(event) => setRequestAmount(event.target.value)}
+              />
+            </label>
+            <label>
+              영수증 금액
+              <input
+                min="1"
+                required
+                type="number"
+                value={receiptAmount}
+                onChange={(event) => setReceiptAmount(event.target.value)}
+              />
+            </label>
           </div>
           <label>
-            사고 장소
-            <input name="accidentLocation" defaultValue="서울 강남구 역삼동" />
+            증빙 첨부
+            <input
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              multiple
+              type="file"
+              onChange={(event) => changeAttachments(event.target.files)}
+            />
           </label>
-          <label>
-            사고 유형
-            <input name="accidentType" defaultValue="쌍방" />
-          </label>
-          <label>
-            차량 번호
-            <input name="vehicleNumber" defaultValue="12가 3456" />
-          </label>
-          {accidentMessage ? <p className="form-success">{accidentMessage}</p> : null}
-          <button className="primary-button" type="submit">
-            접수하기
+          {attachments.length > 0 ? (
+            <div className="attachment-list">
+              {attachments.map((file) => (
+                <span key={`${file.name}-${file.size}`}>
+                  {file.name} · {(file.size / 1024 / 1024).toFixed(2)}MB
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {error ? <p className="form-error">{error}</p> : null}
+          <button
+            className="primary-button"
+            disabled={isSubmitting || healthContracts.length === 0}
+            type="submit"
+          >
+            {isSubmitting ? 'Submitting' : '청구 신청'}
             <Send size={18} />
           </button>
         </form>
-      </div>
 
-      <section className="panel">
-        <div className="section-title">
-          <CalendarDays size={18} />
-          <h2>처리 현황 및 보상 이력</h2>
-        </div>
-        <div className="timeline-list">
-          {claimHistory.map((claim) => (
-            <article key={claim.id}>
-              <span>{claim.date}</span>
+        <section className="panel result-panel">
+          <div className="section-title">
+            <Receipt size={18} />
+            <h2>청구 결과</h2>
+          </div>
+          {result ? (
+            <article className={`claim-result ${result.status.toLowerCase()}`}>
+              <span className="badge">{result.complexity}</span>
               <div>
-                <strong>{claim.type}</strong>
-                <p>{claim.id} · {claim.amount} · {claim.status}</p>
+                <h3>청구번호 {result.claimId}</h3>
+                <p>{describeHealthClaimResult(result)}</p>
               </div>
+              <strong>{result.status}</strong>
             </article>
-          ))}
-        </div>
-      </section>
+          ) : (
+            <div className="empty-result">
+              <FileText size={28} />
+              <p>청구 신청 후 결과가 표시됩니다.</p>
+            </div>
+          )}
+          <div className="claim-rule-grid">
+            <article>
+              <strong>SIMPLE</strong>
+              <span>1,000,000원 미만 · 즉시지급</span>
+            </article>
+            <article>
+              <strong>COMPLEX</strong>
+              <span>1,000,000원 이상 · 심사대기</span>
+            </article>
+          </div>
+        </section>
+      </div>
     </section>
   )
 }
@@ -1804,7 +1997,15 @@ function App() {
                     />
                   }
                 />
-                <Route path="/claims" element={<CustomerClaimsPage />} />
+                <Route
+                  path="/claims"
+                  element={
+                    <CustomerClaimsPage
+                      token={(session as AuthSession).token}
+                      onUnauthorized={handleUnauthorized}
+                    />
+                  }
+                />
                 <Route
                   path="/profile"
                   element={

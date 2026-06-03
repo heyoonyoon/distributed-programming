@@ -11,6 +11,8 @@ import type {
   ContractSummary,
   CreateApplicationRequest,
   ApplicationCreated,
+  HealthClaimRequest,
+  HealthClaimResponse,
   LoginRequest,
   MyApplication,
   PayableContract,
@@ -139,6 +141,39 @@ async function requestBlob(
     blob: await response.blob(),
     filename: readFilename(response, 'contract.txt'),
   }
+}
+
+async function requestForm<T>(
+  path: string,
+  body: FormData,
+  token: string,
+): Promise<T> {
+  const response = await fetch(`${baseUrl}${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body,
+  })
+
+  if (!response.ok) {
+    throw new ApiError(response.status, await readError(response))
+  }
+
+  return response.json() as Promise<T>
+}
+
+function buildHealthClaimForm(body: HealthClaimRequest) {
+  const formData = new FormData()
+  formData.append('contractId', String(body.contractId))
+  formData.append('hospitalName', body.hospitalName)
+  formData.append('diagnosisCode', body.diagnosisCode)
+  formData.append('treatmentDate', body.treatmentDate)
+  formData.append('requestAmount', String(body.requestAmount))
+  formData.append('receiptAmount', String(body.receiptAmount))
+  body.attachments.forEach((file) => formData.append('attachments', file))
+
+  return formData
 }
 
 export const apiClient = {
@@ -351,5 +386,12 @@ export const apiClient = {
       },
       token,
     )
+  },
+
+  async submitHealthClaim(
+    token: string,
+    body: HealthClaimRequest,
+  ): Promise<HealthClaimResponse> {
+    return requestForm('/claims/health', buildHealthClaimForm(body), token)
   },
 }
