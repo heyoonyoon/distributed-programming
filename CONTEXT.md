@@ -17,3 +17,21 @@ _Avoid_: 보험가입자, 가입자, 고객, customer, account, user, member
 **InsuranceEmployee**:
 보험사 직원. 가입·보험금 지급 심사를 담당하며, 특정 심사 건에 배정되면 "담당자" 역할을 한다.
 _Avoid_: 직원, 담당자, staff, admin, agent
+
+### 보험 상품 (Product)
+
+**InsuranceProduct**:
+가입 가능한 보험 상품의 추상 부모. HealthInsuranceProduct와 CarInsuranceProduct의 공통 상위 개념.
+_Avoid_: 보험상품, product, 상품(단독), item
+
+**HealthInsuranceProduct**:
+의료보험 상품.
+_Avoid_: 의료보험, 건강보험, medical, health(단독)
+
+**CarInsuranceProduct**:
+자동차보험 상품.
+_Avoid_: 자동차보험, 차보험, auto, vehicle insurance
+
+**CoverageItem**:
+한 상품이 보장하는 개별 보장 항목(보장 한도·면책 포함). 보험 실무의 "담보"와 같은 개념.
+_Avoid_: 보장항목, 담보, coverage, benefit

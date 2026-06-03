@@ -49,6 +49,8 @@ brainstorming → grill-with-docs → writing-plans → executing-plans → fini
 
 ### 4. executing-plans (superpowers)
 - plan 문서를 실행 대본으로 삼아 step을 그대로 따라간다 = TDD 자동 수행.
+- **실행 방식은 항상 Subagent-Driven(superpowers:subagent-driven-development)으로 한다 — 매번 묻지 말 것.**
+  태스크별 새 서브에이전트 + 2단계 리뷰(spec 준수 → 코드 품질). Inline 실행은 사용자가 명시적으로 요청할 때만.
 - 막히면 추측하지 말고 멈추고 사용자에게 질문한다.
 - main/master에서 직접 구현 시작 금지 — 브랜치/worktree에서 작업.
 

@@ -1,10 +1,12 @@
 package com.distribution.insurance.web;
 
 import com.distribution.insurance.service.DuplicateEmailException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * 전역 예외 → 일관된 4xx 응답 매핑.
@@ -30,5 +32,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<String> handleDuplicateEmail(DuplicateEmailException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+    }
+
+    /** 잘못된 요청 파라미터(없는 종류 값 등) → 400 */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<String> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("잘못된 요청 파라미터입니다.");
+    }
+
+    /** 제약 위반(음수 보험료 등) → 400. 내부 파라미터 경로 노출 없이 일반 메시지 반환. */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<String> handleConstraintViolation(ConstraintViolationException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("잘못된 요청 파라미터입니다.");
     }
 }

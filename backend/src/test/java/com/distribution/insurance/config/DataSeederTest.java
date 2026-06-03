@@ -1,5 +1,6 @@
 package com.distribution.insurance.config;
 
+import com.distribution.insurance.repository.ProductRepository;
 import com.distribution.insurance.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -13,7 +14,9 @@ class DataSeederTest {
     void run_계정이_없으면_시드하고_다시_실행해도_중복삽입하지_않는다() throws Exception {
         UserRepository repo = org.mockito.Mockito.mock(UserRepository.class);
         PasswordEncoder encoder = new BCryptPasswordEncoder();
-        DataSeeder seeder = new DataSeeder(repo, encoder);
+        ProductRepository productRepo = org.mockito.Mockito.mock(ProductRepository.class);
+        org.mockito.Mockito.when(productRepo.count()).thenReturn(99L);
+        DataSeeder seeder = new DataSeeder(repo, encoder, productRepo);
 
         org.mockito.Mockito.when(repo.findByEmail(org.mockito.ArgumentMatchers.anyString()))
                 .thenReturn(java.util.Optional.empty());
@@ -28,7 +31,9 @@ class DataSeederTest {
     void run_이미_존재하면_저장하지_않는다() throws Exception {
         UserRepository repo = org.mockito.Mockito.mock(UserRepository.class);
         PasswordEncoder encoder = new BCryptPasswordEncoder();
-        DataSeeder seeder = new DataSeeder(repo, encoder);
+        ProductRepository productRepo = org.mockito.Mockito.mock(ProductRepository.class);
+        org.mockito.Mockito.when(productRepo.count()).thenReturn(99L);
+        DataSeeder seeder = new DataSeeder(repo, encoder, productRepo);
 
         org.mockito.Mockito.when(repo.findByEmail(org.mockito.ArgumentMatchers.anyString()))
                 .thenReturn(java.util.Optional.of(
