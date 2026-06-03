@@ -7,6 +7,7 @@ import com.distribution.insurance.domain.user.Policyholder;
 import com.distribution.insurance.repository.ProductRepository;
 import com.distribution.insurance.repository.UserRepository;
 import com.distribution.insurance.security.JwtTokenProvider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,13 @@ class ApplicationControllerTest {
     @Autowired JwtTokenProvider tokenProvider;
 
     Long phId; String phToken; Long healthProductId; String employeeToken;
+
+    @AfterEach
+    void tearDown() {
+        applicationRepository.deleteAll();
+        userRepository.deleteAll();
+        productRepository.deleteAll();
+    }
 
     @BeforeEach
     void setUp() {
