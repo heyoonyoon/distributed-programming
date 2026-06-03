@@ -612,6 +612,62 @@ select:focus {
   background: #f5f5f7;
 }
 
+.contract-workspace {
+  display: grid;
+  gap: 16px;
+}
+
+.contract-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.coverage-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.coverage-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #333;
+}
+
+.coverage-list svg {
+  flex: 0 0 auto;
+  color: #05603a;
+}
+
+.unpaid-strip {
+  display: grid;
+  gap: 8px;
+}
+
+.unpaid-strip button {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #f4b4ad;
+  border-radius: 11px;
+  padding: 8px 12px;
+  color: #b42318;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.unpaid-strip span {
+  color: #7a7a7a;
+}
+
 .timeline-list {
   display: grid;
   gap: 10px;
@@ -718,6 +774,7 @@ select:focus {
   .claim-options,
   .split-layout,
   .inline-fields,
+  .contract-detail-grid,
   .employee-grid,
   .metric-grid {
     grid-template-columns: 1fr;

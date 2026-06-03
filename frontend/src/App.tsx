@@ -34,7 +34,11 @@ import './App.css'
 import type {
   AuthSession,
   ConfirmReviewResponse,
+  ContractDetail,
+  ContractSummary,
   MyApplication,
+  PayableContract,
+  PaymentMethod,
   PendingReview,
   PolicyholderProfile,
   ProductDetail,
@@ -42,30 +46,10 @@ import type {
   ProductType,
   ReviewApplicationDetail,
   ReviewResult,
+  UnpaidContract,
 } from './types'
 
 const tokenKey = 'insurance.authToken'
-
-const contracts = [
-  {
-    name: '든든 의료보험',
-    kind: '의료보험',
-    period: '2026.01.01 - 2026.12.31',
-    premium: '72,000원',
-    status: 'ACTIVE',
-    nextPayment: '2026.06.25',
-    coverage: '입원, 통원, 수술',
-  },
-  {
-    name: '자동차 안심보험',
-    kind: '자동차보험',
-    period: '2026.03.01 - 2027.02.28',
-    premium: '118,000원',
-    status: 'ACTIVE',
-    nextPayment: '납부 예정 없음',
-    coverage: '대인, 대물, 자기차량손해',
-  },
-]
 
 const claimHistory = [
   {
@@ -97,6 +81,14 @@ function readSession(): AuthSession | null {
 
 function homePath(session: AuthSession) {
   return session.userType === 'EMPLOYEE' ? '/employee/reviews' : '/customer/home'
+}
+
+function formatCurrency(value: number) {
+  return `${value.toLocaleString('ko-KR')}원`
+}
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('ko-KR')
 }
 
 function LoginPage({
@@ -334,10 +326,24 @@ function CustomerContractsPage({
   const [products, setProducts] = useState<ProductSummary[]>([])
   const [selectedProduct, setSelectedProduct] = useState<ProductDetail | null>(null)
   const [applications, setApplications] = useState<MyApplication[]>([])
+  const [contracts, setContracts] = useState<ContractSummary[]>([])
+  const [selectedContract, setSelectedContract] = useState<ContractDetail | null>(null)
+  const [unpaidContracts, setUnpaidContracts] = useState<UnpaidContract[]>([])
+  const [selectedUnpaid, setSelectedUnpaid] = useState<UnpaidContract | null>(null)
+  const [payableContracts, setPayableContracts] = useState<PayableContract[]>([])
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CARD')
+  const [paymentInfo, setPaymentInfo] = useState('1234-5678-9012-3456')
+  const [autoDebitAccount, setAutoDebitAccount] = useState('110-222-333333')
+  const [withdrawalDay, setWithdrawalDay] = useState('25')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isLoading, setLoading] = useState(false)
-  const [paid, setPaid] = useState(false)
+  const [isContractLoading, setContractLoading] = useState(false)
+  const [isPaymentSubmitting, setPaymentSubmitting] = useState(false)
+  const [isAutoDebitSubmitting, setAutoDebitSubmitting] = useState(false)
+  const selectedPayable = selectedContract
+    ? payableContracts.find((contract) => contract.contractId === selectedContract.contractId)
+    : null
 
   async function loadProducts() {
     setError('')
@@ -376,10 +382,70 @@ function CustomerContractsPage({
     }
   }
 
+  async function loadContractDetail(id: number) {
+    setError('')
+    setContractLoading(true)
+
+    try {
+      const [detail, unpaid] = await Promise.all([
+        apiClient.getContract(token, id),
+        apiClient.getUnpaidContract(token, id).catch((err) => {
+          if (err instanceof ApiError && err.status === 404) {
+            return null
+          }
+          throw err
+        }),
+      ])
+
+      setSelectedContract(detail)
+      setSelectedUnpaid(unpaid)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '계약 상세 조회에 실패했습니다.')
+    } finally {
+      setContractLoading(false)
+    }
+  }
+
+  async function loadContractData() {
+    setContractLoading(true)
+
+    try {
+      const [contractList, unpaidList, payableList] = await Promise.all([
+        apiClient.getContracts(token),
+        apiClient.getUnpaidContracts(token),
+        apiClient.getPayableContracts(token),
+      ])
+
+      setContracts(contractList)
+      setUnpaidContracts(unpaidList)
+      setPayableContracts(payableList)
+
+      if (contractList[0]) {
+        await loadContractDetail(contractList[0].contractId)
+      } else {
+        setSelectedContract(null)
+        setSelectedUnpaid(null)
+      }
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '계약 정보를 조회하지 못했습니다.')
+    } finally {
+      setContractLoading(false)
+    }
+  }
+
   useEffect(() => {
     void Promise.resolve().then(() => {
       loadProducts()
       loadApplications()
+      loadContractData()
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productType])
@@ -443,6 +509,89 @@ function CustomerContractsPage({
         return
       }
       setError(err instanceof Error ? err.message : '신청 취소에 실패했습니다.')
+    }
+  }
+
+  async function downloadContract(id: number) {
+    setError('')
+    setSuccess('')
+
+    try {
+      const { blob, filename } = await apiClient.downloadContract(token, id)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      link.click()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '계약서 다운로드에 실패했습니다.')
+    }
+  }
+
+  async function submitPayment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selectedContract) {
+      return
+    }
+
+    setError('')
+    setSuccess('')
+    setPaymentSubmitting(true)
+
+    try {
+      const result = await apiClient.payPremium(token, selectedContract.contractId, {
+        method: paymentMethod,
+        paymentInfo,
+      })
+
+      if (result.status === 'FAILED') {
+        setError(`결제 실패: ${result.reason ?? '승인되지 않았습니다.'}`)
+      } else {
+        setSuccess(`납부 ${result.paymentId}번이 완료되었습니다. (${formatCurrency(result.amount)})`)
+      }
+
+      await loadContractData()
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '보험료 납부에 실패했습니다.')
+    } finally {
+      setPaymentSubmitting(false)
+    }
+  }
+
+  async function submitAutoDebit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selectedContract) {
+      return
+    }
+
+    setError('')
+    setSuccess('')
+    setAutoDebitSubmitting(true)
+
+    try {
+      await apiClient.registerAutoDebit(token, selectedContract.contractId, {
+        account: autoDebitAccount,
+        withdrawalDay: Number(withdrawalDay),
+      })
+      setSuccess('자동이체가 등록되었습니다.')
+      await loadContractDetail(selectedContract.contractId)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      setError(err instanceof Error ? err.message : '자동이체 등록에 실패했습니다.')
+    } finally {
+      setAutoDebitSubmitting(false)
     }
   }
 
@@ -610,37 +759,179 @@ function CustomerContractsPage({
       <section className="panel">
         <div className="section-title">
           <Download size={18} />
-          <h2>기존 계약 및 납부 데모</h2>
+          <h2>내 계약 및 보험료 납부</h2>
         </div>
-        <div className="customer-list compact">
-          {contracts.map((contract) => (
-            <article key={contract.name}>
-              <Receipt size={20} />
-              <div>
-                <strong>{contract.name}</strong>
-                <span>{contract.period} · 월 {contract.premium}</span>
-                <small>{contract.coverage} · {contract.status}</small>
-              </div>
-              <button className="secondary-button" type="button">
-                상세보기
-              </button>
-            </article>
-          ))}
-        </div>
-        <div className="payment-box">
-          <div>
-            <span className="badge">보험료 납부</span>
-            <h3>든든 의료보험 6월분</h3>
-            <p>납부 기한: 2026.06.25 · 납부 금액: 72,000원</p>
+        {isContractLoading ? <p>Loading contracts...</p> : null}
+        <div className="contract-workspace">
+          <div className="customer-list compact">
+            {contracts.map((contract) => (
+              <article key={contract.contractId}>
+                <Receipt size={20} />
+                <div>
+                  <strong>{contract.productName}</strong>
+                  <span>
+                    {formatDate(contract.startDate)} - {formatDate(contract.endDate)} · 월{' '}
+                    {formatCurrency(contract.monthlyPremium)}
+                  </span>
+                  <small>
+                    {contract.productType} · {contract.status}
+                  </small>
+                </div>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => loadContractDetail(contract.contractId)}
+                >
+                  상세보기
+                </button>
+              </article>
+            ))}
+            {contracts.length === 0 ? <p>유효한 계약이 없습니다.</p> : null}
           </div>
-          {paid ? (
-            <p className="form-success">납부 내역이 기록되었습니다.</p>
-          ) : (
-            <button className="primary-button" type="button" onClick={() => setPaid(true)}>
-              납부하기
-              <CreditCard size={18} />
-            </button>
-          )}
+
+          <div className="contract-detail-grid">
+            <section className="payment-box">
+              <div>
+                <span className="badge">계약 상세</span>
+                <h3>{selectedContract?.productName ?? '계약을 선택하세요'}</h3>
+                {selectedContract ? (
+                  <p>
+                    계약번호 {selectedContract.contractId} · 자동이체{' '}
+                    {selectedContract.paymentMethod}
+                  </p>
+                ) : null}
+              </div>
+              {selectedContract ? (
+                <>
+                  <ul className="coverage-list">
+                    {selectedContract.coverageItems.map((item) => (
+                      <li key={item.itemName}>
+                        <CheckCircle2 size={16} />
+                        {item.itemName} · 한도 {formatCurrency(item.coverageLimit)} · 자기부담{' '}
+                        {formatCurrency(item.deductible)}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => downloadContract(selectedContract.contractId)}
+                  >
+                    계약서 다운로드
+                    <Download size={16} />
+                  </button>
+                </>
+              ) : null}
+            </section>
+
+            <section className="payment-box">
+              <div>
+                <span className="badge">미납/연체</span>
+                <h3>
+                  {selectedUnpaid
+                    ? formatCurrency(selectedUnpaid.unpaidPrincipal)
+                    : '연체 없음'}
+                </h3>
+                <p>
+                  {selectedUnpaid
+                    ? `기한 ${formatDate(selectedUnpaid.dueDate)} · ${selectedUnpaid.overdueDays}일 연체 · 이자 ${formatCurrency(selectedUnpaid.overdueInterest)}`
+                    : '선택한 계약에 표시할 연체 내역이 없습니다.'}
+                </p>
+              </div>
+              <div className="unpaid-strip">
+                {unpaidContracts.map((contract) => (
+                  <button
+                    type="button"
+                    key={contract.contractId}
+                    onClick={() => loadContractDetail(contract.contractId)}
+                  >
+                    <AlertTriangle size={16} />
+                    <span>{contract.productName}</span>
+                    <strong>{formatCurrency(contract.unpaidPrincipal)}</strong>
+                  </button>
+                ))}
+                {unpaidContracts.length === 0 ? <span>전체 연체 내역 없음</span> : null}
+              </div>
+            </section>
+          </div>
+
+          {selectedContract ? (
+            <div className="contract-detail-grid">
+              <form className="payment-box" onSubmit={submitPayment}>
+                <div>
+                  <span className="badge">보험료 납부</span>
+                  <h3>한 회차 납부</h3>
+                  <p>
+                    {selectedPayable
+                      ? `납부 예정 ${formatCurrency(selectedPayable.amount)}`
+                      : '현재 납부할 미납 회차가 없습니다.'}
+                  </p>
+                </div>
+                <div className="inline-fields">
+                  <label>
+                    Method
+                    <select
+                      value={paymentMethod}
+                      onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
+                    >
+                      <option value="CARD">CARD</option>
+                      <option value="TRANSFER">TRANSFER</option>
+                      <option value="AUTO_DEBIT">AUTO_DEBIT</option>
+                    </select>
+                  </label>
+                  <label>
+                    Payment info
+                    <input
+                      value={paymentInfo}
+                      onChange={(event) => setPaymentInfo(event.target.value)}
+                    />
+                  </label>
+                </div>
+                <button
+                  className="primary-button"
+                  disabled={isPaymentSubmitting}
+                  type="submit"
+                >
+                  {isPaymentSubmitting ? 'Processing' : '납부하기'}
+                  <CreditCard size={18} />
+                </button>
+              </form>
+
+              <form className="payment-box" onSubmit={submitAutoDebit}>
+                <div>
+                  <span className="badge">자동이체</span>
+                  <h3>출금 계좌 등록</h3>
+                  <p>등록 후 계약 상세의 납부 방법이 AUTO_DEBIT로 표시됩니다.</p>
+                </div>
+                <div className="inline-fields">
+                  <label>
+                    Account
+                    <input
+                      value={autoDebitAccount}
+                      onChange={(event) => setAutoDebitAccount(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Withdrawal day
+                    <input
+                      min="1"
+                      max="31"
+                      type="number"
+                      value={withdrawalDay}
+                      onChange={(event) => setWithdrawalDay(event.target.value)}
+                    />
+                  </label>
+                </div>
+                <button
+                  className="secondary-button"
+                  disabled={isAutoDebitSubmitting}
+                  type="submit"
+                >
+                  {isAutoDebitSubmitting ? 'Registering' : '자동이체 등록'}
+                </button>
+              </form>
+            </div>
+          ) : null}
         </div>
       </section>
     </section>

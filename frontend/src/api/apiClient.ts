@@ -1,16 +1,23 @@
 import type {
   ConfirmReviewRequest,
   ConfirmReviewResponse,
+  AutoDebitRequest,
+  ContractDetail,
+  ContractSummary,
   CreateApplicationRequest,
   ApplicationCreated,
   LoginRequest,
   MyApplication,
+  PayableContract,
+  PaymentRequest,
+  PaymentResponse,
   PendingReview,
   PolicyholderProfile,
   ProductDetail,
   ProductSummary,
   ProductType,
   ReviewApplicationDetail,
+  UnpaidContract,
   UpdateProfileRequest,
   UserType,
 } from '../types'
@@ -94,7 +101,38 @@ async function request<T>(
     return undefined as T
   }
 
-  return response.json() as Promise<T>
+  const contentType = response.headers.get('content-type') ?? ''
+  if (contentType.includes('application/json')) {
+    return response.json() as Promise<T>
+  }
+
+  return undefined as T
+}
+
+function readFilename(response: Response, fallback: string) {
+  const disposition = response.headers.get('content-disposition') ?? ''
+  const match = /filename="?([^"]+)"?/i.exec(disposition)
+  return match?.[1] ?? fallback
+}
+
+async function requestBlob(
+  path: string,
+  token: string,
+): Promise<{ blob: Blob; filename: string }> {
+  const response = await fetch(`${baseUrl}${path}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new ApiError(response.status, await readError(response))
+  }
+
+  return {
+    blob: await response.blob(),
+    filename: readFilename(response, 'contract.txt'),
+  }
 }
 
 export const apiClient = {
@@ -192,6 +230,63 @@ export const apiClient = {
   ): Promise<ConfirmReviewResponse> {
     return request(
       `/reviews/applications/${id}/confirm`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+      token,
+    )
+  },
+
+  async getContracts(token: string): Promise<ContractSummary[]> {
+    return request('/contracts', {}, token)
+  },
+
+  async getContract(token: string, id: number): Promise<ContractDetail> {
+    return request(`/contracts/${id}`, {}, token)
+  },
+
+  async downloadContract(
+    token: string,
+    id: number,
+  ): Promise<{ blob: Blob; filename: string }> {
+    return requestBlob(`/contracts/${id}/pdf`, token)
+  },
+
+  async getUnpaidContracts(token: string): Promise<UnpaidContract[]> {
+    return request('/contracts/unpaid', {}, token)
+  },
+
+  async getUnpaidContract(token: string, id: number): Promise<UnpaidContract> {
+    return request(`/contracts/${id}/unpaid`, {}, token)
+  },
+
+  async getPayableContracts(token: string): Promise<PayableContract[]> {
+    return request('/contracts/payable', {}, token)
+  },
+
+  async payPremium(
+    token: string,
+    id: number,
+    body: PaymentRequest,
+  ): Promise<PaymentResponse> {
+    return request(
+      `/contracts/${id}/payments`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      },
+      token,
+    )
+  },
+
+  async registerAutoDebit(
+    token: string,
+    id: number,
+    body: AutoDebitRequest,
+  ): Promise<void> {
+    return request(
+      `/contracts/${id}/auto-debit`,
       {
         method: 'POST',
         body: JSON.stringify(body),
