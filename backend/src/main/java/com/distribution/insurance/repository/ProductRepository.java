@@ -23,6 +23,7 @@ public interface ProductRepository extends JpaRepository<InsuranceProduct, Long>
               AND (:keyword IS NULL
                    OR p.productName LIKE CONCAT('%', :keyword, '%')
                    OR c.itemName LIKE CONCAT('%', :keyword, '%'))
+            ORDER BY p.id
             """)
     List<InsuranceProduct> search(@Param("type") Class<? extends InsuranceProduct> type,
                                   @Param("minPremium") Integer minPremium,
