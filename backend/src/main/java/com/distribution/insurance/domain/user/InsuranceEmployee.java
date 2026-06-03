@@ -20,4 +20,9 @@ public class InsuranceEmployee extends User {
         this.department = department;
         this.currentLoad = currentLoad;
     }
+
+    /** 새 심사 건 배정 시 업무량 증가(UC14). */
+    public void assignWork() {
+        this.currentLoad += 1;
+    }
 }
