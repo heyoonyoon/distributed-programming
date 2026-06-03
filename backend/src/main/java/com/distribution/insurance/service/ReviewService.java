@@ -4,6 +4,7 @@ import com.distribution.insurance.domain.application.ApplicationStatus;
 import com.distribution.insurance.domain.application.InsuranceApplication;
 import com.distribution.insurance.domain.product.CarInsuranceProduct;
 import com.distribution.insurance.domain.review.AccidentHistory;
+import org.hibernate.Hibernate;
 import com.distribution.insurance.domain.review.EnrollmentReview;
 import com.distribution.insurance.domain.review.ReviewResult;
 import com.distribution.insurance.domain.user.InsuranceEmployee;
@@ -48,7 +49,7 @@ public class ReviewService {
     public ReviewDetail detail(Long applicationId) {
         InsuranceApplication app = requireApplication(applicationId);
         AccidentHistory history = null;
-        if (app.getProduct() instanceof CarInsuranceProduct) {
+        if (Hibernate.unproxy(app.getProduct()) instanceof CarInsuranceProduct) {
             history = accidentHistoryClient.fetch(app.getApplicant().getSsn());
         }
         return new ReviewDetail(app, history);
@@ -61,7 +62,7 @@ public class ReviewService {
         InsuranceApplication app = requireApplication(applicationId);
 
         EnrollmentReview review = new EnrollmentReview(app, reviewer);
-        if (app.getProduct() instanceof CarInsuranceProduct) {
+        if (Hibernate.unproxy(app.getProduct()) instanceof CarInsuranceProduct) {
             review.attachAccidentHistory(accidentHistoryClient.fetch(app.getApplicant().getSsn()));
         }
         review.confirm(result, comment, surchargeRate, app.getProduct().getBasePremium());
