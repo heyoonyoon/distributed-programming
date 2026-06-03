@@ -14,7 +14,7 @@ public record ProductDetailResponse(
                 .toList();
         return new ProductDetailResponse(
                 product.getId(), product.getProductName(),
-                ProductSummaryResponse.typeOf(product), product.getDescription(),
+                ProductTypeMapper.typeOf(product), product.getDescription(),
                 product.getBasePremium(), items);
     }
 }

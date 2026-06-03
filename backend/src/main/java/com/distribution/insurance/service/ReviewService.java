@@ -2,6 +2,7 @@ package com.distribution.insurance.service;
 
 import com.distribution.insurance.domain.application.ApplicationStatus;
 import com.distribution.insurance.domain.application.InsuranceApplication;
+import com.distribution.insurance.domain.contract.InsuranceContract;
 import com.distribution.insurance.domain.product.CarInsuranceProduct;
 import com.distribution.insurance.domain.review.AccidentHistory;
 import org.hibernate.Hibernate;
@@ -9,11 +10,13 @@ import com.distribution.insurance.domain.review.EnrollmentReview;
 import com.distribution.insurance.domain.review.ReviewResult;
 import com.distribution.insurance.domain.user.InsuranceEmployee;
 import com.distribution.insurance.repository.ApplicationRepository;
+import com.distribution.insurance.repository.ContractRepository;
 import com.distribution.insurance.repository.ReviewRepository;
 import com.distribution.insurance.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -24,17 +27,20 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final AccidentHistoryClient accidentHistoryClient;
     private final NotificationSender notificationSender;
+    private final ContractRepository contractRepository;
 
     public ReviewService(ApplicationRepository applicationRepository,
                          ReviewRepository reviewRepository,
                          UserRepository userRepository,
                          AccidentHistoryClient accidentHistoryClient,
-                         NotificationSender notificationSender) {
+                         NotificationSender notificationSender,
+                         ContractRepository contractRepository) {
         this.applicationRepository = applicationRepository;
         this.reviewRepository = reviewRepository;
         this.userRepository = userRepository;
         this.accidentHistoryClient = accidentHistoryClient;
         this.notificationSender = notificationSender;
+        this.contractRepository = contractRepository;
     }
 
     /** 심사 상세 + (자동차건) 사고이력 참조 정보. */
@@ -71,6 +77,11 @@ public class ReviewService {
             app.markRejected();
         } else {
             app.markApproved();
+            // ADR 0005: 승인 시 같은 트랜잭션에서 계약 생성.
+            // ADR 0003: monthlyPremium은 결과 분기 없이 adjustedPremium 한 필드만 읽는다.
+            contractRepository.save(new InsuranceContract(
+                    app.getApplicant(), app.getProduct(),
+                    review.getAdjustedPremium(), LocalDate.now()));
         }
         reviewRepository.save(review);
 
