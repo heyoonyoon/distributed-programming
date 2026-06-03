@@ -24,7 +24,9 @@ public record ProductSummaryResponse(
     static String typeOf(InsuranceProduct product) {
         if (product instanceof HealthInsuranceProduct) return "HEALTH";
         if (product instanceof CarInsuranceProduct) return "CAR";
-        throw new IllegalStateException(
+        // 내부 매핑 누락(새 상품 종류 추가 시)은 서버 오류(500). IllegalStateException은
+        // 전역 핸들러에서 403으로 매핑되므로 일부러 쓰지 않는다.
+        throw new RuntimeException(
                 "알 수 없는 상품 종류: " + product.getClass().getSimpleName());
     }
 }
