@@ -26,7 +26,6 @@ import {
   Navigate,
   Route,
   Routes,
-  useLocation,
   useNavigate,
 } from 'react-router-dom'
 import { ApiError, apiClient, decodeUserType } from './api/apiClient'
@@ -214,22 +213,6 @@ function LoginPage({
       </section>
     </main>
   )
-}
-
-function Protected({
-  session,
-  children,
-}: {
-  session: AuthSession | null
-  children: ReactNode
-}) {
-  const location = useLocation()
-
-  if (!session) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />
-  }
-
-  return children
 }
 
 function CustomerShell({
@@ -2409,15 +2392,15 @@ function App() {
       <Route
         path="/customer/*"
         element={
-          <Protected session={session}>
-            <CustomerShell session={session as AuthSession} onLogout={handleLogout}>
+          session ? (
+            <CustomerShell session={session} onLogout={handleLogout}>
               <Routes>
                 <Route path="/home" element={<CustomerHomePage />} />
                 <Route
                   path="/contracts"
                   element={
                     <CustomerContractsPage
-                      token={(session as AuthSession).token}
+                      token={session.token}
                       onUnauthorized={handleUnauthorized}
                     />
                   }
@@ -2426,7 +2409,7 @@ function App() {
                   path="/claims"
                   element={
                     <CustomerClaimsPage
-                      token={(session as AuthSession).token}
+                      token={session.token}
                       onUnauthorized={handleUnauthorized}
                     />
                   }
@@ -2435,7 +2418,7 @@ function App() {
                   path="/profile"
                   element={
                     <ProfilePage
-                      token={(session as AuthSession).token}
+                      token={session.token}
                       onUnauthorized={handleUnauthorized}
                     />
                   }
@@ -2443,20 +2426,22 @@ function App() {
                 <Route path="*" element={<Navigate to="/customer/home" replace />} />
               </Routes>
             </CustomerShell>
-          </Protected>
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }
       />
       <Route
         path="/employee/*"
         element={
-          <Protected session={session}>
-            <EmployeeShell session={session as AuthSession} onLogout={handleLogout}>
+          session ? (
+            <EmployeeShell session={session} onLogout={handleLogout}>
               <Routes>
                 <Route
                   path="/reviews"
                   element={
                     <EmployeeReviewsPage
-                      token={(session as AuthSession).token}
+                      token={session.token}
                       onUnauthorized={handleUnauthorized}
                     />
                   }
@@ -2465,7 +2450,7 @@ function App() {
                   path="/benefit-reviews"
                   element={
                     <EmployeeBenefitReviewsPage
-                      token={(session as AuthSession).token}
+                      token={session.token}
                       onUnauthorized={handleUnauthorized}
                     />
                   }
@@ -2474,7 +2459,9 @@ function App() {
                 <Route path="*" element={<Navigate to="/employee/reviews" replace />} />
               </Routes>
             </EmployeeShell>
-          </Protected>
+          ) : (
+            <Navigate to="/login" replace />
+          )
         }
       />
       <Route
