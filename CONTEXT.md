@@ -57,3 +57,29 @@ _Avoid_: 심사결과, result(단독)
 **AccidentHistory**:
 금융감독원(외부 기관)에서 조회되는 자동차 사고 이력(사고 건수·지급 총액·면허 상태). 텍스트 구현에서는 더미로 시뮬레이션한다.
 _Avoid_: 사고이력, accident record(단독)
+
+### 계약 & 수납 (Contract & Billing)
+
+**InsuranceContract**:
+가입 심사 승인 후 성립한 보험 계약. 월 보험료·계약 기간·상태를 가지며, Payment·Notice를 소유한다(composition).
+_Avoid_: 계약, 보험계약, contract(단독), policy
+
+**Payment**:
+보험료 납부 1건의 기록(금액·납부수단·성공여부). 어느 회차에 대응하는지는 저장하지 않는다(FIFO 충당).
+_Avoid_: 납부, 결제, 수납, billing
+
+**Notice**:
+미납 발생 시 시스템이 자동 생성·발송하는 미납 고지서. 연체 30일 초과 시 해지예고를 포함한다.
+_Avoid_: 고지서, 독촉장, notice(단독), reminder
+
+**Installment**:
+계약 시작일부터 매월 발생하는 보험료 청구 회차. 별도 엔티티 없이 계약 정보로 계산해 도출하는 개념상의 단위(온더플라이).
+_Avoid_: 회차, 청구분, billing cycle, invoice
+
+**OverdueInterest**:
+미납 원금에 연체일수와 일이율을 곱해 산출하는 연체이자.
+_Avoid_: 연체이자, 연체료, late fee, penalty
+
+**PaymentMethod**:
+보험료 결제 수단. CARD(신용카드), TRANSFER(계좌이체), AUTO_DEBIT(자동이체).
+_Avoid_: 결제수단, 납입방법, 결제방식
