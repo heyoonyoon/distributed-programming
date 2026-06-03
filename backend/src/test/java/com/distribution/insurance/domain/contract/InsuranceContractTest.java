@@ -44,6 +44,23 @@ class InsuranceContractTest {
     }
 
     @Test
+    void 자동이체_등록_시_결제수단표기가_AUTO_DEBIT가_된다() {
+        InsuranceContract c = newContract();
+        assertThat(c.registeredPaymentMethod()).isEqualTo("미등록");
+        c.registerAutoDebit("110-222-333333", 25);
+        assertThat(c.registeredPaymentMethod()).isEqualTo("AUTO_DEBIT");
+        assertThat(c.getAutoDebit().getAccount()).isEqualTo("110-222-333333");
+        assertThat(c.getAutoDebit().getWithdrawalDay()).isEqualTo(25);
+    }
+
+    @Test
+    void 출금일은_1에서_31_사이여야_한다() {
+        InsuranceContract c = newContract();
+        assertThatThrownBy(() -> c.registerAutoDebit("110-222-333333", 32))
+                .isInstanceOf(com.distribution.insurance.service.InvalidRequestException.class);
+    }
+
+    @Test
     void generatePdf는_계약번호와_월보험료를_담은_바이트를_반환() {
         InsuranceContract c = newContract();
         byte[] pdf = c.generatePdf();
