@@ -238,7 +238,11 @@ function CustomerShell({
         <nav aria-label="Customer navigation">
           <Link to="/customer/home">Home</Link>
           <Link to="/customer/contracts">Contracts</Link>
-          <Link to="/customer/claims">Claims</Link>
+          <Link to="/customer/claims/health">Health claim</Link>
+          <Link to="/customer/claims/car-accident">Car accident</Link>
+          <Link to="/customer/claims/status">Status</Link>
+          <Link to="/customer/claims/history">History</Link>
+          <Link to="/customer/claims/benefit-analysis">Analysis</Link>
           <Link to="/customer/profile">Profile</Link>
         </nav>
         <button className="text-button" type="button" onClick={onLogout}>
@@ -304,8 +308,10 @@ function EmployeeShell({
 function CustomerHomePage() {
   const actions = [
     { label: '보험 상품 조회', icon: Search, path: '/customer/contracts' },
-    { label: '의료보험 청구', icon: HeartPulse, path: '/customer/claims' },
-    { label: '자동차사고 접수', icon: Car, path: '/customer/claims' },
+    { label: '의료보험 청구', icon: HeartPulse, path: '/customer/claims/health' },
+    { label: '자동차사고 접수', icon: Car, path: '/customer/claims/car-accident' },
+    { label: '보상 현황', icon: ClipboardCheck, path: '/customer/claims/status' },
+    { label: '보상 이력', icon: CalendarDays, path: '/customer/claims/history' },
     { label: '보험료 납부', icon: CreditCard, path: '/customer/contracts' },
   ]
 
@@ -967,12 +973,16 @@ function CustomerContractsPage({
   )
 }
 
+type CustomerClaimView = 'health' | 'car' | 'status' | 'history' | 'analysis'
+
 function CustomerClaimsPage({
   token,
   onUnauthorized,
+  view,
 }: {
   token: string
   onUnauthorized: () => void
+  view: CustomerClaimView
 }) {
   const [contracts, setContracts] = useState<ContractSummary[]>([])
   const [selectedHealthContractId, setSelectedHealthContractId] = useState('')
@@ -1297,16 +1307,25 @@ function CustomerClaimsPage({
     }
   }
 
+  const pageMeta: Record<CustomerClaimView, { eyebrow: string; title: string }> = {
+    health: { eyebrow: 'UC05 / UC17', title: '의료보험 청구' },
+    car: { eyebrow: 'UC09', title: '자동차사고 접수' },
+    status: { eyebrow: 'UC03', title: '보상 처리 현황' },
+    history: { eyebrow: 'UC04', title: '보상 이력' },
+    analysis: { eyebrow: 'UC11', title: '실익 분석' },
+  }
+
   return (
     <section className="page">
       <div className="page-header">
         <div>
-          <span className="eyebrow">UC05 / UC09 / UC17</span>
-          <h1>청구 및 사고 접수</h1>
+          <span className="eyebrow">{pageMeta[view].eyebrow}</span>
+          <h1>{pageMeta[view].title}</h1>
         </div>
       </div>
 
-      <div className="split-layout">
+      {view === 'health' ? (
+        <>
         <form className="panel form-panel" onSubmit={submitClaim}>
           <div className="section-title">
             <HeartPulse size={18} />
@@ -1403,7 +1422,41 @@ function CustomerClaimsPage({
             <Send size={18} />
           </button>
         </form>
+        <section className="panel result-panel">
+        <div className="section-title">
+          <Receipt size={18} />
+          <h2>청구 결과</h2>
+        </div>
+        {claimResult ? (
+          <article className={`claim-result ${claimResult.status.toLowerCase()}`}>
+            <span className="badge">{claimResult.complexity}</span>
+            <div>
+              <h3>청구번호 {claimResult.claimId}</h3>
+              <p>{describeHealthClaimResult(claimResult)}</p>
+            </div>
+            <strong>{claimResult.status}</strong>
+          </article>
+        ) : (
+          <div className="empty-result">
+            <FileText size={28} />
+            <p>청구 신청 후 결과가 표시됩니다.</p>
+          </div>
+        )}
+        <div className="claim-rule-grid">
+          <article>
+            <strong>SIMPLE</strong>
+            <span>1,000,000원 미만 · 즉시지급</span>
+          </article>
+          <article>
+            <strong>COMPLEX</strong>
+            <span>1,000,000원 이상 · 심사대기</span>
+          </article>
+        </div>
+      </section>
+      </>
+      ) : null}
 
+      {view === 'car' ? (
         <form className="panel form-panel" onSubmit={submitAccident}>
           <div className="section-title">
             <Car size={18} />
@@ -1513,40 +1566,9 @@ function CustomerClaimsPage({
             <Send size={18} />
           </button>
         </form>
-      </div>
+      ) : null}
 
-      <section className="panel result-panel">
-        <div className="section-title">
-          <Receipt size={18} />
-          <h2>청구 결과</h2>
-        </div>
-        {claimResult ? (
-          <article className={`claim-result ${claimResult.status.toLowerCase()}`}>
-            <span className="badge">{claimResult.complexity}</span>
-            <div>
-              <h3>청구번호 {claimResult.claimId}</h3>
-              <p>{describeHealthClaimResult(claimResult)}</p>
-            </div>
-            <strong>{claimResult.status}</strong>
-          </article>
-        ) : (
-          <div className="empty-result">
-            <FileText size={28} />
-            <p>청구 신청 후 결과가 표시됩니다.</p>
-          </div>
-        )}
-        <div className="claim-rule-grid">
-          <article>
-            <strong>SIMPLE</strong>
-            <span>1,000,000원 미만 · 즉시지급</span>
-          </article>
-          <article>
-            <strong>COMPLEX</strong>
-            <span>1,000,000원 이상 · 심사대기</span>
-          </article>
-        </div>
-      </section>
-
+      {view === 'status' ? (
       <section className="panel">
         <div className="section-title">
           <ClipboardCheck size={18} />
@@ -1566,7 +1588,9 @@ function CustomerClaimsPage({
           {statusClaims.length === 0 && !isQueryLoading ? <p>진행 중인 보상 건이 없습니다.</p> : null}
         </div>
       </section>
+      ) : null}
 
+      {view === 'history' ? (
       <section className="panel">
         <div className="section-title">
           <CalendarDays size={18} />
@@ -1606,7 +1630,9 @@ function CustomerClaimsPage({
           {historyClaims.length === 0 && !isQueryLoading && !isHistoryLoading ? <p>조회 기간의 보상 이력이 없습니다.</p> : null}
         </div>
       </section>
+      ) : null}
 
+      {view === 'analysis' ? (
       <section className="panel">
         <div className="section-title">
           <BadgeCheck size={18} />
@@ -1653,6 +1679,7 @@ function CustomerClaimsPage({
         ) : null}
         {queryError ? <p className="form-error">{queryError}</p> : null}
       </section>
+      ) : null}
     </section>
   )
 }
@@ -2406,14 +2433,56 @@ function App() {
                   }
                 />
                 <Route
-                  path="/claims"
+                  path="/claims/health"
                   element={
                     <CustomerClaimsPage
                       token={session.token}
                       onUnauthorized={handleUnauthorized}
+                      view="health"
                     />
                   }
                 />
+                <Route
+                  path="/claims/car-accident"
+                  element={
+                    <CustomerClaimsPage
+                      token={session.token}
+                      onUnauthorized={handleUnauthorized}
+                      view="car"
+                    />
+                  }
+                />
+                <Route
+                  path="/claims/status"
+                  element={
+                    <CustomerClaimsPage
+                      token={session.token}
+                      onUnauthorized={handleUnauthorized}
+                      view="status"
+                    />
+                  }
+                />
+                <Route
+                  path="/claims/history"
+                  element={
+                    <CustomerClaimsPage
+                      token={session.token}
+                      onUnauthorized={handleUnauthorized}
+                      view="history"
+                    />
+                  }
+                />
+                <Route
+                  path="/claims/benefit-analysis"
+                  element={
+                    <CustomerClaimsPage
+                      token={session.token}
+                      onUnauthorized={handleUnauthorized}
+                      view="analysis"
+                    />
+                  }
+                />
+                <Route path="/claims" element={<Navigate to="/customer/claims/health" replace />} />
                 <Route
                   path="/profile"
                   element={
