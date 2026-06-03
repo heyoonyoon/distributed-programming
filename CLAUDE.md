@@ -60,7 +60,12 @@ brainstorming → grill-with-docs → writing-plans → executing-plans → fini
 
 ### 6. 마무리
 - 완료 선언 전 verification-before-completion 또는 `/verify`로 실제 동작 확인.
-- 리뷰는 `/code-review`, 브랜치 마무리는 finishing-a-development-branch.
+- 코드 리뷰는 **2단계**로 한다(순서 엄수):
+  1. **superpowers:requesting-code-review** 를 먼저 수행한다(Claude 셀프/서브에이전트 리뷰, superpowers 파이프라인 정석).
+  2. 그 지적사항을 반영한 뒤, **Codex로 최종 교차 리뷰**를 수행한다(다른 모델의 second opinion).
+     - 플러그인(`openai/codex-plugin-cc`) 설치 시 `/codex:review`(또는 `/codex:adversarial-review`).
+     - 플러그인 없이도 `codex exec`에 `git diff main...HEAD`를 물려 직접 리뷰 가능.
+- 위 2단계 리뷰가 끝난 후 finishing-a-development-branch 로 브랜치를 마무리한다.
 
 ## 문서 위치 규약 (프로젝트 루트 기준)
 - `CONTEXT.md` — 루트
@@ -69,6 +74,13 @@ brainstorming → grill-with-docs → writing-plans → executing-plans → fini
 - `docs/adr/NNNN-<slug>.md` — 결정 기록
 - `docs/superpowers/specs/` — 설계 문서(spec)
 - `docs/superpowers/plans/` — 구현 계획서(plan)
+
+## Git / GitHub 워크플로우 (작업 단위 규약)
+- **GitHub 마일스톤 = Epic.** 빌드 순서의 각 에픽(Epic 0~4)을 마일스톤 하나로 둔다.
+- **이슈 = 작업 단위.** 각 작업을 이슈로 등록하고 해당 에픽 마일스톤에 매단다.
+- **이슈마다 브랜치를 만들어 작업한다.** 브랜치명: `<이슈번호>-<slug>` (예: `1-epic0-user-auth`).
+- **이슈 브랜치 하나 = PR 하나.** 한 이슈의 작업이 끝나면 그 브랜치로 PR을 올리고, PR이 머지되면 이슈가 닫힌다. 여러 이슈를 한 브랜치/PR에 섞지 않는다.
+- main/master에서 직접 구현 시작 금지 — 항상 이슈 브랜치에서 작업한다.
 
 ## 항상 지킬 것
 - 코드/문서 네이밍은 `CONTEXT.md` 용어집을 단일 출처로 따른다.

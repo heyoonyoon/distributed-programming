@@ -1,3 +1,19 @@
 spring:
   application:
     name: insurance
+  datasource:
+    url: jdbc:mysql://localhost:3306/insurance?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: insurance
+    password: insurance
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+jwt:
+  secret: "demo-secret-key-please-change-this-to-a-long-enough-value-32bytes!!"
+  expiration-millis: 3600000
