@@ -77,6 +77,14 @@
   cursor: pointer;
 }
 
+.account-switch button.is-selected,
+.account-switch button[aria-pressed='true'] {
+  color: #fff;
+  background: #0066cc;
+  border-color: #0066cc;
+  font-weight: 700;
+}
+
 label {
   display: grid;
   gap: 8px;
