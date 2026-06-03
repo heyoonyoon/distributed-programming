@@ -63,6 +63,28 @@ class ClaimServiceTest {
     }
 
     @Test
+    void 임계값과_정확히_같으면_COMPLEX이다() {
+        Policyholder p = ph("110-123-456789");
+        InsuranceContract c = healthContract(p);
+
+        HealthInsuranceClaim claim = claimService.fileHealthClaim(
+                p.getId(), c.getId(), "서울병원", "S00", LocalDate.now(), 1000000, 1000000, List.of());
+
+        assertThat(claim.getComplexity()).isEqualTo(ClaimComplexity.COMPLEX);
+        assertThat(claimRepository.findById(claim.getId()).orElseThrow().getStatus())
+                .isEqualTo(ClaimStatus.PENDING);
+    }
+
+    @Test
+    void 없는_계약으로_청구하면_404성_예외() {
+        Policyholder p = ph("110-123-456789");
+
+        assertThatThrownBy(() -> claimService.fileHealthClaim(
+                p.getId(), 999999L, "서울병원", "S00", LocalDate.now(), 500000, 500000, List.of()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void 본인계약이_아니면_403성_예외() {
         Policyholder owner = ph("110-123-456789");
         Policyholder other = ph("220-123-456789");
