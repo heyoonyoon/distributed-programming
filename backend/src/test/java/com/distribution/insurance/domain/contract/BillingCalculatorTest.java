@@ -44,6 +44,15 @@ class BillingCalculatorTest {
     }
 
     @Test
+    void 월말_시작은_plusMonths_기한과_발생회차가_일치한다() {
+        // start=1/31, asOf=2/28: 2회차 기한(plusMonths(1)=2/28)이 도래했으므로 미납 2회차.
+        InsuranceContract c = contract(LocalDate.of(2026, 1, 31), 30000);
+        BillingStatus s = BillingCalculator.compute(c, 0, LocalDate.of(2026, 2, 28));
+        assertThat(s.unpaidCount()).isEqualTo(2);
+        assertThat(s.oldestUnpaidDueDate()).isEqualTo(LocalDate.of(2026, 1, 31));
+    }
+
+    @Test
     void 발생회차는_총회차_12를_넘지_않는다() {
         InsuranceContract c = contract(LocalDate.of(2026, 1, 1), 30000);
         BillingStatus s = BillingCalculator.compute(c, 0, LocalDate.of(2028, 1, 1));

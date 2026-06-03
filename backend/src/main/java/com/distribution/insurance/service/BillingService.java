@@ -70,6 +70,9 @@ public class BillingService {
     @Transactional
     public PayOutcome pay(Long policyholderId, Long contractId, PaymentMethod method, String paymentInfo) {
         InsuranceContract c = requireOwned(policyholderId, contractId);
+        if (!statusOf(c).hasUnpaid()) {
+            throw new InvalidRequestException("납부할 미납 보험료가 없습니다.");
+        }
         int amount = c.getMonthlyPremium();
 
         PaymentGateway.Result result = paymentGateway.charge(method, amount, paymentInfo);

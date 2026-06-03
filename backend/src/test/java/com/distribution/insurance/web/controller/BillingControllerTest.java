@@ -151,6 +151,30 @@ class BillingControllerTest {
     }
 
     @Test
+    void 미납이_없으면_납부는_400() throws Exception {
+        // 오늘 시작 계약 → 1회차만 발생. 한 번 성공 납부하면 미납이 없다.
+        HealthInsuranceProduct product = productRepository.save(
+                new HealthInsuranceProduct("오늘상품", "설명", 30000, 120));
+        Policyholder owner = (Policyholder) userRepository.findById(ownerId).orElseThrow();
+        InsuranceContract today = contractRepository.save(
+                new InsuranceContract(owner, product, 30000, LocalDate.now()));
+        Long todayId = today.getId();
+
+        mockMvc.perform(post("/contracts/" + todayId + "/payments")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"method\":\"TRANSFER\",\"paymentInfo\":\"110-222-333\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("SUCCESS"));
+
+        mockMvc.perform(post("/contracts/" + todayId + "/payments")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"method\":\"TRANSFER\",\"paymentInfo\":\"110-222-333\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void 타인_토큰으로_미납조회는_403() throws Exception {
         mockMvc.perform(get("/contracts/" + contractId + "/unpaid")
                         .header("Authorization", "Bearer " + otherToken))

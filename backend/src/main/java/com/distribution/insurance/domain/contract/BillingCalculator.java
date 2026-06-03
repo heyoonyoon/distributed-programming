@@ -22,12 +22,11 @@ public final class BillingCalculator {
         LocalDate start = contract.getStartDate();
         int totalInstallments = (int) ChronoUnit.MONTHS.between(start, contract.getEndDate());
 
-        int dueCount;
-        if (asOf.isBefore(start)) {
-            dueCount = 0;
-        } else {
-            long elapsedMonths = ChronoUnit.MONTHS.between(start, asOf);
-            dueCount = (int) Math.min(elapsedMonths + 1, totalInstallments);
+        // 회차 기한(start.plusMonths(k))과 동일한 규약으로 발생 회차를 센다.
+        // 월말 시작(예: 1/31)은 plusMonths가 말일로 보정되므로 between() 기반 계산과 어긋날 수 있다.
+        int dueCount = 0;
+        while (dueCount < totalInstallments && !start.plusMonths(dueCount).isAfter(asOf)) {
+            dueCount++;
         }
 
         int unpaidCount = (int) Math.max(0, dueCount - successCount);
