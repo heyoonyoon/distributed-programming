@@ -120,7 +120,11 @@ function formatContractStatus(value: string) {
 }
 
 function formatInputDate(date: Date) {
-  return date.toISOString().slice(0, 10)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
 }
 
 function describeBenefitReviewResult(result: ConfirmBenefitReviewResponse) {
@@ -1293,7 +1297,7 @@ function CustomerClaimsPage({
 
     const contractId = Number(selectedCarContractId)
     const parsedInjuredCount = Number(injuredCount)
-    const today = new Date().toISOString().slice(0, 10)
+    const today = formatInputDate(new Date())
 
     if (!contractId) {
       setAccidentError('접수할 자동차보험 계약을 선택해 주세요.')
