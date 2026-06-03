@@ -1,12 +1,12 @@
 package com.distribution.insurance.domain.review;
 
-import com.distribution.insurance.domain.claim.HealthInsuranceClaim;
+import com.distribution.insurance.domain.claim.Claim;
 import com.distribution.insurance.service.InvalidRequestException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 복잡한 의료보험 청구의 보험금 지급 심사(UC12). 배정된 담당자만 확정한다. */
+/** 보험금 지급 심사(UC12, ADR 0009). 복잡한 의료보험 청구와 자동차사고 접수 건을 대상으로 하며 배정된 담당자만 확정한다. */
 @Entity
 @DiscriminatorValue("BENEFIT_PAYMENT")
 @Getter
@@ -17,9 +17,9 @@ public class BenefitPaymentReview extends Review {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "claim_id", unique = true)
-    private HealthInsuranceClaim claim;
+    private Claim claim;
 
-    public BenefitPaymentReview(HealthInsuranceClaim claim) {
+    public BenefitPaymentReview(Claim claim) {
         this.claim = claim;
     }
 

@@ -1,6 +1,6 @@
 package com.distribution.insurance.service;
 
-import com.distribution.insurance.domain.claim.HealthInsuranceClaim;
+import com.distribution.insurance.domain.claim.Claim;
 import com.distribution.insurance.domain.review.BenefitPaymentReview;
 import com.distribution.insurance.domain.review.ReviewResult;
 import com.distribution.insurance.domain.user.Policyholder;
@@ -44,7 +44,7 @@ public class BenefitReviewService {
         if (review.getResult() != null) {
             throw new IllegalStateTransitionException("이미 확정된 심사입니다.");
         }
-        HealthInsuranceClaim claim = review.getClaim();
+        Claim claim = review.getClaim();
 
         review.confirm(result, comment);
         Policyholder ph = claim.getContract().getPolicyholder();
