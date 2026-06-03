@@ -27,7 +27,7 @@ public class BenefitPayoutService {
     @Transactional
     public BenefitPayment pay(Claim claim) {
         ClaimStatus status = claim.getStatus();
-        if (status != ClaimStatus.PENDING && status != ClaimStatus.APPROVED) {
+        if (status != ClaimStatus.PENDING && status != ClaimStatus.APPROVED && status != ClaimStatus.FAILED) {
             throw new IllegalStateTransitionException(
                     "지급 가능한 상태가 아닙니다. 현재 상태: " + status);
         }

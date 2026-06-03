@@ -52,15 +52,15 @@ public abstract class Claim {
         this.status = ClaimStatus.REJECTED;
     }
 
-    /** 지급 완료. SIMPLE은 PENDING에서, COMPLEX는 APPROVED에서 진입(ADR 0006/0007). */
+    /** 지급 완료. SIMPLE은 PENDING, COMPLEX는 APPROVED, 재시도는 FAILED에서 진입(ADR 0006/0007, UC17 E1). */
     public void markCompleted() {
-        requireOneOf(ClaimStatus.PENDING, ClaimStatus.APPROVED);
+        requireOneOf(ClaimStatus.PENDING, ClaimStatus.APPROVED, ClaimStatus.FAILED);
         this.status = ClaimStatus.COMPLETED;
     }
 
-    /** 지급 실패(UC17 E1). 송금 시도는 PENDING(SIMPLE) 또는 APPROVED(COMPLEX)에서만 일어난다. */
+    /** 지급 실패(UC17 E1). PENDING/APPROVED 최초 시도 또는 FAILED 재시도에서 발생. */
     public void markFailed() {
-        requireOneOf(ClaimStatus.PENDING, ClaimStatus.APPROVED);
+        requireOneOf(ClaimStatus.PENDING, ClaimStatus.APPROVED, ClaimStatus.FAILED);
         this.status = ClaimStatus.FAILED;
     }
 
