@@ -35,19 +35,15 @@ JPA single-table 상속이 필요 없는 단일 엔티티. 기존 product 도메
 InsuranceApplication
 - id            : Long (IDENTITY)
 - appliedAt     : LocalDateTime
-- status        : ApplicationStatus   // PENDING, APPROVED, CONDITIONAL, REJECTED, CANCELLED
-- applicantName : String              // 가입 시점 개인정보 스냅샷
-- birthDate     : LocalDate
-- ssn           : String              // 주민등록번호 (스냅샷)
-- phone         : String
-- email         : String
+- status        : ApplicationStatus   // PENDING, APPROVED, REJECTED, CANCELLED
 - product       : ManyToOne → InsuranceProduct
 - applicant     : ManyToOne → Policyholder
 - vehicleInfo   : VehicleInfo (@Embeddable, nullable — CarInsuranceProduct만)
 - medicalHistory: MedicalHistory (@Embeddable, nullable — HealthInsuranceProduct만)
 ```
 
-- **개인정보 스냅샷 이유**: 신청 시점의 정보를 보존(이후 Policyholder 프로필이 바뀌어도 심사 근거 유지).
+- **개인정보 비복제(ADR 0002)**: 이름·생년월일·주민번호·연락처·이메일은 Policyholder가 소유한다. Application은 `applicant`만 참조하고, 심사 화면·사고이력 조회(ssn)는 `applicant`에서 읽는다. Application 고유 데이터는 종류별 추가정보뿐이다.
+- **조건부승인 비표현(ADR 0003)**: ApplicationStatus에 CONDITIONAL을 두지 않는다. 조건부도 APPROVED이며, 조건부 여부는 EnrollmentReview가 소유한다.
 - `VehicleInfo`(@Embeddable): 차량번호, 차종, 연식, 운전경력.
 - `MedicalHistory`(@Embeddable): 현재 병력, 과거 입원 이력, 복용 중인 약물.
 - **종류 정합성 불변식**:
@@ -79,10 +75,12 @@ EnrollmentReview extends Review   @DiscriminatorValue("ENROLLMENT")
 ```
 
 - `applySurcharge(rate)`: `adjustedPremium = round(basePremium * (1 + rate))`.
+- **adjustedPremium 단일 출처(ADR 0003)**: 결과와 무관하게 항상 최종 월 보험료를 담는다. APPROVED면 basePremium 그대로, CONDITIONAL이면 할증 적용액. REJECTED는 의미 없음(0/미사용). Epic 3는 이 필드만 읽는다.
 - **할증 규칙**:
-  - `result=CONDITIONAL`이면 surchargeRate > 0 필수, adjustedPremium 계산.
-  - `result=APPROVED|REJECTED`이면 surchargeRate 입력 금지(있으면 400).
-- 확정 시 `application`의 status를 동기 전이시킨다(APPROVED/CONDITIONAL/REJECTED).
+  - `result=CONDITIONAL`이면 surchargeRate > 0 필수, adjustedPremium = 할증 적용액.
+  - `result=APPROVED`이면 surchargeRate 입력 금지(있으면 400), adjustedPremium = basePremium.
+  - `result=REJECTED`이면 surchargeRate 입력 금지.
+- 확정 시 `application`의 status를 동기 전이시킨다(CONDITIONAL→APPROVED, REJECTED→REJECTED).
 
 ### 3.3 AccidentHistory + AccidentHistoryClient (이슈 B, UC15)
 
@@ -107,7 +105,7 @@ AccidentHistory (@Embeddable)
 ### 4.1 이슈 A — UC02 (ROLE: POLICYHOLDER)
 
 - `POST /api/applications` — 가입 신청 생성
-  - body: `productId`, 개인정보(name, birthDate, ssn, phone, email), `vehicleInfo` | `medicalHistory`
+  - body: `productId`, `vehicleInfo` | `medicalHistory` (개인정보는 인증 주체 Policyholder에서 읽음 — ADR 0002)
   - 201 → `{ applicationId, status: "PENDING", appliedAt }`
   - mock 알림(접수번호, 예상 처리기간) 발송(로그)
 - `GET /api/applications/me` — 내 신청 목록/상태 조회
@@ -134,7 +132,7 @@ GlobalExceptionHandler(Epic 1) 확장.
 
 - **500 오매핑 방지**: 알 수 없는 enum/상품 종류는 명시적으로 처리(Epic 1 교훈 반영).
 - **검증 위치**:
-  - 형식 검증(주민번호/연락처/이메일 패턴, 필수 항목) → DTO Bean Validation(`@Valid`).
+  - 형식 검증(productId 필수, vehicleInfo/medicalHistory 필드 형식·필수) → DTO Bean Validation(`@Valid`). 개인정보는 body로 받지 않으므로 검증 대상 아님(ADR 0002).
   - 도메인 불변식(종류 정합성, 상태 전이, 할증 규칙) → 엔티티/도메인 서비스 내부에서 throw.
 
 ## 6. 테스트 전략 (TDD 철칙)

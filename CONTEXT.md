@@ -35,3 +35,25 @@ _Avoid_: 자동차보험, 차보험, auto, vehicle insurance
 **CoverageItem**:
 한 상품이 보장하는 개별 보장 항목(보장 한도·면책 포함). 보험 실무의 "담보"와 같은 개념.
 _Avoid_: 보장항목, 담보, coverage, benefit
+
+### 가입 & 심사 (Enrollment & Underwriting)
+
+**InsuranceApplication**:
+Policyholder가 특정 상품에 대해 제출한 가입 신청. 심사 완료 전까지의 단계이며, 승인 후 InsuranceContract로 이어진다.
+_Avoid_: 가입신청, 신청서, application(단독), enrollment
+
+**ApplicationStatus**:
+가입 신청의 진행 상태. PENDING(심사 대기), APPROVED(승인), REJECTED(반려), CANCELLED(취소). 조건부 여부는 여기 두지 않고 ReviewResult가 가진다.
+_Avoid_: 신청상태, status(단독)
+
+**EnrollmentReview**:
+InsuranceApplication에 대한 가입 심사. Review 추상 부모를 상속하며, 자동차보험 건은 AccidentHistory를 참조한다. 확정한 InsuranceEmployee가 담당자(reviewer)로 기록된다.
+_Avoid_: 가입심사, 심사(단독), underwriting, review(단독)
+
+**ReviewResult**:
+심사 결과. APPROVED(승인), CONDITIONAL(조건부 승인 — 할증 부과), REJECTED(반려).
+_Avoid_: 심사결과, result(단독)
+
+**AccidentHistory**:
+금융감독원(외부 기관)에서 조회되는 자동차 사고 이력(사고 건수·지급 총액·면허 상태). 텍스트 구현에서는 더미로 시뮬레이션한다.
+_Avoid_: 사고이력, accident record(단독)
