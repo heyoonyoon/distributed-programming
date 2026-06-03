@@ -21,7 +21,13 @@ public class OverdueNoticeScheduler {
 
     @Scheduled(cron = "0 0 9 * * *")
     public void run() {
-        int created = noticeService.issueOverdueNotices(LocalDate.now());
-        log.info("미납 고지서 발송 완료: {}건", created);
+        log.info("미납 고지서 발송 배치 시작");
+        try {
+            int created = noticeService.issueOverdueNotices(LocalDate.now());
+            log.info("미납 고지서 발송 완료: {}건", created);
+        } catch (Exception e) {
+            // 배치 실패가 스케줄러 스레드를 죽이지 않도록 격리한다.
+            log.error("미납 고지서 발송 배치 실패", e);
+        }
     }
 }

@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
  * 다이어그램(issuedAt/dueAmount/overdueDays/isTerminationWarning)에 발송 기록 필드를 보강했다(plan 참고).
  */
 @Entity
-@Table(name = "notice")
+@Table(name = "notice", uniqueConstraints = @UniqueConstraint(
+        name = "uk_notice_contract_day", columnNames = {"contract_id", "issued_at"}))
 @Getter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class Notice {

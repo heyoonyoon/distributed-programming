@@ -1,10 +1,14 @@
 package com.distribution.insurance.service;
 
+import com.distribution.insurance.domain.contract.BillingCalculator;
+import com.distribution.insurance.domain.contract.BillingStatus;
 import com.distribution.insurance.domain.contract.InsuranceContract;
 import com.distribution.insurance.domain.contract.Notice;
+import com.distribution.insurance.domain.contract.PaymentStatus;
 import com.distribution.insurance.domain.product.HealthInsuranceProduct;
 import com.distribution.insurance.domain.user.Policyholder;
 import com.distribution.insurance.repository.*;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +28,7 @@ class NoticeServiceTest {
     @Autowired NoticeRepository noticeRepository;
     @Autowired UserRepository userRepository;
     @Autowired ProductRepository productRepository;
+    @Autowired PaymentRepository paymentRepository;
 
     Long contractId; Long policyholderId;
 
@@ -66,6 +71,19 @@ class NoticeServiceTest {
         int secondRun = noticeService.issueOverdueNotices(LocalDate.now());
         assertThat(secondRun).isZero();
         assertThat(noticeRepository.findByContractId(contractId)).hasSize(1);
+    }
+
+    @Test
+    void 유니크_제약이_같은_계약_같은_날_중복_고지서를_막는다() {
+        InsuranceContract c = contractRepository.findById(contractId).orElseThrow();
+        long success = paymentRepository.countByContractIdAndStatus(contractId, PaymentStatus.SUCCESS);
+        LocalDate asOf = LocalDate.now();
+        BillingStatus status = BillingCalculator.compute(c, success, asOf);
+
+        noticeRepository.saveAndFlush(Notice.of(c, status, asOf));
+
+        assertThatThrownBy(() -> noticeRepository.saveAndFlush(Notice.of(c, status, asOf)))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test
