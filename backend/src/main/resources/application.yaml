@@ -13,7 +13,18 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
 
 jwt:
   secret: "demo-secret-key-please-change-this-to-a-long-enough-value-32bytes!!"
   expiration-millis: 3600000
+
+# Epic 4 청구/지급
+insurance:
+  claim:
+    complex-threshold: 1000000
+  upload:
+    dir: ./uploads/claims

@@ -83,3 +83,41 @@ _Avoid_: 연체이자, 연체료, late fee, penalty
 **PaymentMethod**:
 보험료 결제 수단. CARD(신용카드), TRANSFER(계좌이체), AUTO_DEBIT(자동이체).
 _Avoid_: 결제수단, 납입방법, 결제방식
+
+### 보상 & 청구 (Claim & Payout)
+
+**Claim**:
+가입자가 유효한 InsuranceContract에 대해 제출하는 보상 처리 1건의 추상 부모. HealthInsuranceClaim과 CarAccidentReport의 공통 상위 개념. "청구"는 제출 행위, "보상"은 그 처리·지급 흐름을 가리키지만 둘 다 같은 Claim을 지칭한다.
+_Avoid_: 보상, 보상건, 청구, 청구건, claim request, 사고접수(단독)
+
+**HealthInsuranceClaim**:
+HealthInsuranceProduct 계약에 대한 의료보험 청구. 청구금액으로 SIMPLE/COMPLEX 복잡도가 판별된다.
+_Avoid_: 의료청구, 의료비청구, medical claim
+
+**CarAccidentReport**:
+CarInsuranceProduct 계약에 대한 자동차사고 접수 건. 접수번호 발급·직원 알림까지가 현재 범위(심사·지급 흐름 없음).
+_Avoid_: 사고접수, 사고접수건, accident report(단독), car claim
+
+**ClaimStatus**:
+Claim의 처리 상태. PENDING(접수), IN_REVIEW(심사중), APPROVED(승인), REJECTED(반려), COMPLETED(지급완료), FAILED(지급실패).
+_Avoid_: 청구상태, 보상상태, status(단독)
+
+**ClaimComplexity**:
+HealthInsuranceClaim의 복잡도. SIMPLE(간단 — 즉시 지급), COMPLEX(복잡 — 담당자 배정 후 심사).
+_Avoid_: 복잡도, 난이도, complexity(단독)
+
+**BenefitPaymentReview**:
+COMPLEX 의료보험 청구에 대한 보험금 지급 심사. Review 추상 부모를 상속하며 배정된 InsuranceEmployee(담당자)가 확정한다. 승인 시 BenefitPayment를 소유한다(composition). 결과는 기존 ReviewResult를 쓰되 CONDITIONAL은 사용하지 않는다.
+_Avoid_: 지급심사, 보험금심사, benefit review, payout review
+
+**BenefitPayment**:
+승인된(또는 SIMPLE) 청구에 대해 가입자 계좌로 송금되는 보험금 지급 1건의 기록(금액·일시·계좌·성공여부).
+_Avoid_: 보험금지급, 지급, payout, benefit(단독)
+
+**ClaimAttachment**:
+Claim에 첨부되는 증빙 1건의 메타(파일명·타입·크기·저장경로). 바이너리는 디스크에 저장하고 엔티티는 메타만 보존한다.
+_Avoid_: 첨부, 증빙, 첨부파일, attachment(단독), document
+
+**BenefitTransferGateway**:
+보험금을 가입자 계좌로 송금하는 외부 연동의 추상 포트(보험료 수납용 PaymentGateway와 별개). 텍스트 구현에서는 Mock으로 시뮬레이션한다.
+_Avoid_: 송금게이트웨이, 이체연동, transfer gateway(단독)
