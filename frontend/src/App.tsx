@@ -24,6 +24,7 @@ import type { FormEvent, ReactNode } from 'react'
 import {
   Link,
   Navigate,
+  NavLink,
   Route,
   Routes,
   useNavigate,
@@ -174,6 +175,8 @@ function LoginPage({
   const [password, setPassword] = useState('1234')
   const [error, setError] = useState('')
   const [isSubmitting, setSubmitting] = useState(false)
+  const selectedLoginType =
+    email === 'staff@test.com' ? 'employee' : email === 'hong@test.com' ? 'policyholder' : null
 
   if (session) {
     return <Navigate to={homePath(session)} replace />
@@ -209,10 +212,20 @@ function LoginPage({
         </div>
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="account-switch">
-            <button type="button" onClick={() => setEmail('hong@test.com')}>
+            <button
+              aria-pressed={selectedLoginType === 'policyholder'}
+              className={selectedLoginType === 'policyholder' ? 'is-selected' : ''}
+              type="button"
+              onClick={() => setEmail('hong@test.com')}
+            >
               가입자
             </button>
-            <button type="button" onClick={() => setEmail('staff@test.com')}>
+            <button
+              aria-pressed={selectedLoginType === 'employee'}
+              className={selectedLoginType === 'employee' ? 'is-selected' : ''}
+              type="button"
+              onClick={() => setEmail('staff@test.com')}
+            >
               직원
             </button>
           </div>
@@ -266,17 +279,17 @@ function CustomerShell({
           <span>보험</span>
         </Link>
         <nav aria-label="고객 메뉴">
-          <Link to="/customer/home">홈</Link>
-          <Link to="/customer/products">상품 조회</Link>
-          <Link to="/customer/apply">가입 신청</Link>
-          <Link to="/customer/applications">신청 내역</Link>
-          <Link to="/customer/contracts">계약/납부</Link>
-          <Link to="/customer/claims/health">의료청구</Link>
-          <Link to="/customer/claims/car-accident">사고접수</Link>
-          <Link to="/customer/claims/status">보상현황</Link>
-          <Link to="/customer/claims/history">보상이력</Link>
-          <Link to="/customer/claims/benefit-analysis">실익분석</Link>
-          <Link to="/customer/profile">내 정보</Link>
+          <NavLink to="/customer/home">홈</NavLink>
+          <NavLink to="/customer/products">상품 조회</NavLink>
+          <NavLink to="/customer/apply">가입 신청</NavLink>
+          <NavLink to="/customer/applications">신청 내역</NavLink>
+          <NavLink to="/customer/contracts">계약/납부</NavLink>
+          <NavLink to="/customer/claims/health">의료청구</NavLink>
+          <NavLink to="/customer/claims/car-accident">사고접수</NavLink>
+          <NavLink to="/customer/claims/status">보상현황</NavLink>
+          <NavLink to="/customer/claims/history">보상이력</NavLink>
+          <NavLink to="/customer/claims/benefit-analysis">실익분석</NavLink>
+          <NavLink to="/customer/profile">내 정보</NavLink>
         </nav>
         <button className="text-button" type="button" onClick={onLogout}>
           <LogOut size={17} />
@@ -309,18 +322,18 @@ function EmployeeShell({
           <span>직원</span>
         </Link>
         <nav className="nav-list" aria-label="직원 메뉴">
-          <Link to="/employee/reviews">
+          <NavLink to="/employee/reviews">
             <ClipboardCheck size={18} />
             가입 심사
-          </Link>
-          <Link to="/employee/benefit-reviews">
+          </NavLink>
+          <NavLink to="/employee/benefit-reviews">
             <Receipt size={18} />
             보험금 심사
-          </Link>
-          <Link to="/employee/assignments">
+          </NavLink>
+          <NavLink to="/employee/assignments">
             <Users size={18} />
             담당자 배정
-          </Link>
+          </NavLink>
         </nav>
         <div className="sidebar-footer">
           <div>
@@ -746,6 +759,7 @@ function CustomerContractsPage({
             {!isLoading && !hasSearchedProducts ? <p>조건을 선택한 뒤 필터 적용을 눌러 조회하세요.</p> : null}
             {products.map((product) => (
               <button
+                aria-pressed={product.id === selectedProduct?.id}
                 className={product.id === selectedProduct?.id ? 'is-selected' : ''}
                 key={product.id}
                 type="button"
@@ -903,7 +917,12 @@ function CustomerContractsPage({
         <div className="contract-workspace">
           <div className="customer-list compact">
             {contracts.map((contract) => (
-              <article key={contract.contractId}>
+              <article
+                className={
+                  contract.contractId === selectedContract?.contractId ? 'is-selected' : ''
+                }
+                key={contract.contractId}
+              >
                 <Receipt size={20} />
                 <div>
                   <strong>{contract.productName}</strong>
@@ -916,6 +935,7 @@ function CustomerContractsPage({
                   </small>
                 </div>
                 <button
+                  aria-pressed={contract.contractId === selectedContract?.contractId}
                   className="secondary-button"
                   type="button"
                   onClick={() => loadContractDetail(contract.contractId)}
@@ -2051,6 +2071,7 @@ function EmployeeReviewsPage({
           <div className="review-list">
             {pendingReviews.map((review) => (
               <button
+                aria-pressed={review.applicationId === selectedReview?.applicationId}
                 className={review.applicationId === selectedReview?.applicationId ? 'is-selected' : ''}
                 key={review.applicationId}
                 type="button"
@@ -2345,6 +2366,7 @@ function EmployeeBenefitReviewsPage({
           <div className="review-list">
             {reviews.map((review) => (
               <button
+                aria-pressed={review.claimId === selectedReview?.claimId}
                 className={review.claimId === selectedReview?.claimId ? 'is-selected' : ''}
                 key={review.claimId}
                 type="button"
