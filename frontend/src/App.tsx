@@ -33,6 +33,7 @@ import { ApiError, apiClient, decodeUserType } from './api/apiClient'
 import './App.css'
 import type {
   AuthSession,
+  CarAccidentReportResponse,
   ConfirmReviewResponse,
   ContractDetail,
   ContractSummary,
@@ -50,6 +51,13 @@ import type {
 } from './types'
 
 const tokenKey = 'insurance.authToken'
+
+const maxClaimAttachmentSize = 10 * 1024 * 1024
+const acceptedClaimFileTypes = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+])
 
 const claimHistory = [
   {
@@ -89,6 +97,14 @@ function formatCurrency(value: number) {
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString('ko-KR')
+}
+
+function isAcceptedClaimFile(file: File) {
+  if (acceptedClaimFileTypes.has(file.type)) {
+    return true
+  }
+
+  return /\.(pdf|jpe?g|png)$/i.test(file.name)
 }
 
 function LoginPage({
@@ -938,18 +954,157 @@ function CustomerContractsPage({
   )
 }
 
-function CustomerClaimsPage() {
+function CustomerClaimsPage({
+  token,
+  onUnauthorized,
+}: {
+  token: string
+  onUnauthorized: () => void
+}) {
   const [claimMessage, setClaimMessage] = useState('')
-  const [accidentMessage, setAccidentMessage] = useState('')
+  const [contracts, setContracts] = useState<ContractSummary[]>([])
+  const [selectedContractId, setSelectedContractId] = useState('')
+  const [accidentDate, setAccidentDate] = useState('2026-06-01')
+  const [accidentLocation, setAccidentLocation] = useState('서울 강남구 역삼동')
+  const [accidentType, setAccidentType] = useState('쌍방')
+  const [vehicleNumber, setVehicleNumber] = useState('12가3456')
+  const [hasInjury, setHasInjury] = useState(false)
+  const [injuredCount, setInjuredCount] = useState('0')
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [accidentResult, setAccidentResult] = useState<CarAccidentReportResponse | null>(null)
+  const [accidentError, setAccidentError] = useState('')
+  const [isAccidentLoading, setAccidentLoading] = useState(true)
+  const [isAccidentSubmitting, setAccidentSubmitting] = useState(false)
+  const carContracts = contracts.filter(
+    (contract) => contract.productType === 'CAR' && contract.status === 'ACTIVE',
+  )
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadContracts() {
+      setAccidentError('')
+      setAccidentLoading(true)
+
+      try {
+        const list = await apiClient.getContracts(token)
+        const activeCarContracts = list.filter(
+          (contract) => contract.productType === 'CAR' && contract.status === 'ACTIVE',
+        )
+
+        if (isMounted) {
+          setContracts(list)
+          setSelectedContractId((current) => current || String(activeCarContracts[0]?.contractId ?? ''))
+        }
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          onUnauthorized()
+          return
+        }
+
+        if (isMounted) {
+          setAccidentError(err instanceof Error ? err.message : '계약 목록 조회에 실패했습니다.')
+        }
+      } finally {
+        if (isMounted) {
+          setAccidentLoading(false)
+        }
+      }
+    }
+
+    loadContracts()
+
+    return () => {
+      isMounted = false
+    }
+  }, [onUnauthorized, token])
 
   function submitClaim(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setClaimMessage('청구 정보가 저장되었고, 간단한 청구로 판별되어 지급 처리가 진행됩니다.')
   }
 
-  function submitAccident(event: FormEvent<HTMLFormElement>) {
+  function changeAccidentAttachments(files: FileList | null) {
+    const nextFiles = Array.from(files ?? [])
+    const invalidType = nextFiles.find((file) => !isAcceptedClaimFile(file))
+    const oversized = nextFiles.find((file) => file.size > maxClaimAttachmentSize)
+
+    setAccidentResult(null)
+
+    if (invalidType) {
+      setAttachments([])
+      setAccidentError('지원하지 않는 파일 형식입니다. (허용: PDF, JPG, PNG)')
+      return
+    }
+
+    if (oversized) {
+      setAttachments([])
+      setAccidentError('파일 크기는 개당 10MB 이하여야 합니다.')
+      return
+    }
+
+    setAccidentError('')
+    setAttachments(nextFiles)
+  }
+
+  async function submitAccident(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setAccidentMessage('자동차사고 접수 번호 CAR-2026-0042가 발급되었습니다.')
+    setAccidentError('')
+    setAccidentResult(null)
+
+    const contractId = Number(selectedContractId)
+    const parsedInjuredCount = Number(injuredCount)
+    const today = new Date().toISOString().slice(0, 10)
+
+    if (!contractId) {
+      setAccidentError('접수할 자동차보험 계약을 선택해 주세요.')
+      return
+    }
+
+    if (accidentDate > today) {
+      setAccidentError('사고 일자는 미래일 수 없습니다.')
+      return
+    }
+
+    if (parsedInjuredCount < 0) {
+      setAccidentError('부상자 수는 0 이상이어야 합니다.')
+      return
+    }
+
+    if (hasInjury && parsedInjuredCount < 1) {
+      setAccidentError('대인사고는 부상자 수를 1명 이상 입력해야 합니다.')
+      return
+    }
+
+    if (!hasInjury && parsedInjuredCount !== 0) {
+      setAccidentError('대인사고가 아니면 부상자 수는 0이어야 합니다.')
+      return
+    }
+
+    setAccidentSubmitting(true)
+
+    try {
+      const response = await apiClient.submitCarAccidentReport(token, {
+        contractId,
+        accidentDate,
+        accidentLocation,
+        accidentType,
+        vehicleNumber,
+        hasInjury,
+        injuredCount: parsedInjuredCount,
+        attachments,
+      })
+      setAccidentResult(response)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+
+      setAccidentError(err instanceof Error ? err.message : '자동차사고 접수에 실패했습니다.')
+    } finally {
+      setAccidentSubmitting(false)
+    }
   }
 
   return (
@@ -992,20 +1147,106 @@ function CustomerClaimsPage() {
             <h2>자동차사고 접수</h2>
           </div>
           <label>
+            계약
+            <select
+              disabled={isAccidentLoading || carContracts.length === 0}
+              value={selectedContractId}
+              onChange={(event) => setSelectedContractId(event.target.value)}
+            >
+              {carContracts.map((contract) => (
+                <option key={contract.contractId} value={contract.contractId}>
+                  {contract.productName} · {formatDate(contract.startDate)}
+                </option>
+              ))}
+              {carContracts.length === 0 ? <option value="">선택 가능한 계약 없음</option> : null}
+            </select>
+          </label>
+          <label>
+            사고 일자
+            <input
+              required
+              type="date"
+              value={accidentDate}
+              onChange={(event) => setAccidentDate(event.target.value)}
+            />
+          </label>
+          <label>
             사고 장소
-            <input name="accidentLocation" defaultValue="서울 강남구 역삼동" />
+            <input
+              required
+              value={accidentLocation}
+              onChange={(event) => setAccidentLocation(event.target.value)}
+            />
           </label>
           <label>
             사고 유형
-            <input name="accidentType" defaultValue="쌍방" />
+            <input
+              required
+              value={accidentType}
+              onChange={(event) => setAccidentType(event.target.value)}
+            />
           </label>
           <label>
             차량 번호
-            <input name="vehicleNumber" defaultValue="12가 3456" />
+            <input
+              required
+              value={vehicleNumber}
+              onChange={(event) => setVehicleNumber(event.target.value)}
+            />
           </label>
-          {accidentMessage ? <p className="form-success">{accidentMessage}</p> : null}
-          <button className="primary-button" type="submit">
-            접수하기
+          <label className="toggle-row">
+            <input
+              checked={hasInjury}
+              type="checkbox"
+              onChange={(event) => {
+                setHasInjury(event.target.checked)
+                setInjuredCount(event.target.checked ? '1' : '0')
+              }}
+            />
+            대인사고
+          </label>
+          {hasInjury ? (
+            <label>
+              부상자 수
+              <input
+                min="1"
+                required
+                type="number"
+                value={injuredCount}
+                onChange={(event) => setInjuredCount(event.target.value)}
+              />
+            </label>
+          ) : null}
+          <label>
+            현장 사진/증빙
+            <input
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              multiple
+              type="file"
+              onChange={(event) => changeAccidentAttachments(event.target.files)}
+            />
+          </label>
+          {attachments.length > 0 ? (
+            <div className="attachment-list">
+              {attachments.map((file) => (
+                <span key={`${file.name}-${file.size}`}>
+                  {file.name} · {(file.size / 1024 / 1024).toFixed(2)}MB
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {accidentResult ? (
+            <p className="form-success">
+              자동차사고 접수번호 {accidentResult.reportId}번이 {accidentResult.status} 상태로 접수되었습니다.
+            </p>
+          ) : null}
+          {accidentError ? <p className="form-error">{accidentError}</p> : null}
+          <button
+            className="primary-button"
+            disabled={isAccidentSubmitting || carContracts.length === 0}
+            type="submit"
+          >
+            {isAccidentSubmitting ? 'Submitting' : '접수하기'}
             <Send size={18} />
           </button>
         </form>
@@ -1472,7 +1713,15 @@ function App() {
                     />
                   }
                 />
-                <Route path="/claims" element={<CustomerClaimsPage />} />
+                <Route
+                  path="/claims"
+                  element={
+                    <CustomerClaimsPage
+                      token={(session as AuthSession).token}
+                      onUnauthorized={handleUnauthorized}
+                    />
+                  }
+                />
                 <Route
                   path="/profile"
                   element={

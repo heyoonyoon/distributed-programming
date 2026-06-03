@@ -1,4 +1,6 @@
 import type {
+  CarAccidentReportRequest,
+  CarAccidentReportResponse,
   ConfirmReviewRequest,
   ConfirmReviewResponse,
   AutoDebitRequest,
@@ -133,6 +135,40 @@ async function requestBlob(
     blob: await response.blob(),
     filename: readFilename(response, 'contract.txt'),
   }
+}
+
+async function requestForm<T>(
+  path: string,
+  body: FormData,
+  token: string,
+): Promise<T> {
+  const response = await fetch(`${baseUrl}${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body,
+  })
+
+  if (!response.ok) {
+    throw new ApiError(response.status, await readError(response))
+  }
+
+  return response.json() as Promise<T>
+}
+
+function buildCarAccidentForm(body: CarAccidentReportRequest) {
+  const formData = new FormData()
+  formData.append('contractId', String(body.contractId))
+  formData.append('accidentDate', body.accidentDate)
+  formData.append('accidentLocation', body.accidentLocation)
+  formData.append('accidentType', body.accidentType)
+  formData.append('vehicleNumber', body.vehicleNumber)
+  formData.append('hasInjury', String(body.hasInjury))
+  formData.append('injuredCount', String(body.injuredCount))
+  body.attachments.forEach((file) => formData.append('attachments', file))
+
+  return formData
 }
 
 export const apiClient = {
@@ -293,5 +329,12 @@ export const apiClient = {
       },
       token,
     )
+  },
+
+  async submitCarAccidentReport(
+    token: string,
+    body: CarAccidentReportRequest,
+  ): Promise<CarAccidentReportResponse> {
+    return requestForm('/claims/car-accidents', buildCarAccidentForm(body), token)
   },
 }
