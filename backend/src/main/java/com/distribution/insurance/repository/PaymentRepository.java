@@ -1,0 +1,11 @@
+package com.distribution.insurance.repository;
+
+import com.distribution.insurance.domain.contract.Payment;
+import com.distribution.insurance.domain.contract.PaymentStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface PaymentRepository extends JpaRepository<Payment, Long> {
+
+    /** FIFO 충당용 — 계약의 성공 납부 건수(ADR 0004). */
+    long countByContractIdAndStatus(Long contractId, PaymentStatus status);
+}

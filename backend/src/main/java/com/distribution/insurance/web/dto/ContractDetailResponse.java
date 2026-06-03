@@ -29,6 +29,6 @@ public record ContractDetailResponse(
                 c.getId(), c.getProduct().getProductName(),
                 ProductTypeMapper.typeOf(c.getProduct()),
                 c.getStartDate(), c.getEndDate(), c.getMonthlyPremium(), c.getStatus().name(),
-                "미등록", items);  // 이슈 B에서 실제 결제수단으로 대체
+                c.registeredPaymentMethod(), items);  // 이슈 B: "미등록" 상수 → 실제 등록 상태
     }
 }
