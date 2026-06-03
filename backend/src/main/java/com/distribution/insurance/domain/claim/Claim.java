@@ -64,6 +64,11 @@ public abstract class Claim {
         this.status = ClaimStatus.FAILED;
     }
 
+    /** 접수 시 금액 미정인 건(자동차사고 등)의 사정 금액을 청구금액으로 기록한다(서브클래스 전용). */
+    protected void recordAssessedAmount(int amount) {
+        this.requestAmount = amount;
+    }
+
     private void requireStatus(ClaimStatus expected) {
         if (this.status != expected) {
             throw new IllegalStateTransitionException(
