@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/products", "/products/**").permitAll()
                         .requestMatchers("/applications/**").hasRole("POLICYHOLDER")
+                        .requestMatchers("/contracts/**").hasRole("POLICYHOLDER")
                         .requestMatchers("/reviews/**").hasRole("EMPLOYEE")
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
