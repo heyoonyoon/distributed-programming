@@ -70,6 +70,13 @@ brainstorming → grill-with-docs → writing-plans → executing-plans → fini
 - `docs/superpowers/specs/` — 설계 문서(spec)
 - `docs/superpowers/plans/` — 구현 계획서(plan)
 
+## Git / GitHub 워크플로우 (작업 단위 규약)
+- **GitHub 마일스톤 = Epic.** 빌드 순서의 각 에픽(Epic 0~4)을 마일스톤 하나로 둔다.
+- **이슈 = 작업 단위.** 각 작업을 이슈로 등록하고 해당 에픽 마일스톤에 매단다.
+- **이슈마다 브랜치를 만들어 작업한다.** 브랜치명: `<이슈번호>-<slug>` (예: `1-epic0-user-auth`).
+- **이슈 브랜치 하나 = PR 하나.** 한 이슈의 작업이 끝나면 그 브랜치로 PR을 올리고, PR이 머지되면 이슈가 닫힌다. 여러 이슈를 한 브랜치/PR에 섞지 않는다.
+- main/master에서 직접 구현 시작 금지 — 항상 이슈 브랜치에서 작업한다.
+
 ## 항상 지킬 것
 - 코드/문서 네이밍은 `CONTEXT.md` 용어집을 단일 출처로 따른다.
 - 계획 수립 시 CONTEXT.md 용어 + docs/adr 결정을 항상 준수한다(자동 아님 — 명시적으로 적용).
