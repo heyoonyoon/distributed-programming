@@ -25,4 +25,9 @@ public class InsuranceEmployee extends User {
     public void assignWork() {
         this.currentLoad += 1;
     }
+
+    /** 심사 건 해제 시 업무량 감소(재배정 시 이전 담당자 부하 회수). */
+    public void releaseWork() {
+        this.currentLoad = Math.max(0, this.currentLoad - 1);
+    }
 }
