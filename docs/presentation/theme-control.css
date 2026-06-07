@@ -1,0 +1,103 @@
+/* @theme control */
+/* 보험 발표용 커스텀 테마 — 네이비 + 앰버 액센트, 한 슬라이드 한 메시지 */
+
+@import 'default';
+
+:root {
+  --navy: #0b3d5c;
+  --navy-2: #0f2a43;
+  --amber: #f2a900;
+  --ink: #1c2b36;
+  --muted: #5b7185;
+  --line: #d7e1ea;
+  --panel: #eef3f7;
+  --ok: #1f9e8f;
+  --bad: #d9534f;
+}
+
+section {
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Helvetica Neue", sans-serif;
+  font-size: 26px;
+  color: var(--ink);
+  background: #ffffff;
+  padding: 56px 64px 64px;
+  letter-spacing: -0.01em;
+}
+
+/* 상단 액센트 바 */
+section::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 10px;
+  background: linear-gradient(90deg, var(--navy) 0%, var(--navy) 70%, var(--amber) 70%, var(--amber) 100%);
+}
+
+h1 { color: var(--navy); font-size: 46px; line-height: 1.15; margin: 0 0 10px; }
+h2 { color: var(--navy); font-size: 34px; line-height: 1.2; border-bottom: 3px solid var(--amber); padding-bottom: 8px; display: inline-block; margin: 0 0 24px; }
+h3 { color: var(--navy-2); font-size: 24px; margin: 6px 0; }
+strong { color: var(--navy); }
+em { color: var(--bad); font-style: normal; font-weight: 700; }
+a { color: var(--ok); }
+
+ul { line-height: 1.5; }
+li { margin: 6px 0; }
+small, .muted { color: var(--muted); font-size: 18px; }
+
+code { background: var(--panel); color: var(--navy-2); padding: 1px 6px; border-radius: 5px; font-size: 0.9em; }
+
+table { font-size: 21px; border-collapse: collapse; width: 100%; }
+th { background: var(--navy); color: #fff; padding: 10px 12px; text-align: left; }
+td { border-bottom: 1px solid var(--line); padding: 9px 12px; }
+tr:nth-child(even) td { background: #f7fafc; }
+
+footer { color: var(--muted); font-size: 14px; }
+section::after { color: var(--muted); font-size: 16px; } /* 페이지 번호 */
+
+/* 타이틀/섹션 분할 슬라이드 */
+section.lead {
+  background: radial-gradient(1200px 600px at 20% 0%, #14507a 0%, var(--navy-2) 60%, #08203a 100%);
+  color: #eaf2f8;
+  justify-content: center;
+}
+section.lead::before { background: var(--amber); height: 10px; }
+section.lead h1 { color: #ffffff; font-size: 54px; }
+section.lead h2 { color: var(--amber); border: none; font-size: 30px; }
+section.lead strong { color: var(--amber); }
+section.lead p, section.lead li { color: #cfe0ec; }
+
+/* 큰 한 문장 강조 슬라이드 */
+section.statement { justify-content: center; }
+section.statement h1 { font-size: 50px; max-width: 22ch; }
+section.statement .sub { color: var(--muted); font-size: 24px; margin-top: 18px; }
+
+/* 가로 흐름(레이어/파이프라인) */
+.flow { display: flex; align-items: stretch; gap: 0; margin: 18px 0; }
+.node { background: var(--panel); border: 2px solid var(--navy); border-radius: 12px;
+  padding: 16px 14px; flex: 1; text-align: center; font-weight: 700; color: var(--navy);
+  display: flex; flex-direction: column; justify-content: center; }
+.node small { display:block; color: var(--muted); font-weight: 500; margin-top:4px; }
+.arrow { align-self: center; color: var(--amber); font-size: 30px; font-weight: 800; padding: 0 8px; }
+.node.db { background: var(--navy); color: #fff; }
+.node.db small { color: #bcd2e3; }
+
+/* 진화 타임라인 4단계 */
+.timeline { display: flex; gap: 14px; margin: 16px 0; }
+.stage { flex: 1; border: 1px solid var(--line); border-top: 6px solid var(--navy); border-radius: 10px; padding: 14px; background: #fbfdff; }
+.stage:last-child { border-top-color: var(--amber); box-shadow: 0 6px 18px rgba(11,61,92,.12); }
+.stage h3 { font-size: 20px; margin-bottom: 6px; }
+.stage ul { font-size: 16px; padding-left: 18px; margin: 6px 0; color: var(--ink); }
+.stage .hash { font-size: 14px; color: var(--ok); font-family: monospace; }
+
+/* 2열 카드(단점→통제) */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; }
+.card { border: 1px solid var(--line); border-left: 6px solid var(--amber); border-radius: 10px; padding: 14px 16px; background: #fbfdff; }
+.card h3 { font-size: 20px; margin: 0 0 6px; }
+.card p { font-size: 17px; margin: 4px 0; color: var(--ink); }
+.card .fix { color: var(--ok); font-weight: 700; }
+
+/* 배지 */
+.badge { display:inline-block; background: var(--ok); color:#fff; font-size:18px; font-weight:700;
+  padding: 6px 14px; border-radius: 999px; margin-top: 14px; }
+
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
