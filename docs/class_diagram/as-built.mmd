@@ -1,0 +1,184 @@
+classDiagram
+direction LR
+
+%% ===== user =====
+class User {
+  <<abstract>>
+  Long id
+  String name
+  String email
+  String phone
+  String password
+}
+class Policyholder {
+  String ssn
+  LocalDate birthDate
+  String address
+  String bankAccount
+}
+class InsuranceEmployee {
+  String department
+  int currentLoad
+}
+User <|-- Policyholder
+User <|-- InsuranceEmployee
+
+%% ===== product =====
+class InsuranceProduct {
+  <<abstract>>
+  Long id
+  String productName
+  String description
+  int basePremium
+}
+class HealthInsuranceProduct {
+  int maxHospitalizationDays
+}
+class CarInsuranceProduct {
+  String vehicleType
+  String driverScopeType
+}
+class CoverageItem {
+  Long id
+  String itemName
+  int coverageLimit
+  int deductible
+}
+InsuranceProduct <|-- HealthInsuranceProduct
+InsuranceProduct <|-- CarInsuranceProduct
+InsuranceProduct "1" o-- "*" CoverageItem : coverageItems
+
+%% ===== application =====
+class InsuranceApplication {
+  Long id
+  LocalDateTime appliedAt
+  ApplicationStatus status
+}
+class VehicleInfo {
+  <<embeddable>>
+  String plateNumber
+  String vehicleType
+  int modelYear
+  int drivingExperienceYears
+}
+class MedicalHistory {
+  <<embeddable>>
+  String currentConditions
+  String pastHospitalization
+  String medications
+}
+InsuranceApplication --> Policyholder : applicant
+InsuranceApplication --> InsuranceProduct : product
+InsuranceApplication *-- VehicleInfo : vehicleInfo
+InsuranceApplication *-- MedicalHistory : medicalHistory
+
+%% ===== contract =====
+class InsuranceContract {
+  Long id
+  LocalDate startDate
+  LocalDate endDate
+  ContractStatus status
+  int monthlyPremium
+}
+class AutoDebit {
+  <<embeddable>>
+  String account
+  int withdrawalDay
+}
+class Payment {
+  Long id
+  int amount
+  LocalDateTime paidAt
+  PaymentMethod method
+  PaymentStatus status
+}
+class Notice {
+  Long id
+  LocalDate issuedAt
+  LocalDate dueDate
+  int dueAmount
+  int overdueDays
+  long overdueInterest
+  boolean terminationWarning
+  boolean delivered
+  int attempts
+}
+InsuranceContract --> Policyholder : policyholder
+InsuranceContract --> InsuranceProduct : product
+InsuranceContract *-- AutoDebit : autoDebit
+Payment --> InsuranceContract : contract
+Notice --> InsuranceContract : contract
+
+%% ===== claim =====
+class Claim {
+  <<abstract>>
+  Long id
+  LocalDate claimDate
+  int requestAmount
+  ClaimStatus status
+}
+class HealthInsuranceClaim {
+  String hospitalName
+  String diagnosisCode
+  LocalDate treatmentDate
+  int receiptAmount
+  ClaimComplexity complexity
+}
+class CarAccidentReport {
+  LocalDate accidentDate
+  String accidentLocation
+  String accidentType
+  String vehicleNumber
+  boolean hasInjury
+  int injuredCount
+}
+class ClaimAttachment {
+  <<embeddable>>
+  String filename
+  String contentType
+  long sizeBytes
+  String storedPath
+}
+class BenefitPayment {
+  Long id
+  int paidAmount
+  LocalDateTime paidAt
+  String bankAccount
+  PaymentStatus status
+}
+Claim <|-- HealthInsuranceClaim
+Claim <|-- CarAccidentReport
+Claim --> InsuranceContract : contract
+HealthInsuranceClaim "1" *-- "*" ClaimAttachment
+CarAccidentReport "1" *-- "*" ClaimAttachment
+BenefitPayment --> Claim : claim
+
+%% ===== review =====
+class Review {
+  <<abstract>>
+  Long id
+  LocalDateTime reviewedAt
+  ReviewResult result
+  String comment
+}
+class EnrollmentReview {
+  double surchargeRate
+  int adjustedPremium
+}
+class BenefitPaymentReview {
+  Long assignedStaffId
+}
+class AccidentHistory {
+  <<embeddable>>
+  int accidentCount
+  int totalPaidAmount
+  String licenseStatus
+  LocalDateTime fetchedAt
+}
+Review <|-- EnrollmentReview
+Review <|-- BenefitPaymentReview
+EnrollmentReview --> InsuranceApplication : application
+EnrollmentReview --> InsuranceEmployee : reviewer
+EnrollmentReview *-- AccidentHistory : accidentHistory
+BenefitPaymentReview --> Claim : claim
+BenefitPaymentReview ..> InsuranceEmployee : assignedStaffId

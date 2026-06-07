@@ -1456,6 +1456,7 @@ function App() {
         path="/login"
         element={<LoginPage session={session} onLogin={setSession} />}
       />
+      {session && (
       <Route
         path="/customer/*"
         element={
@@ -1488,6 +1489,8 @@ function App() {
           </Protected>
         }
       />
+      )}
+      {session && (
       <Route
         path="/employee/*"
         element={
@@ -1510,6 +1513,7 @@ function App() {
           </Protected>
         }
       />
+      )}
       <Route
         path="*"
         element={
