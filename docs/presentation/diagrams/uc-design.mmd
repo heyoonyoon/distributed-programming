@@ -1,0 +1,7 @@
+flowchart TD
+  H[고객: 복잡 의료청구<br/>UC05] --> AS[시스템: 담당자<br/>자동 배정 · UC14]
+  C[고객: 자동차사고 접수<br/>UC09] --> NT[담당자 알림]
+  AS --> RV[직원: 지급심사<br/>UC12 · 대상=의료청구만]
+  RV --> PAY[보험금 지급 · UC17]
+  classDef a fill:#eef3f7,stroke:#0b3d5c,color:#0b3d5c;
+  class H,AS,C,NT,RV,PAY a;

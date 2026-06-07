@@ -1,0 +1,35 @@
+classDiagram
+direction LR
+class Claim {
+  <<abstract>>
+  String claimId
+  ClaimStatus status
+}
+class HealthInsuranceClaim
+class CarAccidentReport
+class Review {
+  <<abstract>>
+  String reviewId
+  ReviewResult result
+}
+class EnrollmentReview
+class BenefitPaymentReview {
+  String assignedStaffId
+}
+class BenefitPayment
+class AccidentHistory {
+  String ssn
+  int accidentCount
+}
+class AccidentRecord {
+  Date accidentDate
+  int paidAmount
+}
+Claim <|-- HealthInsuranceClaim
+Claim <|-- CarAccidentReport
+Review <|-- EnrollmentReview
+Review <|-- BenefitPaymentReview
+BenefitPaymentReview --> HealthInsuranceClaim : 대상=의료청구
+BenefitPaymentReview *-- BenefitPayment
+AccidentHistory *-- AccidentRecord
+note for Claim "ClaimStatus 4값<br/>PENDING·IN_REVIEW·APPROVED·REJECTED"

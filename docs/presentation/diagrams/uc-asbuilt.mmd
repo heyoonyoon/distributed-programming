@@ -1,0 +1,11 @@
+flowchart TD
+  H[고객: 복잡 의료청구<br/>UC05] --> AS[시스템: 자동 배정<br/>UC14]
+  C[고객: 자동차사고 접수<br/>UC09] --> Q[보상심사 미배정 큐<br/>PENDING 생성]
+  Q --> MN[직원: 수동 배정<br/>UC14 · A1]
+  AS --> RV[직원: 지급심사<br/>UC12 · 대상=의료+자동차]
+  MN --> RV
+  RV --> PAY[보험금 지급 · UC17]
+  classDef a fill:#eef3f7,stroke:#0b3d5c,color:#0b3d5c;
+  classDef chg fill:#fff3d6,stroke:#f2a900,stroke-width:3px,color:#0b3d5c;
+  class H,AS,RV,PAY a;
+  class C,Q,MN chg;

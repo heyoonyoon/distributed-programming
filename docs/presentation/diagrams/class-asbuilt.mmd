@@ -1,0 +1,33 @@
+classDiagram
+direction LR
+class Claim {
+  <<abstract>>
+  Long id
+  ClaimStatus status
+}
+class HealthInsuranceClaim
+class CarAccidentReport
+class Review {
+  <<abstract>>
+  Long id
+  ReviewResult result
+}
+class EnrollmentReview
+class BenefitPaymentReview {
+  Long assignedStaffId
+}
+class BenefitPayment
+class AccidentHistory {
+  <<embeddable>>
+  int accidentCount
+  int totalPaidAmount
+}
+Claim <|-- HealthInsuranceClaim
+Claim <|-- CarAccidentReport
+Review <|-- EnrollmentReview
+Review <|-- BenefitPaymentReview
+BenefitPaymentReview --> Claim : 대상=의료+자동차
+BenefitPaymentReview *-- BenefitPayment
+note for Claim "ClaimStatus 6값<br/>+ COMPLETED · FAILED (ADR0007)"
+classDef chg fill:#fff3d6,stroke:#f2a900,stroke-width:3px,color:#0b3d5c
+cssClass "Claim,BenefitPaymentReview,AccidentHistory" chg

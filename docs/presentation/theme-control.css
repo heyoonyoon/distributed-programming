@@ -120,3 +120,21 @@ section.statement .sub { color: var(--muted); font-size: 24px; margin-top: 18px;
 .xform td:nth-child(3) { color: var(--navy); font-weight: 600; }
 
 .small-note { font-size: 16px; color: var(--muted); margin-top: 10px; }
+
+/* 설계 vs 구현 비교 */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; margin-top: 6px; }
+.compare figure { margin: 0; text-align: center; }
+.compare img { width: 100%; height: 380px; object-fit: contain; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 6px; }
+.cap { display:inline-block; font-weight:700; font-size:18px; padding:5px 16px; border-radius:999px; margin-bottom:8px; }
+.cap-d { background:#e4ebf1; color:var(--navy); }
+.cap-b { background:var(--amber); color:#3a2a00; }
+
+/* AI 사용 파이프라인 */
+.aipipe { display:flex; align-items:center; gap:0; margin:14px 0; }
+.aistep { flex:1; text-align:center; background:var(--panel); border:1px solid var(--line); border-top:5px solid var(--navy); border-radius:10px; padding:12px 8px; }
+.aistep b { color:var(--navy); font-size:19px; } .aistep small{ display:block; color:var(--muted); font-size:14px; margin-top:4px; }
+.aistep.tdd { border-top-color:var(--amber); }
+.who { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:10px 0 4px; }
+.who div { border-radius:10px; padding:14px 18px; }
+.who .human { background:#eef6f4; border-left:6px solid var(--ok); }
+.who .ai { background:var(--panel); border-left:6px solid var(--navy); }
