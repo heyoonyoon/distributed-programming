@@ -101,3 +101,22 @@ section.statement .sub { color: var(--muted); font-size: 24px; margin-top: 18px;
   padding: 6px 14px; border-radius: 999px; margin-top: 14px; }
 
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+
+/* 데이터 변환 파이프라인 (컴포넌트 → 데이터 모양) */
+.pipe { display: flex; flex-direction: column; gap: 0; margin: 8px 0; }
+.prow { display: grid; grid-template-columns: 240px 1fr; align-items: center; gap: 14px;
+  padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.prow:last-child { border-bottom: none; }
+.comp { font-weight: 700; color: var(--navy); font-size: 19px; }
+.comp small { display:block; color: var(--muted); font-weight: 500; font-size: 14px; }
+.shape { font-family: monospace; font-size: 17px; background: var(--panel); color: var(--navy-2);
+  padding: 6px 12px; border-radius: 6px; border-left: 4px solid var(--amber); }
+.layer-tag { display:inline-block; font-size:13px; font-weight:700; padding:2px 8px; border-radius:4px;
+  margin-right:8px; color:#fff; }
+.tag-fe { background:#2c7a7b; } .tag-net { background:#7a5c2c; } .tag-be { background:var(--navy); } .tag-db { background:#444; }
+
+/* 변형 비교 표 강조 */
+.xform td:nth-child(2) { color: var(--muted); }
+.xform td:nth-child(3) { color: var(--navy); font-weight: 600; }
+
+.small-note { font-size: 16px; color: var(--muted); margin-top: 10px; }
