@@ -163,9 +163,9 @@ for name,key,diff in comps:
     box(s,0.5,6.05,12.35,1.15,WARM,[[("다른 점   ",19,True,C("b5793a"),SANS),(diff,19,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.12)
 
 # 17. 유스케이스
-s=slide(); head(s,"","실제 동작하는 경로")
-img_fit(s,os.path.join(DIA,"uc-map.png"),3.0,2.05,7.3,3.9)
-tb(s,0.85,6.1,11.6,0.9,[[("노란 경로가 데모에서 실제로 동작한다.",28,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
+s=slide(); head(s,"","유스케이스 중 내가 시연하는 부분")
+img_fit(s,os.path.join(DIA,"uc-map.png"),2.4,2.05,8.5,3.9)
+tb(s,0.85,6.1,11.6,0.9,[[("두 시나리오를 직접 시연한다 — ① 가입~납입, ② 보상심사~지급.",26,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
 
 # 18. AI 사용
 s=slide(); head(s,"","AI를 어떻게 썼나")
