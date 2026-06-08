@@ -2,21 +2,29 @@ classDiagram
 direction TB
 class InsuranceContract {
   Long id
+  ContractStatus status
   LocalDate startDate
   LocalDate endDate
   int monthlyPremium
-  ContractStatus status
+  +generatePdf() File
+  +suspend()
+  +terminate()
 }
 class Policyholder
 class InsuranceProduct
 class Notice {
+  Long id
   int dueAmount
   int overdueDays
   boolean terminationWarning
+  +send() boolean
 }
 class Payment {
+  Long id
   int amount
+  PaymentMethod method
   PaymentStatus status
+  +process()
 }
 class AutoDebit {
   String account

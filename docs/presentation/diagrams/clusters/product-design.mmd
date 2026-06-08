@@ -1,12 +1,15 @@
 classDiagram
 direction TB
+class InsuranceContract {
+  String contractId
+}
 class InsuranceProduct {
   <<abstract>>
   String productId
   String productName
   String description
   int basePremium
-  +calculatePremium()
+  +calculatePremium(Policyholder) int
 }
 class HealthInsuranceProduct {
   int maxHospitalizationDays
@@ -21,6 +24,7 @@ class CoverageItem {
   int coverageLimit
   int deductible
 }
+InsuranceContract --> InsuranceProduct : 가입 상품
 InsuranceProduct <|-- HealthInsuranceProduct
 InsuranceProduct <|-- CarInsuranceProduct
 InsuranceProduct "1" *-- "*" CoverageItem

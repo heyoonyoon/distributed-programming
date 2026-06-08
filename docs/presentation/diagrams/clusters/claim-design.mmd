@@ -11,16 +11,21 @@ class Claim {
 class HealthInsuranceClaim {
   String hospitalName
   String diagnosisCode
-  Date treatmentDate
   int receiptAmount
   ClaimComplexity complexity
+  +isSimpleClaim() boolean
 }
 class CarAccidentReport {
-  Date accidentDate
   String accidentType
   String vehicleNumber
   boolean hasInjury
   int injuredCount
 }
+class InsuranceContract
+class BenefitPayment
+class BenefitPaymentReview
 Claim <|-- HealthInsuranceClaim
 Claim <|-- CarAccidentReport
+Claim --> InsuranceContract : 소속 계약
+BenefitPayment --> Claim : 지급 대상
+BenefitPaymentReview --> Claim : 심사 대상

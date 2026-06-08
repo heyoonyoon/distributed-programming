@@ -1,0 +1,14 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#f7f0e0",
+    "primaryBorderColor": "#b9a06a",
+    "primaryTextColor": "#3f3320",
+    "secondaryColor": "#ffffff",
+    "lineColor": "#9a8a66",
+    "classText": "#3f3320",
+    "fontFamily": "Apple SD Gothic Neo, Pretendard, sans-serif",
+    "fontSize": "19px"
+  },
+  "class": { "hideEmptyMembersBox": true }
+}

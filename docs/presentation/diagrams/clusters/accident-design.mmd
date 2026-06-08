@@ -1,15 +1,19 @@
 classDiagram
 direction TB
+class EnrollmentReview
 class AccidentHistory {
-  String ssn
   int accidentCount
-  int totalPaidAmount
-  String licenseStatus
   Date fetchedAt
+  String licenseStatus
+  String ssn
+  int totalPaidAmount
+  +fetch(String) AccidentHistory
+  +getSummary()
 }
 class AccidentRecord {
   Date accidentDate
   String accidentType
   int paidAmount
 }
+EnrollmentReview --> AccidentHistory : 조회
 AccidentHistory "1" *-- "*" AccidentRecord

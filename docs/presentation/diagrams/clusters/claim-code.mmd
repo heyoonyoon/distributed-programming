@@ -6,25 +6,28 @@ class Claim {
   LocalDate claimDate
   int requestAmount
   ClaimStatus status
+  +submit()
 }
 class HealthInsuranceClaim {
   String hospitalName
+  String diagnosisCode
   int receiptAmount
   ClaimComplexity complexity
+  +attachDocument(File)
 }
 class CarAccidentReport {
   String accidentType
+  String vehicleNumber
   boolean hasInjury
   int injuredCount
+  +attachPhoto(File)
 }
 class ClaimAttachment {
   String filename
   String storedPath
 }
 class InsuranceContract
-class BenefitPayment {
-  int paidAmount
-}
+class BenefitPayment
 class BenefitPaymentReview
 Claim <|-- HealthInsuranceClaim
 Claim <|-- CarAccidentReport

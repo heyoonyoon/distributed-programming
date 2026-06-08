@@ -158,7 +158,7 @@ for name,key,diff in comps:
     s=slide(); head(s,"",name)
     tb(s,0.5,1.95,6.1,0.55,[[("내가 그린 설계",24,True,ACCENT,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
     tb(s,6.75,1.95,6.1,0.55,[[("실제 코드",24,True,C("b5793a"),SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
-    img_fit(s,os.path.join(DC,f"{key}.png"),0.5,2.5,6.1,3.35)
+    img_fit(s,os.path.join(CL,f"{key}-design.png"),0.5,2.5,6.1,3.35)
     img_fit(s,os.path.join(CL,f"{key}-code.png"),6.75,2.5,6.1,3.35)
     box(s,0.5,6.05,12.35,1.15,WARM,[[("다른 점   ",19,True,C("b5793a"),SANS),(diff,19,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.12)
 

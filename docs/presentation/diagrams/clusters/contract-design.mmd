@@ -2,24 +2,30 @@ classDiagram
 direction TB
 class InsuranceContract {
   String contractId
+  ContractStatus status
   Date startDate
   Date endDate
-  ContractStatus status
-  int monthlyPremium
-  +generatePdf()
+  +generatePdf() File
+  +suspend()
+  +terminate()
+}
+class Policyholder
+class InsuranceProduct
+class Notice {
+  String noticeId
+  int dueAmount
+  int overdueDays
+  boolean isTerminationWarning
+  +send(String, String) boolean
 }
 class Payment {
   String paymentId
   int amount
-  Date paidAt
   PaymentMethod method
   PaymentStatus status
+  +process()
 }
-class Notice {
-  String noticeId
-  Date issuedAt
-  int dueAmount
-  int overdueDays
-}
-InsuranceContract "1" *-- "*" Payment
+InsuranceContract --> Policyholder : 계약자
+InsuranceContract --> InsuranceProduct : 가입 상품
 InsuranceContract "1" *-- "*" Notice
+InsuranceContract "1" *-- "*" Payment
