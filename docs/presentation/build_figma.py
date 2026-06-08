@@ -169,6 +169,58 @@ box(s,0.85,2.3,3.4,0.8,ACCENT,[[("파란 박스 = 직접 시연",18,True,WHITE,S
 box(s,0.85,3.3,3.4,0.8,C("f1f1f3"),[[("회색 = 시연 외(코드엔 있음)",17,True,GRAY,SANS)]],line=C("c9c9cf"),wrap=False)
 tb(s,0.85,6.35,11.6,0.8,[[("전체 흐름 중 파란 부분만 라이브로 시연한다.",26,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
 
+# 17b. 프로젝트 구조
+s=slide(); head(s,"","프로젝트 구조")
+def varrow(s,l,t):
+    tb(s,l,t,0.9,0.35,[[("↓",20,True,GRAY,SANS)]],align=PP_ALIGN.CENTER,anchor=MSO_ANCHOR.MIDDLE)
+# 백엔드 — 계층형
+tb(s,0.85,1.95,5.9,0.5,[[("백엔드 · Spring — 계층형",21,True,ACCENT,SANS)]],spc=-0.3)
+blayers=[("web","Controller · DTO — 요청/응답"),("service","업무 흐름 · 규칙 조합"),
+         ("domain","엔티티 · 도메인 규칙"),("repository","JPA 저장 · 조회")]
+y=2.5
+for i,(nm,desc) in enumerate(blayers):
+    fillc=ACCENT_SOFT if nm=="domain" else SOFT
+    box(s,1.4,y,4.8,0.66,fillc,[[(nm+"   ",17,True,ACCENT if nm=="domain" else BLACK,MONO),(desc,15,False,GRAY,SANS)]],align=PP_ALIGN.LEFT,line=HAIR,wrap=False)
+    if i<len(blayers)-1: varrow(s,3.35,y+0.6)
+    y+=0.88
+tb(s,1.4,y-0.04,5.5,0.6,[[("domain = user·product·contract·claim·review·application",11,False,GRAY,MONO)]],spc=-0.3,wrap=False)
+# 프론트 — 기능형
+tb(s,7.05,1.95,5.5,0.5,[[("프론트 · React — 기능형",21,True,C("b5793a"),SANS)]],spc=-0.3)
+box(s,7.05,2.55,5.5,0.72,WARM,[[("app   ",17,True,BLACK,MONO),("라우팅 · 역할별 화면",15,False,GRAY,SANS)]],align=PP_ALIGN.LEFT,line=HAIR,wrap=False)
+box(s,7.05,3.45,5.5,1.65,SOFT,[[("features/  — 기능 한 폴더 = 화면+hook+api",15,True,BLACK,MONO)],
+    [("auth · contracts · claims",15,False,GRAY,SANS)],
+    [("benefit-review · underwriting-review",15,False,GRAY,SANS)],
+    [("assignments · profile · customer-home",15,False,GRAY,SANS)]],align=PP_ALIGN.LEFT,anchor=MSO_ANCHOR.MIDDLE,line=HAIR)
+box(s,7.05,5.3,5.5,0.72,SOFT,[[("lib/api · components   ",15,True,BLACK,MONO),("공통",15,False,GRAY,SANS)]],align=PP_ALIGN.LEFT,line=HAIR,wrap=False)
+tb(s,0.85,6.55,11.6,0.7,[[("백엔드는 계층(웹→서비스→도메인→저장소), 프론트는 기능 단위로 나눴다.",24,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
+
+# 17c. 클래스 다이어그램 → 코드
+s=slide(); head(s,"","클래스 다이어그램 → 코드")
+tb(s,0.85,2.0,5.9,0.5,[[("설계 — 클래스 한 개",18,True,ACCENT,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+tb(s,6.6,2.0,5.9,0.5,[[("코드 — JPA 엔티티 한 개",18,True,C("b5793a"),SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+img_fit(s,os.path.join(CL,"contract-design.png"),0.85,2.55,5.9,2.9)
+ecode=("@Entity\nclass InsuranceContract {\n  @Id Long id;\n  ContractStatus status;\n"
+       "  @ManyToOne Policyholder policyholder;\n  @ManyToOne InsuranceProduct product;\n"
+       "  @OneToMany List<Payment> payments;\n  @Embedded AutoDebit autoDebit;\n}")
+panel(s,6.6,2.55,5.9,2.9,C("1f1d3d"),rad=0.05)
+tb(s,6.95,2.75,5.3,2.6,[[(l,14,False,C("cdbff7") if ("@" in l or "class" in l) else WHITE,MONO)] for l in ecode.split("\n")],anchor=MSO_ANCHOR.MIDDLE)
+box(s,0.85,5.75,11.6,1.25,SOFT,[[("필드 = 컬럼,  관계선 = ",18,True,BLACK,SANS),("@ManyToOne · @OneToMany · @Embedded",17,True,ACCENT,MONO),(".  domain 패키지의 6묶음이 다이어그램 6묶음과 1:1.",18,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.1,line=HAIR)
+
+# 17d. 유스케이스 → 코드
+s=slide(); head(s,"","유스케이스 → 코드")
+tb(s,0.85,2.0,11.6,0.6,[[("예) 가입 신청 — 한 시나리오가 한 줄기 호출 흐름으로",20,True,GRAY,SANS)]],spc=-0.3)
+flow=[("고객","가입 신청 화면",A_CUST),("web","ApplicationController\nPOST /applications",SOFT),
+      ("service","ApplicationService\n.apply()",ACCENT_SOFT),("domain","InsuranceApplication\n+ 도메인 규칙",ACCENT),
+      ("repository","저장 · 조회",NAVY)]
+n=len(flow); bw,gap=2.05,0.5; total=n*bw+(n-1)*gap; x=(SW-total)/2
+for i,(tag,body,col) in enumerate(flow):
+    runs=[[(tag,14,True,fg(col),MONO)]]+[[(ln,15,True,fg(col),SANS)] for ln in body.split("\n")]
+    box(s,x,3.0,bw,1.7,col,runs,anchor=MSO_ANCHOR.MIDDLE,wrap=True)
+    if i<n-1: arrow(s,x+bw+(gap-0.7)/2,3.65,22)
+    x+=bw+gap
+box(s,(SW-7.0)/2,5.15,7.0,0.95,WARM,[[("응답은 ",17,True,BLACK,SANS),("DTO",17,True,C("b5793a"),MONO),("로 변환해 화면으로 (from(entity))",17,True,BLACK,SANS)]],wrap=False,rad=0.12)
+tb(s,0.85,6.45,11.6,0.7,[[("모든 도메인이 같은 패턴: 화면 → 컨트롤러 → 서비스 → 도메인 → 저장소.",24,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
+
 # 18. AI 사용
 s=slide(); head(s,"","AI를 어떻게 썼나")
 panel(s,0.85,2.2,5.7,1.7,ACCENT_SOFT,rad=0.12)
