@@ -39,21 +39,19 @@ footer: ''
 
 ---
 
-## 어떤 보험을 다루나
+## 두 가지 보험
 
 <div class="kinds">
-  <div class="kind"><h3>의료보험</h3><p>아프면 진료비를 돌려받는다</p></div>
-  <div class="kind amber"><h3>자동차보험</h3><p>사고가 나면 보상받는다</p></div>
+  <div class="kind"><h3>의료보험</h3><p>병원비</p></div>
+  <div class="kind amber"><h3>자동차보험</h3><p>자동차 사고</p></div>
 </div>
-
-<p class="verdict">이 서비스는 두 가지 보험을 다룹니다.</p>
 
 ---
 
 ## 의료보험이란
 
 <div class="detail">
-  <p class="lead2">아프면 병원비를 돌려받는 보험</p>
+  <p class="lead2">병원비를 보험금으로 돌려주는 보험</p>
   <ul>
     <li>병원비를 청구하면 보험금을 계좌로 입금해 준다</li>
     <li>청구액이 100만 원보다 적으면 — 묻지 않고 바로 입금 (예: 30만 원 청구 → 즉시)</li>
@@ -66,7 +64,7 @@ footer: ''
 ## 자동차보험이란
 
 <div class="detail">
-  <p class="lead2">사고가 나면 보상받는 보험</p>
+  <p class="lead2">사고 피해를 보상해 주는 보험</p>
   <ul>
     <li>사고를 접수하면 접수번호가 나온다</li>
     <li>직원 한 명이 그 사고를 맡아(배정) 보상 금액을 정한다</li>
@@ -88,7 +86,7 @@ footer: ''
   <div class="jcol"><div class="javatar sys">시스템</div><div class="jaction">계약 자동 생성</div></div>
 </div>
 
-<p class="verdict">직원이 승인하면, 같은 처리 안에서 계약이 곧바로 만들어집니다.</p>
+<p class="verdict">승인되면 계약이 바로 생깁니다.</p>
 
 ---
 
@@ -120,20 +118,18 @@ footer: ''
 
 ---
 
-## 여섯 개의 도메인으로 설계했다
+## 도메인 여섯 개
 
 <div class="legend" style="flex-wrap:wrap">
   <span class="ly">사용자</span><span class="ly">상품</span><span class="ly">계약</span><span class="ly">청구</span><span class="ly">심사</span><span class="ly">사고이력</span>
 </div>
-
-<p class="verdict">이 여섯 도메인을 직접 클래스 다이어그램으로 설계했고, 지금부터 하나씩 코드와 비교합니다.</p>
 
 ---
 
 ## 설계 = 구현 — 사용자
 
 <div class="cmp2">
-  <figure><span class="cap cap-d">내가 설계</span><img src="diagrams/clusters/user-design.png"></figure>
+  <figure><span class="cap cap-d">설계</span><img src="diagrams/clusters/user-design.png"></figure>
   <figure><span class="cap cap-b">코드 역설계</span><img src="diagrams/clusters/user-code.png"></figure>
 </div>
 
@@ -147,7 +143,7 @@ footer: ''
 ## 설계 = 구현 — 상품
 
 <div class="cmp2">
-  <figure><span class="cap cap-d">내가 설계</span><img src="diagrams/clusters/product-design.png"></figure>
+  <figure><span class="cap cap-d">설계</span><img src="diagrams/clusters/product-design.png"></figure>
   <figure><span class="cap cap-b">코드 역설계</span><img src="diagrams/clusters/product-code.png"></figure>
 </div>
 
@@ -161,7 +157,7 @@ footer: ''
 ## 설계 = 구현 — 계약
 
 <div class="cmp2">
-  <figure><span class="cap cap-d">내가 설계</span><img src="diagrams/clusters/contract-design.png"></figure>
+  <figure><span class="cap cap-d">설계</span><img src="diagrams/clusters/contract-design.png"></figure>
   <figure><span class="cap cap-b">코드 역설계</span><img src="diagrams/clusters/contract-code.png"></figure>
 </div>
 
@@ -175,7 +171,7 @@ footer: ''
 ## 설계 = 구현 — 청구
 
 <div class="cmp2">
-  <figure><span class="cap cap-d">내가 설계</span><img src="diagrams/clusters/claim-design.png"></figure>
+  <figure><span class="cap cap-d">설계</span><img src="diagrams/clusters/claim-design.png"></figure>
   <figure><span class="cap cap-b">코드 역설계</span><img src="diagrams/clusters/claim-code.png"></figure>
 </div>
 
@@ -202,7 +198,7 @@ public enum ClaimStatus {
 ## 설계 = 구현 — 심사
 
 <div class="cmp2">
-  <figure><span class="cap cap-d">내가 설계</span><img src="diagrams/clusters/review-design.png"></figure>
+  <figure><span class="cap cap-d">설계</span><img src="diagrams/clusters/review-design.png"></figure>
   <figure><span class="cap cap-b">코드 역설계</span><img src="diagrams/clusters/review-code.png"></figure>
 </div>
 
@@ -216,7 +212,7 @@ public enum ClaimStatus {
 ## 설계 = 구현 — 사고이력
 
 <div class="cmp2">
-  <figure><span class="cap cap-d">내가 설계</span><img src="diagrams/clusters/accident-design.png"></figure>
+  <figure><span class="cap cap-d">설계</span><img src="diagrams/clusters/accident-design.png"></figure>
   <figure><span class="cap cap-b">코드 역설계</span><img src="diagrams/clusters/accident-code.png"></figure>
 </div>
 
@@ -227,13 +223,13 @@ public enum ClaimStatus {
 
 ---
 
-## 유스케이스도 설계대로 동작한다
+## 유스케이스 — 실제 동작 경로
 
 <div style="text-align:center">
   <img src="diagrams/uc-map.png" alt="유스케이스 지도" style="height:430px;">
 </div>
 
-<p class="verdict">설계한 유스케이스가 데모에서 그대로 동작합니다 (노란 경로).</p>
+<p class="verdict">노란 경로가 데모에서 실제로 동작합니다.</p>
 
 ---
 
