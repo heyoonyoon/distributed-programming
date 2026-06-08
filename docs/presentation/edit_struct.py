@@ -62,40 +62,32 @@ clear(target); s=target
 
 head(s,"프로젝트 구조")
 
-# 백엔드 — 계층형
-tb(s,0.85,2.0,3.4,0.5,[[("백엔드 · Spring",20,True,ACCENT,SANS)],[("계층형",15,False,GRAY,SANS)]],spc=-0.3)
-blayers=[("controller","요청 받기·응답"),("service","업무 흐름·규칙"),
-         ("domain","엔티티·도메인 규칙"),("repository","JPA 저장·조회"),("DB","")]
-y=2.95
-for i,(nm,desc) in enumerate(blayers):
-    fillc=ACCENT if nm=="DB" else (ACCENT_SOFT if nm=="domain" else SOFT)
-    runs=[[(nm,17,True,fg(fillc) if nm=="DB" else BLACK,MONO)]]
-    if desc: runs[0].append(("   "+desc,12,False,GRAY,SANS))
-    box(s,0.85,y,3.45,0.6,fillc,runs,align=PP_ALIGN.LEFT if desc else PP_ALIGN.CENTER,line=HAIR,wrap=False)
-    if i<len(blayers)-1: varrow(s,2.35,y+0.55)
-    y+=0.78
-
-# 프론트 — 기능형 (화면→hook→api 3단)
-tb(s,4.75,2.0,3.4,0.5,[[("프론트 · React",20,True,C("b5793a"),SANS)],[("기능형",15,False,GRAY,SANS)]],spc=-0.3)
-flayers=[("화면","components — 보이는 UI"),("hook","상태 관리·호출 트리거"),("api","서버에 요청 보냄")]
-y=2.95
+# 프론트 — 기능형 (왼쪽 stack)
+tb(s,0.85,2.0,3.4,0.5,[[("프론트 · React",19,True,C("b5793a"),SANS)]],spc=-0.3)
+flayers=[("화면","보이는 UI"),("hook","호출"),("api","서버 요청")]
+y=2.75
 for i,(nm,desc) in enumerate(flayers):
-    box(s,4.75,y,3.45,0.78,WARM,[[(nm+"   ",17,True,BLACK,MONO),(desc,13,False,GRAY,SANS)]],align=PP_ALIGN.LEFT,line=HAIR,wrap=False)
-    if i<len(flayers)-1: varrow(s,6.25,y+0.72)
-    y+=0.96
-tb(s,4.75,y+0.0,3.6,0.9,[[("한 기능 = 이 셋이 한 폴더",13,True,BLACK,SANS)],
-    [("features/ : auth·contracts·claims",12,False,GRAY,MONO)],
-    [("benefit-review·profile … ",12,False,GRAY,MONO)]],spc=-0.2)
+    box(s,0.85,y,3.3,0.7,WARM,[[(nm+"  ",17,True,BLACK,MONO),(desc,13,False,GRAY,SANS)]],align=PP_ALIGN.LEFT,line=HAIR,wrap=False)
+    if i<len(flayers)-1: varrow(s,2.0,y+0.64)
+    y+=0.92
 
-# DTO — 큰 박스로 승격 (양쪽을 잇는 데이터)
-box(s,8.65,2.95,3.9,2.55,NAVY,[[("DTO",30,True,WHITE,MONO)],[("",10,False,WHITE,SANS)],
-    [("화면(api)과 서버(controller)가",16,True,WHITE,SANS)],[("주고받는 데이터 형식",16,True,WHITE,SANS)],
-    [("",8,False,WHITE,SANS)],
-    [("요청 DTO  →  서버로 보낼 값",14,False,C("cdbff7"),SANS)],
-    [("응답 DTO  ←  화면에 뿌릴 값",14,False,C("cdbff7"),SANS)]],align=PP_ALIGN.LEFT,anchor=MSO_ANCHOR.MIDDLE,rad=0.06)
-tb(s,8.65,5.6,3.9,0.5,[[("엔티티를 그대로 노출 안 하고 DTO로 변환",12,False,GRAY,SANS)]],spc=-0.2,align=PP_ALIGN.CENTER)
+# 백엔드 — 계층형 (오른쪽 stack)
+tb(s,9.15,2.0,3.4,0.5,[[("백엔드 · Spring",19,True,ACCENT,SANS)]],spc=-0.3)
+blayers=["controller","service","domain","repository","DB"]
+y=2.75
+for i,nm in enumerate(blayers):
+    fillc=ACCENT if nm=="DB" else (ACCENT_SOFT if nm=="domain" else SOFT)
+    box(s,9.15,y,3.3,0.62,fillc,[[(nm,16,True,fg(fillc) if nm=="DB" else BLACK,MONO)]],line=HAIR,wrap=False)
+    if i<len(blayers)-1: varrow(s,10.3,y+0.56)
+    y+=0.74
 
-tb(s,0.85,6.55,11.6,0.7,[[("백엔드는 계층, 프론트는 기능 단위 — 둘 사이는 DTO로 주고받는다.",24,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
+# DTO — 가운데 연결자 (프론트 ↔ 백엔드)
+tb(s,4.45,3.05,4.45,0.5,[[("DTO",20,True,ACCENT,MONO)]],align=PP_ALIGN.CENTER,spc=0)
+tb(s,4.25,3.7,4.85,0.6,[[("요청 DTO  ───────▶",17,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.2)
+tb(s,4.25,4.55,4.85,0.6,[[("◀───────  응답 DTO",17,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.2)
+tb(s,4.35,5.2,4.65,0.7,[[("화면과 서버가 주고받는",14,False,GRAY,SANS)],[("데이터 형식",14,False,GRAY,SANS)]],align=PP_ALIGN.CENTER,spc=-0.2)
+
+tb(s,0.85,6.5,11.6,0.7,[[("프론트와 백엔드는 DTO로 데이터를 주고받는다.",24,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
 
 prs.save(PPTX)
 print("updated 프로젝트 구조 in place:", PPTX, "| total slides:", len(prs.slides._sldIdLst))
