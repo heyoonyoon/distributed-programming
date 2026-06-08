@@ -14,9 +14,11 @@ DIA = os.path.join(HERE, "diagrams"); CL = os.path.join(DIA, "clusters")
 NAVY=RGBColor(0x0B,0x3D,0x5C); NAVY2=RGBColor(0x0F,0x2A,0x43); AMBER=RGBColor(0xF2,0xA9,0x00)
 INK=RGBColor(0x1C,0x2B,0x36); MUTED=RGBColor(0x5B,0x71,0x85); LINE=RGBColor(0xC3,0xD2,0xDF)
 WHITE=RGBColor(0xFF,0xFF,0xFF); AMBER_DK=RGBColor(0xB5,0x79,0x00)
-# 액터/주체 색 (서로 또렷이 구분)
-CUST=RGBColor(0x2C,0x6F,0x9C); STAFF=RGBColor(0x1F,0x9E,0x8F); SYS=RGBColor(0x0B,0x3D,0x5C)
-CUST_BG=RGBColor(0xDE,0xEC,0xF6); STAFF_BG=RGBColor(0xDC,0xF1,0xEC)
+# 액터/주체 색 (빨강·파랑·노랑 — 완전히 다른 색)
+CUST=RGBColor(0x1E,0x64,0xC8); STAFF=RGBColor(0xD8,0x39,0x2B); SYS=RGBColor(0xF4,0xB4,0x00)
+CUST_BG=RGBColor(0xDC,0xE7,0xF8); STAFF_BG=RGBColor(0xF8,0xDE,0xDB)
+def actc(fill):  # 노랑 위엔 진한 글자, 그 외엔 흰 글자
+    return NAVY if fill==SYS else WHITE
 # 같음/다름
 OKBG=RGBColor(0xDC,0xF1,0xEC); OK=RGBColor(0x15,0x80,0x73)
 AMBERBG=RGBColor(0xFD,0xEC,0xC4)
@@ -82,7 +84,7 @@ data=[("고객",CUST,"고객","보험에 가입하고\n청구·납부한다"),
       ("시스템",SYS,"시스템","계약·고지서·지급을\n자동 처리한다")]
 xs=[1.75,5.62,9.49]
 for (lab,col,nm,role),x in zip(data,xs):
-    box(s,x,1.75,2.3,2.3,col,None,[[(lab,24,True,WHITE,FONT)]],shape=MSO_SHAPE.OVAL)
+    box(s,x,1.75,2.3,2.3,col,None,[[(lab,24,True,actc(col),FONT)]],shape=MSO_SHAPE.OVAL)
     tb(s,x-0.6,4.2,3.5,0.7,[[(nm,28,True,NAVY,FONT)]],align=PP_ALIGN.CENTER)
     tb(s,x-0.6,4.95,3.5,1.2,[[(l,22,False,MUTED,FONT)] for l in role.split("\n")],align=PP_ALIGN.CENTER)
 
@@ -108,8 +110,8 @@ tb(s,0.7,1.65,12,0.9,[[("사고 피해를 보상해 주는 보험",32,True,NAVY,
 steps=["사고 접수","직원이 맡음","보상액 사정","계좌 입금"]
 iw,gap=2.55,0.6; total=len(steps)*iw+(len(steps)-1)*gap; x=(SW-total)/2
 for i,st in enumerate(steps):
-    fill=SYS if i==len(steps)-1 else CUST_BG; tc=WHITE if i==len(steps)-1 else NAVY
-    box(s,x,3.55,iw,1.35,fill,CUST,[[(st,23,True,tc,FONT)]],lw=1.8)
+    fill=SYS if i==len(steps)-1 else CUST_BG
+    box(s,x,3.55,iw,1.35,fill,CUST,[[(st,23,True,NAVY,FONT)]],lw=1.8)
     if i<len(steps)-1: arrow(s,x+iw+0.04,3.75)
     x+=iw+gap
 
@@ -119,9 +121,8 @@ def journey(t,steps,vtext):
     total=n*iw+(n-1)*gap; x=(SW-total)/2
     cmap={"cust":CUST,"staff":STAFF,"sys":SYS}; bgmap={"cust":CUST_BG,"staff":STAFF_BG,"sys":SYS}
     for i,(who,lab,act) in enumerate(steps):
-        box(s,x+iw/2-0.7,2.35,1.4,1.4,cmap[who],None,[[(lab,21,True,WHITE,FONT)]],shape=MSO_SHAPE.OVAL)
-        tc=WHITE if who=="sys" else NAVY
-        box(s,x,4.05,iw,1.2,bgmap[who],cmap[who],[[(act,24,True,tc,FONT)]],lw=2.0)
+        box(s,x+iw/2-0.7,2.35,1.4,1.4,cmap[who],None,[[(lab,21,True,actc(cmap[who]),FONT)]],shape=MSO_SHAPE.OVAL)
+        box(s,x,4.05,iw,1.2,bgmap[who],cmap[who],[[(act,24,True,NAVY,FONT)]],lw=2.0)
         if i<n-1: arrow(s,x+iw+0.08,4.3)
         x+=iw+gap
     verdict(s,vtext,t=5.7)
