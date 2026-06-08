@@ -31,6 +31,91 @@ footer: ''
 
 ---
 
+## 두 가지 보험을 다룬다
+
+<div class="bigcards">
+  <div class="bigcard">
+    <h3>의료보험</h3>
+    <p>진료비를 청구합니다.</p>
+    <p>입원·통원 보장, 보장 한도와 자기부담금.</p>
+    <p><small>청구가 간단하면 즉시 지급, 복잡하면 심사로 넘어갑니다.</small></p>
+  </div>
+  <div class="bigcard amber">
+    <h3>자동차보험</h3>
+    <p>사고를 접수합니다.</p>
+    <p>차량 정보, 운전자 범위, 사고 이력으로 보험료 산정.</p>
+    <p><small>접수되면 담당 직원이 지급액을 사정합니다.</small></p>
+  </div>
+</div>
+
+---
+
+## 세 주체가 참여한다
+
+<div class="bigcards three">
+  <div class="bigcard">
+    <h3>고객</h3>
+    <p>가입자.</p>
+    <p>가입·납부·청구·사고접수.</p>
+  </div>
+  <div class="bigcard">
+    <h3>보험사 직원</h3>
+    <p>심사자.</p>
+    <p>가입 심사·지급 심사.</p>
+  </div>
+  <div class="bigcard amber">
+    <h3>시스템</h3>
+    <p>자동 처리.</p>
+    <p>계약 생성·고지서·보험금 지급.</p>
+  </div>
+</div>
+
+---
+
+## 여정 ① — 가입
+
+<div class="flow">
+  <div class="node">상품 조회<small>고객</small></div>
+  <div class="arrow">→</div>
+  <div class="node">가입 신청<small>고객</small></div>
+  <div class="arrow">→</div>
+  <div class="node">가입 심사<small>직원</small></div>
+  <div class="arrow">→</div>
+  <div class="node db">계약 자동 생성<small>시스템</small></div>
+</div>
+
+<p class="verdict">심사가 승인되면 계약이 자동으로 만들어집니다.</p>
+
+---
+
+## 여정 ② — 납부와 미납
+
+<div class="flow">
+  <div class="node">매달 보험료 납부<small>고객</small></div>
+  <div class="arrow">→</div>
+  <div class="node">미납 발생<small>시스템 감지</small></div>
+  <div class="arrow">→</div>
+  <div class="node db">고지서 자동 발송<small>시스템</small></div>
+</div>
+
+<p class="verdict">납부가 밀리면 시스템이 미납 고지서를 자동으로 보냅니다.</p>
+
+---
+
+## 여정 ③ — 보상과 지급
+
+<div class="flow">
+  <div class="node">청구·사고 접수<small>고객</small></div>
+  <div class="arrow">→</div>
+  <div class="node">보상 심사<small>직원</small></div>
+  <div class="arrow">→</div>
+  <div class="node db">보험금 지급<small>시스템</small></div>
+</div>
+
+<p class="verdict">의료청구는 복잡도에 따라, 자동차사고는 직원 사정으로 지급됩니다.</p>
+
+---
+
 ## 무엇으로 이루어져 있나 — 도메인
 
 <div class="matchbar">
@@ -41,9 +126,7 @@ footer: ''
   <span class="check" style="border-color:#0b3d5c;color:#0b3d5c">심사·지급</span>
 </div>
 
-<p class="verdict">서비스는 다섯 개의 도메인으로 이루어집니다.</p>
-
-<p class="small-note" style="text-align:center">이 도메인들을 직접 클래스 다이어그램으로 설계하고, 구현은 AI로 진행했습니다.</p>
+<p class="verdict">이 다섯 도메인을 직접 클래스 다이어그램으로 설계했습니다.</p>
 
 ---
 
@@ -61,7 +144,10 @@ footer: ''
   <img src="diagrams/clusters/product-code.png" alt="">
 </div>
 
-<p class="verdict">설계한 구조 그대로 구현되었습니다.</p>
+<div class="sd">
+  <div class="same"><b>같은 점</b> 상속 구조와 관계가 그대로입니다.</div>
+  <div class="diff"><b>다른 점</b> 식별자 String→Long, 날짜 Date→LocalDate (JPA 표준).</div>
+</div>
 
 ---
 
@@ -79,7 +165,10 @@ footer: ''
   <img src="diagrams/clusters/claim-code.png" alt="">
 </div>
 
-<p class="verdict">자동이체(AutoDebit) 기능 하나가 더해졌을 뿐, 구조는 같습니다.</p>
+<div class="sd">
+  <div class="same"><b>같은 점</b> 계약–납부–고지 구성, 청구 상속이 동일합니다.</div>
+  <div class="diff"><b>다른 점</b> 계약에 AutoDebit(자동이체) 추가, 청구 상태 4→6값.</div>
+</div>
 
 ---
 
@@ -97,7 +186,10 @@ footer: ''
   <img src="diagrams/clusters/accident-code.png" alt="">
 </div>
 
-<p class="verdict">외부 사고이력은 실제 연동이 아니라 더미라서, 개별 기록을 집계값으로 단순화했습니다.</p>
+<div class="sd">
+  <div class="same"><b>같은 점</b> 심사 상속 구조가 동일합니다.</div>
+  <div class="diff"><b>다른 점</b> 사고이력은 더미라 AccidentRecord 제거, 지급심사 대상에 자동차 포함.</div>
+</div>
 
 ---
 
