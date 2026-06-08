@@ -16,7 +16,7 @@ INK=RGBColor(0x1C,0x2B,0x36); MUTED=RGBColor(0x5B,0x71,0x85); LINE=RGBColor(0xC3
 WHITE=RGBColor(0xFF,0xFF,0xFF); AMBER_DK=RGBColor(0xB5,0x79,0x00)
 # 액터/주체 색 (빨강·파랑·노랑 — 완전히 다른 색)
 CUST=RGBColor(0x1E,0x64,0xC8); STAFF=RGBColor(0xD8,0x39,0x2B); SYS=RGBColor(0xF4,0xB4,0x00)
-CUST_BG=RGBColor(0xDC,0xE7,0xF8); STAFF_BG=RGBColor(0xF8,0xDE,0xDB)
+CUST_BG=RGBColor(0xDC,0xE7,0xF8); STAFF_BG=RGBColor(0xF8,0xDE,0xDB); SYS_BG=RGBColor(0xFB,0xEF,0xC4)
 def actc(fill):  # 노랑 위엔 진한 글자, 그 외엔 흰 글자
     return NAVY if fill==SYS else WHITE
 # 같음/다름
@@ -111,7 +111,7 @@ tb(s,0.7,1.65,12,0.9,[[("사고 피해를 보상해 주는 보험",32,True,NAVY,
 steps=["사고 접수","직원이 맡음","보상액 사정","계좌 입금"]
 iw,gap=2.55,0.6; total=len(steps)*iw+(len(steps)-1)*gap; x=(SW-total)/2
 for i,st in enumerate(steps):
-    fill=SYS if i==len(steps)-1 else CUST_BG
+    fill=SYS_BG if i==len(steps)-1 else CUST_BG
     box(s,x,3.55,iw,1.35,fill,CUST,[[(st,23,True,NAVY,FONT)]],lw=1.8,wrap=False)
     if i<len(steps)-1: arrow(s,x+iw+0.04,3.75)
     x+=iw+gap
@@ -120,7 +120,7 @@ for i,st in enumerate(steps):
 def journey(t,steps,vtext):
     s=slide(); title(s,t); n=len(steps); iw,gap=2.45,0.7
     total=n*iw+(n-1)*gap; x=(SW-total)/2
-    cmap={"cust":CUST,"staff":STAFF,"sys":SYS}; bgmap={"cust":CUST_BG,"staff":STAFF_BG,"sys":SYS}
+    cmap={"cust":CUST,"staff":STAFF,"sys":SYS}; bgmap={"cust":CUST_BG,"staff":STAFF_BG,"sys":SYS_BG}
     for i,(who,lab,act) in enumerate(steps):
         box(s,x+iw/2-0.75,2.3,1.5,1.5,cmap[who],None,[[(lab,21,True,actc(cmap[who]),FONT)]],shape=MSO_SHAPE.OVAL,wrap=False)
         box(s,x,4.1,iw,1.2,bgmap[who],cmap[who],[[(act,24,True,NAVY,FONT)]],lw=2.0,wrap=False)
