@@ -1,0 +1,16 @@
+classDiagram
+direction TB
+class InsuranceProduct {
+  <<abstract>>
+  String productId
+  int basePremium
+}
+class HealthInsuranceProduct
+class CarInsuranceProduct
+class CoverageItem {
+  String itemId
+  int coverageLimit
+}
+InsuranceProduct <|-- HealthInsuranceProduct
+InsuranceProduct <|-- CarInsuranceProduct
+InsuranceProduct "1" *-- "*" CoverageItem

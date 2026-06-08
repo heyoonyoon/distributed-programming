@@ -1,0 +1,11 @@
+classDiagram
+direction TB
+class Claim {
+  <<abstract>>
+  Long id
+  ClaimStatus status
+}
+class HealthInsuranceClaim
+class CarAccidentReport
+Claim <|-- HealthInsuranceClaim
+Claim <|-- CarAccidentReport

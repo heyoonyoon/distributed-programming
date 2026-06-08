@@ -48,21 +48,43 @@ footer: ''
 
 ---
 
-## 설계 = 구현 — 차이가 없습니다
+## 설계 = 구현 ① — 사용자 · 상품 계층
 
-<div class="eqcmp">
-  <figure style="margin:0"><span class="cap cap-d">내가 설계 (Enterprise Architect)</span><img src="diagrams/class-design-ea.png" alt="설계 클래스 다이어그램"></figure>
-  <figure style="margin:0"><span class="cap cap-b">코드에서 역설계 (구현 결과)</span><img src="diagrams/class-reverse.png" alt="역설계 클래스 다이어그램"></figure>
+<div class="clgrid">
+  <div class="spacer"></div>
+  <div class="clhead d">내가 설계 (EA)</div>
+  <div class="clhead b">코드 역설계 (구현)</div>
+
+  <div class="cllabel">사용자<small>✓ 일치</small></div>
+  <img src="diagrams/clusters/user-design.png" alt="">
+  <img src="diagrams/clusters/user-code.png" alt="">
+
+  <div class="cllabel">상품<small>✓ 일치</small></div>
+  <img src="diagrams/clusters/product-design.png" alt="">
+  <img src="diagrams/clusters/product-code.png" alt="">
 </div>
 
-<div class="matchbar">
-  <span class="check">클래스 계층 4개 일치</span>
-  <span class="check">상속 구조 일치</span>
-  <span class="check">Composition·Aggregation·Association 일치</span>
+<p class="small-note" style="text-align:center">클래스·상속·관계가 동일합니다. 노란 칸의 차이는 식별자(userId→id)·날짜 타입뿐입니다.</p>
+
+---
+
+## 설계 = 구현 ② — 청구 · 심사 계층
+
+<div class="clgrid">
+  <div class="spacer"></div>
+  <div class="clhead d">내가 설계 (EA)</div>
+  <div class="clhead b">코드 역설계 (구현)</div>
+
+  <div class="cllabel">청구<small>✓ 일치</small></div>
+  <img src="diagrams/clusters/claim-design.png" alt="">
+  <img src="diagrams/clusters/claim-code.png" alt="">
+
+  <div class="cllabel">심사<small>✓ 일치</small></div>
+  <img src="diagrams/clusters/review-design.png" alt="">
+  <img src="diagrams/clusters/review-code.png" alt="">
 </div>
 
-<p class="verdict">설계한 그대로 구현되었습니다 — 도메인 구조 100% 일치.</p>
-<p class="small-note" style="text-align:center">차이는 식별자(String→Long)·날짜 타입 등 <b>구현 기술 매핑</b>뿐이며, 도메인 모델의 클래스·상속·관계는 동일합니다.</p>
+<p class="verdict">계층을 하나씩 맞춰봐도 — 설계 = 구현.</p>
 
 ---
 

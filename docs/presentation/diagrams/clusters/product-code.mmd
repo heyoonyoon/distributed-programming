@@ -1,0 +1,16 @@
+classDiagram
+direction TB
+class InsuranceProduct {
+  <<abstract>>
+  Long id
+  int basePremium
+}
+class HealthInsuranceProduct
+class CarInsuranceProduct
+class CoverageItem {
+  Long id
+  int coverageLimit
+}
+InsuranceProduct <|-- HealthInsuranceProduct
+InsuranceProduct <|-- CarInsuranceProduct
+InsuranceProduct "1" *-- "*" CoverageItem

@@ -1,0 +1,11 @@
+classDiagram
+direction TB
+class Review {
+  <<abstract>>
+  String reviewId
+  ReviewResult result
+}
+class EnrollmentReview
+class BenefitPaymentReview
+Review <|-- EnrollmentReview
+Review <|-- BenefitPaymentReview

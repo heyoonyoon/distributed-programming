@@ -1,0 +1,11 @@
+classDiagram
+direction TB
+class Claim {
+  <<abstract>>
+  String claimId
+  ClaimStatus status
+}
+class HealthInsuranceClaim
+class CarAccidentReport
+Claim <|-- HealthInsuranceClaim
+Claim <|-- CarAccidentReport
