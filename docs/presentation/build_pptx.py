@@ -44,14 +44,14 @@ def _set(tf,runs,align,anchor,wrap=True):
 def tb(s,l,t,w,h,runs,align=PP_ALIGN.LEFT,anchor=MSO_ANCHOR.TOP):
     x=s.shapes.add_textbox(Inches(l),Inches(t),Inches(w),Inches(h)); _set(x.text_frame,runs,align,anchor); return x
 
-def box(s,l,t,w,h,fill,line,runs,align=PP_ALIGN.CENTER,anchor=MSO_ANCHOR.MIDDLE,lw=1.5,shape=MSO_SHAPE.ROUNDED_RECTANGLE):
+def box(s,l,t,w,h,fill,line,runs,align=PP_ALIGN.CENTER,anchor=MSO_ANCHOR.MIDDLE,lw=1.5,shape=MSO_SHAPE.ROUNDED_RECTANGLE,wrap=True):
     sp=s.shapes.add_shape(shape,Inches(l),Inches(t),Inches(w),Inches(h)); sp.shadow.inherit=False
     if fill is None: sp.fill.background()
     else: sp.fill.solid(); sp.fill.fore_color.rgb=fill
     if line is None: sp.line.fill.background()
     else: sp.line.color.rgb=line; sp.line.width=Pt(lw)
     tf=sp.text_frame; tf.margin_top=Pt(5); tf.margin_bottom=Pt(5); tf.margin_left=Pt(10); tf.margin_right=Pt(10)
-    _set(tf,runs,align,anchor); return sp
+    _set(tf,runs,align,anchor,wrap); return sp
 
 def bar(s,l,t,w,col,h=0.14):
     r=s.shapes.add_shape(MSO_SHAPE.RECTANGLE,Inches(l),Inches(t),Inches(w),Inches(h)); r.shadow.inherit=False
@@ -74,19 +74,20 @@ def img_fit(s,path,bl,bt,bw,bh):
 
 # 1. 타이틀
 s=slide(NAVY2)
-tb(s,1.0,2.6,11.3,1.4,[[("설계대로 구현하고, AI를 통제하다",46,True,WHITE,FONT)]],anchor=MSO_ANCHOR.MIDDLE)
-tb(s,1.0,4.05,11.3,0.9,[[("의료·자동차 보험 시스템",28,True,AMBER,FONT)]])
+tb(s,1.0,2.35,11.3,0.6,[[("기말 발표",20,True,AMBER,FONT)]])
+tb(s,1.0,2.95,11.5,1.4,[[("설계대로 구현하고, AI를 통제하다",48,True,WHITE,FONT)]],anchor=MSO_ANCHOR.MIDDLE)
+bar(s,1.02,4.35,3.0,AMBER,0.08)
+tb(s,1.0,4.6,11.3,0.9,[[("의료·자동차 보험 시스템",26,True,RGBColor(0xCF,0xE0,0xEC),FONT)]])
 
 # 2. 세 주체
 s=slide(); title(s,"세 주체")
-data=[("고객",CUST,"고객","보험에 가입하고\n청구·납부한다"),
-      ("직원",STAFF,"보험사 직원","가입과 지급을\n심사한다"),
-      ("시스템",SYS,"시스템","계약·고지서·지급을\n자동 처리한다")]
-xs=[1.75,5.62,9.49]
-for (lab,col,nm,role),x in zip(data,xs):
-    box(s,x,1.75,2.3,2.3,col,None,[[(lab,24,True,actc(col),FONT)]],shape=MSO_SHAPE.OVAL)
-    tb(s,x-0.6,4.2,3.5,0.7,[[(nm,28,True,NAVY,FONT)]],align=PP_ALIGN.CENTER)
-    tb(s,x-0.6,4.95,3.5,1.2,[[(l,22,False,MUTED,FONT)] for l in role.split("\n")],align=PP_ALIGN.CENTER)
+data=[("고객",CUST,"가입·청구·납부"),
+      ("직원",STAFF,"가입·지급 심사"),
+      ("시스템",SYS,"계약·고지서·지급 자동화")]
+xs=[1.55,5.42,9.29]
+for (lab,col,role),x in zip(data,xs):
+    box(s,x,1.9,2.5,2.5,col,None,[[(lab,28,True,actc(col),FONT)]],shape=MSO_SHAPE.OVAL,wrap=False)
+    tb(s,x-1.0,4.75,4.5,0.8,[[(role,23,True,NAVY,FONT)]],align=PP_ALIGN.CENTER,anchor=MSO_ANCHOR.MIDDLE)
 
 # 3. 두 가지 보험
 s=slide(); title(s,"두 가지 보험")
@@ -101,8 +102,8 @@ s=slide(); title(s,"의료보험")
 tb(s,0.7,1.65,12,0.9,[[("병원비를 보험금으로 돌려주는 보험",32,True,NAVY,FONT)]],anchor=MSO_ANCHOR.MIDDLE)
 box(s,1.0,3.6,3.2,1.3,NAVY,None,[[("병원비 청구",25,True,WHITE,FONT)]])
 arrow(s,4.45,2.85,30); arrow(s,4.45,4.75,30)
-box(s,5.4,2.45,7.0,1.35,CUST_BG,STAFF,[[("100만 원 ",22,True,NAVY,FONT),("미만",22,True,STAFF,FONT),("  →  바로 입금",22,True,INK,FONT)]],align=PP_ALIGN.LEFT,lw=2.0)
-box(s,5.4,4.35,7.0,1.35,AMBERBG,AMBER,[[("100만 원 ",22,True,NAVY,FONT),("이상",22,True,AMBER_DK,FONT),("  →  직원 확인 후 입금",22,True,INK,FONT)]],align=PP_ALIGN.LEFT,lw=2.0)
+box(s,5.4,2.45,7.0,1.35,CUST_BG,CUST,[[("100만 원 ",22,True,NAVY,FONT),("미만",22,True,CUST,FONT),("  →  바로 입금",22,True,INK,FONT)]],align=PP_ALIGN.LEFT,lw=2.0,wrap=False)
+box(s,5.4,4.35,7.0,1.35,STAFF_BG,STAFF,[[("100만 원 ",22,True,NAVY,FONT),("이상",22,True,STAFF,FONT),("  →  직원 확인 후 입금",22,True,INK,FONT)]],align=PP_ALIGN.LEFT,lw=2.0,wrap=False)
 
 # 5. 자동차보험 — 흐름
 s=slide(); title(s,"자동차보험")
@@ -111,7 +112,7 @@ steps=["사고 접수","직원이 맡음","보상액 사정","계좌 입금"]
 iw,gap=2.55,0.6; total=len(steps)*iw+(len(steps)-1)*gap; x=(SW-total)/2
 for i,st in enumerate(steps):
     fill=SYS if i==len(steps)-1 else CUST_BG
-    box(s,x,3.55,iw,1.35,fill,CUST,[[(st,23,True,NAVY,FONT)]],lw=1.8)
+    box(s,x,3.55,iw,1.35,fill,CUST,[[(st,23,True,NAVY,FONT)]],lw=1.8,wrap=False)
     if i<len(steps)-1: arrow(s,x+iw+0.04,3.75)
     x+=iw+gap
 
@@ -121,21 +122,21 @@ def journey(t,steps,vtext):
     total=n*iw+(n-1)*gap; x=(SW-total)/2
     cmap={"cust":CUST,"staff":STAFF,"sys":SYS}; bgmap={"cust":CUST_BG,"staff":STAFF_BG,"sys":SYS}
     for i,(who,lab,act) in enumerate(steps):
-        box(s,x+iw/2-0.7,2.35,1.4,1.4,cmap[who],None,[[(lab,21,True,actc(cmap[who]),FONT)]],shape=MSO_SHAPE.OVAL)
-        box(s,x,4.05,iw,1.2,bgmap[who],cmap[who],[[(act,24,True,NAVY,FONT)]],lw=2.0)
-        if i<n-1: arrow(s,x+iw+0.08,4.3)
+        box(s,x+iw/2-0.75,2.3,1.5,1.5,cmap[who],None,[[(lab,21,True,actc(cmap[who]),FONT)]],shape=MSO_SHAPE.OVAL,wrap=False)
+        box(s,x,4.1,iw,1.2,bgmap[who],cmap[who],[[(act,24,True,NAVY,FONT)]],lw=2.0,wrap=False)
+        if i<n-1: arrow(s,x+iw+0.08,4.35)
         x+=iw+gap
-    verdict(s,vtext,t=5.7)
+    verdict(s,vtext,t=5.75)
 
 journey("여정 ① — 가입",
-    [("cust","고객","상품 조회"),("cust","고객","가입 신청"),("staff","직원","가입 심사"),("sys","시스템","계약 자동 생성")],
+    [("cust","고객","상품 조회"),("cust","고객","가입 신청"),("staff","직원","가입 심사"),("sys","시스템","계약 생성")],
     "승인되면 계약이 바로 생깁니다.")
 journey("여정 ② — 납부와 미납",
-    [("cust","고객","매달 보험료 납부"),("sys","시스템","미납 감지"),("sys","시스템","고지서 자동 발송")],
-    "낼 회차보다 납부가 밀리면 미납으로 잡히고, 매일 아침 고지서를 보냅니다 (30일 넘으면 해지 예고).")
+    [("cust","고객","보험료 납부"),("sys","시스템","미납 감지"),("sys","시스템","고지서 발송")],
+    "납부가 밀리면 미납으로 잡히고, 매일 아침 고지서가 나갑니다 (30일 초과 시 해지 예고).")
 journey("여정 ③ — 보상과 지급",
-    [("cust","고객","청구·사고 접수"),("staff","직원","보상 심사"),("sys","시스템","보험금 지급")],
-    "병원비는 100만 원 미만이면 즉시, 이상이거나 자동차 사고면 직원 심사를 거쳐 지급됩니다.")
+    [("cust","고객","청구·접수"),("staff","직원","보상 심사"),("sys","시스템","보험금 지급")],
+    "병원비는 100만 원 미만이면 즉시, 이상이거나 자동차 사고는 직원 심사 후 지급.")
 
 # 9. 도메인 여섯 개
 s=slide(); title(s,"도메인 여섯 개")
