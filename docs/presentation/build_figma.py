@@ -58,8 +58,10 @@ def box(s,l,t,w,h,fill,runs,align=PP_ALIGN.CENTER,anchor=MSO_ANCHOR.MIDDLE,rad=0
     _runs(tf,runs,align,anchor,wrap,spc); return sp
 
 def head(s,eyebrow,title,ink=BLACK):
-    tb(s,0.85,0.6,11.6,0.5,[[(eyebrow,15,False,ACCENT,MONO)]],spc=0.6)
-    tb(s,0.82,1.05,11.7,1.3,[[(title,40,True,ink,SANS)]],spc=-0.8)
+    # eyebrow(영어 소제목)는 쓰지 않는다. 제목만 크게.
+    tb(s,0.82,0.62,11.9,1.5,[[(title,52,True,ink,SANS)]],spc=-1.0)
+    bar=s.shapes.add_shape(MSO_SHAPE.RECTANGLE,Inches(0.9),Inches(1.78),Inches(0.95),Inches(0.09)); bar.shadow.inherit=False
+    bar.fill.solid(); bar.fill.fore_color.rgb=ACCENT; bar.line.fill.background()
 
 def arrow(s,l,t,sz=30,col=ACCENT):
     tb(s,l,t,0.7,0.7,[[("→",sz,True,col,SANS)]],align=PP_ALIGN.CENTER,anchor=MSO_ANCHOR.MIDDLE)
@@ -71,40 +73,39 @@ def img_fit(s,path,bl,bt,bw,bh):
 
 # 1. 타이틀
 s=slide(NAVY)
-tb(s,1.0,2.2,11.3,0.5,[[("FINAL PRESENTATION",16,False,ACCENT_LT,MONO)]],spc=0.8)
-tb(s,0.95,2.75,11.6,1.7,[[("설계대로 구현하고, AI를 통제하다",50,True,WHITE,SANS)]],spc=-1.0)
-tb(s,1.0,4.55,11.3,0.8,[[("의료·자동차 보험 시스템",24,False,ACCENT_LT,SANS)]],spc=-0.3)
+tb(s,0.95,2.35,11.6,2.2,[[("설계대로 구현하고,",56,True,WHITE,SANS)],[("AI를 통제하다",56,True,WHITE,SANS)]],spc=-1.2)
+tb(s,1.0,4.85,11.3,0.9,[[("의료·자동차 보험 시스템",30,False,ACCENT_LT,SANS)]],spc=-0.3)
 
 # 2. 세 주체
 s=slide(); head(s,"ACTORS","누가 사용하나")
 data=[("고객",A_CUST,"가입·청구·납부"),("직원",A_STAFF,"가입·지급 심사"),("시스템",A_SYS,"계약·고지서·지급 자동화")]
 xs=[1.55,5.42,9.29]
 for (lab,col,role),x in zip(data,xs):
-    box(s,x,2.5,2.5,2.5,col,[[(lab,30,True,fg(col),SANS)]],shape=MSO_SHAPE.OVAL,wrap=False)
-    tb(s,x-1.0,5.25,4.5,0.7,[[(role,21,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+    box(s,x,2.55,2.5,2.5,col,[[(lab,34,True,fg(col),SANS)]],shape=MSO_SHAPE.OVAL,wrap=False)
+    tb(s,x-1.0,5.3,4.5,0.8,[[(role,27,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
 
 # 3. 두 가지 보험
 s=slide(); head(s,"PRODUCTS","두 가지 보험")
 for nm,ess,col,x in [("의료보험","아플 때 — 병원비",ACCENT_SOFT,1.45),("자동차보험","사고 났을 때 — 수리·치료비",WARM,7.0)]:
-    panel(s,x,2.55,4.9,3.0,col,rad=0.12)
-    tb(s,x,3.35,4.9,1.0,[[(nm,36,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.6)
-    tb(s,x,4.5,4.9,0.7,[[(ess,21,False,GRAY,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+    panel(s,x,2.6,4.9,3.1,col,rad=0.12)
+    tb(s,x,3.4,4.9,1.0,[[(nm,42,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.6)
+    tb(s,x,4.65,4.9,0.8,[[(ess,26,False,GRAY,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
 
 # 4. 의료보험 — 분기
 s=slide(); head(s,"MEDICAL","병원비를 보험금으로 돌려준다")
-box(s,1.0,3.9,3.0,1.3,ACCENT,[[("병원비 청구",23,True,WHITE,SANS)]],wrap=False)
-arrow(s,4.3,3.15,28); arrow(s,4.3,5.05,28)
-box(s,5.2,2.7,7.2,1.35,ACCENT_SOFT,[[("100만 원 미만  →  바로 입금",22,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,wrap=False)
-box(s,5.2,4.55,7.2,1.35,WARM,[[("100만 원 이상  →  직원 확인 후 입금",22,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,wrap=False)
+box(s,0.9,3.95,3.1,1.4,ACCENT,[[("병원비 청구",28,True,WHITE,SANS)]],wrap=False)
+arrow(s,4.25,3.15,32); arrow(s,4.25,5.15,32)
+box(s,5.1,2.75,7.4,1.5,ACCENT_SOFT,[[("100만 원 미만 → 바로 입금",27,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,wrap=False)
+box(s,5.1,4.7,7.4,1.5,WARM,[[("100만 원 이상 → 직원 확인 후 입금",27,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,wrap=False)
 
 # 5. 자동차보험 — 흐름
 s=slide(); head(s,"AUTO","사고 피해를 보상한다")
-steps=["사고 접수","직원이 맡음","보상액 사정","계좌 입금"]
-iw,gap=2.55,0.6; total=len(steps)*iw+(len(steps)-1)*gap; x=(SW-total)/2
+steps=["사고 접수","직원이 맡음","보상액 결정","계좌 입금"]
+iw,gap=2.6,0.55; total=len(steps)*iw+(len(steps)-1)*gap; x=(SW-total)/2
 for i,st in enumerate(steps):
     col=ACCENT_SOFT if i==len(steps)-1 else SOFT
-    box(s,x,3.7,iw,1.4,col,[[(st,22,True,BLACK,SANS)]],line=HAIR,wrap=False)
-    if i<len(steps)-1: arrow(s,x+iw+0.04,3.95)
+    box(s,x,3.7,iw,1.5,col,[[(st,26,True,BLACK,SANS)]],line=HAIR,wrap=False)
+    if i<len(steps)-1: arrow(s,x+iw+0.0,3.95,30)
     x+=iw+gap
 
 # 6-8. 여정
@@ -114,11 +115,11 @@ def journey(eye,t,steps,vtext):
     cmap={"cust":A_CUST,"staff":A_STAFF,"sys":A_SYS}
     for i,(who,lab,act) in enumerate(steps):
         col=cmap[who]
-        box(s,x+iw/2-0.75,2.55,1.5,1.5,col,[[(lab,20,True,fg(col),SANS)]],shape=MSO_SHAPE.OVAL,wrap=False)
-        box(s,x,4.3,iw,1.2,col,[[(act,22,True,fg(col),SANS)]],wrap=False)
-        if i<n-1: arrow(s,x+iw+0.08,4.55)
+        box(s,x+iw/2-0.85,2.5,1.7,1.7,col,[[(lab,24,True,fg(col),SANS)]],shape=MSO_SHAPE.OVAL,wrap=False)
+        box(s,x,4.5,iw,1.3,col,[[(act,26,True,fg(col),SANS)]],wrap=False)
+        if i<n-1: arrow(s,x+iw+0.05,4.75,30)
         x+=iw+gap
-    tb(s,0.85,5.95,11.6,0.9,[[(vtext,20,False,GRAY,SANS)]],align=PP_ALIGN.LEFT,spc=-0.3)
+    tb(s,0.85,6.15,11.6,1.0,[[(vtext,27,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
 
 journey("JOURNEY 1","가입",
     [("cust","고객","상품 조회"),("cust","고객","가입 신청"),("staff","직원","가입 심사"),("sys","시스템","계약 생성")],
@@ -133,68 +134,68 @@ journey("JOURNEY 3","보상과 지급",
 # 9. 도메인 여섯 개
 s=slide(); head(s,"DOMAINS","도메인 여섯 개")
 doms=["사용자","상품","계약","청구","심사","사고이력"]
-cw,gap=1.92,0.28; total=len(doms)*cw+(len(doms)-1)*gap; x=(SW-total)/2
+cw,gap=1.95,0.26; total=len(doms)*cw+(len(doms)-1)*gap; x=(SW-total)/2
 for d in doms:
-    box(s,x,3.3,cw,1.3,SOFT,[[(d,23,True,BLACK,SANS)]],line=HAIR,wrap=False); x+=cw+gap
+    box(s,x,3.25,cw,1.45,SOFT,[[(d,27,True,BLACK,SANS)]],line=HAIR,wrap=False); x+=cw+gap
 
 # 10-16. 비교
-comps=[("사용자","user","상속(User→Policyholder·Employee)과 모든 필드가 동일.","userId(String) → id(Long), birthDate Date → LocalDate."),
-       ("상품","product","상품 상속과 CoverageItem 합성 관계가 동일.","productId·itemId(String) → id(Long)."),
-       ("계약","contract","계약–납부–고지 합성 구조가 동일.","자동이체 정보 AutoDebit 추가, 날짜 타입 변경."),
-       ("청구","claim","Claim 상속(의료/자동차)과 필드가 동일.","첨부파일 ClaimAttachment 추가, ClaimStatus 4값 → 6값."),
+DC=os.path.join(DIA,"design-crops")
+comps=[("사용자","user","고객과 직원이 '사용자'를 물려받는 뼈대가 똑같다.","글자로 된 번호를 숫자로, 날짜 표기만 손봤다."),
+       ("상품","product","상품을 의료·자동차가 물려받고 보장 항목을 품는 구조가 똑같다.","번호 표기만 손봤다."),
+       ("계약","contract","계약이 납부·고지서를 품는 구조가 똑같다.","자동이체 정보를 더했다."),
+       ("청구","claim","청구를 의료·자동차가 물려받는 뼈대가 똑같다.","첨부파일을 더하고, 상태를 4개→6개로 늘려 송금 결과까지 추적."),
        ("__CODE__",None,None,None),
-       ("심사","review","Review 상속(가입심사/지급심사) 구조가 동일.","지급심사 대상이 의료청구 → Claim(의료+자동차)으로 확대."),
-       ("사고이력","accident","사고 집계 정보(건수·지급액·면허상태)를 동일하게 보유.","외부 연동이 더미라 AccidentRecord 제거, 값 객체로 단순화.")]
+       ("심사","review","심사를 가입 심사·지급 심사가 물려받는 구조가 똑같다.","지급 심사가 의료뿐 아니라 자동차 사고까지 맡도록 넓혔다."),
+       ("사고이력","accident","사고 건수·지급액 같은 집계 정보를 똑같이 가진다.","외부 연동이 아직 가짜라, 사고 한 건 클래스는 빼고 단순화했다.")]
 for name,key,same,diff in comps:
     if name=="__CODE__":
-        s=slide(); head(s,"DESIGN = CODE","청구 상태값")
-        code=("public enum ClaimStatus {\n    PENDING, IN_REVIEW, APPROVED, REJECTED,   // 설계 4값\n"
-              "    COMPLETED, FAILED                         // 구현 추가: 송금 성공·실패\n}")
-        panel(s,0.95,2.5,11.4,2.0,SOFT,rad=0.04)
-        tb(s,1.3,2.7,10.8,1.7,[[(l,18,False,BLACK,MONO)] for l in code.split("\n")],anchor=MSO_ANCHOR.MIDDLE)
-        tb(s,0.85,4.8,11.6,0.8,[[("송금 결과까지 추적하려고 두 값을 더했다.",22,True,BLACK,SANS)]],spc=-0.3); continue
-    s=slide(); head(s,"DESIGN = CODE",name)
-    tb(s,0.85,2.0,5.9,0.45,[[("설계",14,False,GRAY,MONO)]],align=PP_ALIGN.CENTER,spc=0.5)
-    tb(s,6.6,2.0,5.9,0.45,[[("코드 역설계",14,False,GRAY,MONO)]],align=PP_ALIGN.CENTER,spc=0.5)
-    img_fit(s,os.path.join(CL,f"{key}-design.png"),0.85,2.45,5.9,3.0)
-    img_fit(s,os.path.join(CL,f"{key}-code.png"),6.6,2.45,5.9,3.0)
-    box(s,0.85,5.65,5.9,1.3,ACCENT_SOFT,[[("같은 점",16,True,ACCENT,SANS)],[(same,15,False,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.1)
-    box(s,6.6,5.65,5.9,1.3,WARM,[[("다른 점",16,True,C("b5793a"),SANS)],[(diff,15,False,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.1)
+        s=slide(); head(s,"","청구 상태값")
+        code=("public enum ClaimStatus {\n    PENDING, IN_REVIEW, APPROVED, REJECTED,   // 설계 4개\n"
+              "    COMPLETED, FAILED                         // 구현에서 추가: 송금 성공·실패\n}")
+        panel(s,0.95,2.6,11.4,2.1,SOFT,rad=0.04)
+        tb(s,1.3,2.8,10.8,1.8,[[(l,19,False,BLACK,MONO)] for l in code.split("\n")],anchor=MSO_ANCHOR.MIDDLE)
+        tb(s,0.85,5.05,11.6,1.0,[[("돈을 실제로 보냈는지까지 따라가려고 상태 두 개를 더했다.",28,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4); continue
+    s=slide(); head(s,"",name)
+    tb(s,0.85,2.05,5.9,0.55,[[("내가 그린 설계",24,True,ACCENT,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+    tb(s,6.6,2.05,5.9,0.55,[[("실제 코드",24,True,C("b5793a"),SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+    img_fit(s,os.path.join(DC,f"{key}.png"),0.85,2.6,5.9,2.95)
+    img_fit(s,os.path.join(CL,f"{key}-code.png"),6.6,2.6,5.9,2.95)
+    box(s,0.85,5.65,5.9,1.45,ACCENT_SOFT,[[("같은 점",20,True,ACCENT,SANS)],[(same,18,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.1)
+    box(s,6.6,5.65,5.9,1.45,WARM,[[("다른 점",20,True,C("b5793a"),SANS)],[(diff,18,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.1)
 
 # 17. 유스케이스
-s=slide(); head(s,"USE CASES","실제 동작 경로")
-img_fit(s,os.path.join(DIA,"uc-map.png"),3.0,1.9,7.3,4.0)
-tb(s,0.85,6.05,11.6,0.8,[[("노란 경로가 데모에서 실제로 동작한다.",22,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+s=slide(); head(s,"","실제 동작하는 경로")
+img_fit(s,os.path.join(DIA,"uc-map.png"),3.0,2.05,7.3,3.9)
+tb(s,0.85,6.1,11.6,0.9,[[("노란 경로가 데모에서 실제로 동작한다.",28,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
 
 # 18. AI 사용
-s=slide(); head(s,"HOW WE USED AI","AI를 어떻게 썼나")
-panel(s,0.85,2.0,5.7,1.6,ACCENT_SOFT,rad=0.12)
-tb(s,1.2,2.2,5.1,1.3,[[("사람",22,True,ACCENT,SANS)],[("설계·결정(ADR)·리뷰",18,False,BLACK,SANS)]],anchor=MSO_ANCHOR.MIDDLE)
-panel(s,6.75,2.0,5.7,1.6,SOFT,rad=0.12,line=HAIR)
-tb(s,7.1,2.2,5.1,1.3,[[("AI",22,True,BLACK,SANS)],[("구현·테스트·리팩토링",18,False,BLACK,SANS)]],anchor=MSO_ANCHOR.MIDDLE)
-steps=["설계","취조","계획","TDD 구현","리뷰"]; cw,gap=2.1,0.5; total=len(steps)*cw+(len(steps)-1)*gap; x=(SW-total)/2
+s=slide(); head(s,"","AI를 어떻게 썼나")
+panel(s,0.85,2.2,5.7,1.7,ACCENT_SOFT,rad=0.12)
+tb(s,1.2,2.4,5.1,1.4,[[("사람",26,True,ACCENT,SANS)],[("설계 · 결정 · 검토",22,True,BLACK,SANS)]],anchor=MSO_ANCHOR.MIDDLE)
+panel(s,6.75,2.2,5.7,1.7,SOFT,rad=0.12,line=HAIR)
+tb(s,7.1,2.4,5.1,1.4,[[("AI",26,True,BLACK,SANS)],[("구현 · 테스트 · 정리",22,True,BLACK,SANS)]],anchor=MSO_ANCHOR.MIDDLE)
+steps=["설계","따져묻기","계획","테스트 먼저 구현","검토"]; cw,gap=2.15,0.42; total=len(steps)*cw+(len(steps)-1)*gap; x=(SW-total)/2
 for i,st in enumerate(steps):
-    col=ACCENT_SOFT if st=="TDD 구현" else SOFT
-    box(s,x,4.1,cw,1.1,col,[[(st,20,True,BLACK,SANS)]],line=HAIR,wrap=False)
-    if i<len(steps)-1: arrow(s,x+cw+0.02,4.3,26)
+    col=ACCENT_SOFT if st=="테스트 먼저 구현" else SOFT
+    box(s,x,4.35,cw,1.2,col,[[(st,21,True,BLACK,SANS)]],line=HAIR,wrap=True)
+    if i<len(steps)-1: arrow(s,x+cw+0.0,4.6,26)
     x+=cw+gap
-tb(s,0.85,5.6,11.6,0.8,[[("설계·결정은 사람이, 구현은 AI가 했다.",22,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+tb(s,0.85,5.95,11.6,0.9,[[("설계와 결정은 사람이, 구현은 AI가 했다.",28,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
 
 # 19. AI 문제
-s=slide(); head(s,"AI PITFALLS","문제와 해결")
-cards=[("성급한 추상화","실익 없는 계층 분리 → 되돌림"),("명세와 불일치","자동 배정 → 수동 배정 정정"),
-       ("계층 패턴 일탈","점검으로 식별·관리"),("용어·도메인 오염","용어집·ADR로 사전 차단")]
-pos=[(0.85,2.1),(6.75,2.1),(0.85,4.0),(6.75,4.0)]
+s=slide(); head(s,"","AI가 삑사리 난 곳, 어떻게 잡았나")
+cards=[("성급하게 쪼갬","쓸모없는 계층 분리 → 되돌림"),("시킨 것과 다름","자동 배정 → 수동 배정으로 정정"),
+       ("정해둔 틀에서 이탈","점검으로 찾아내 관리"),("용어를 섞어 씀","용어집으로 미리 차단")]
+pos=[(0.85,2.25),(6.75,2.25),(0.85,4.15),(6.75,4.15)]
 for (h,fix),(x,y) in zip(cards,pos):
     panel(s,x,y,5.7,1.7,SOFT,rad=0.1,line=HAIR)
-    bar=s.shapes.add_shape(MSO_SHAPE.RECTANGLE,Inches(x),Inches(y+0.25),Inches(0.1),Inches(1.2)); bar.shadow.inherit=False
+    bar=s.shapes.add_shape(MSO_SHAPE.RECTANGLE,Inches(x),Inches(y+0.25),Inches(0.12),Inches(1.2)); bar.shadow.inherit=False
     bar.fill.solid(); bar.fill.fore_color.rgb=ACCENT; bar.line.fill.background()
-    tb(s,x+0.45,y+0.25,5.0,1.3,[[(h,22,True,BLACK,SANS)],[(fix,18,False,GRAY,SANS)]],anchor=MSO_ANCHOR.MIDDLE,spc=-0.3)
-tb(s,0.85,6.0,11.6,0.8,[[("AI는 빠르지만, 방향은 사람이 잡았다.",22,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+    tb(s,x+0.5,y+0.22,5.0,1.35,[[(h,24,True,BLACK,SANS)],[(fix,19,True,GRAY,SANS)]],anchor=MSO_ANCHOR.MIDDLE,spc=-0.3)
+tb(s,0.85,6.15,11.6,0.9,[[("AI는 빠르지만, 방향은 사람이 잡았다.",28,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
 
 # 20. 결론
 s=slide(NAVY)
-tb(s,1.0,2.4,11.3,0.5,[[("CONCLUSION",16,False,ACCENT_LT,MONO)]],spc=0.8)
-tb(s,0.95,3.0,11.6,1.8,[[("설계한 그대로 구현했고,",44,True,WHITE,SANS)],[("그 과정에서 AI를 통제했다.",44,True,WHITE,SANS)]],spc=-0.9)
+tb(s,0.95,2.75,11.6,2.2,[[("설계한 그대로 구현했고,",48,True,WHITE,SANS)],[("그 과정에서 AI를 통제했다.",48,True,WHITE,SANS)]],spc=-1.0)
 
 out=os.path.join(HERE,"보험발표-figma.pptx"); prs.save(out); print("saved:",out,"| slides:",len(prs.slides._sldIdLst))
