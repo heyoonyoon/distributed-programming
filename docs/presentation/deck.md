@@ -15,162 +15,149 @@ footer: ''
 
 ## 의료·자동차 보험 시스템
 
-<br>
+---
 
-분산프로그래밍 기말 발표
+## 어떤 서비스인가
+
+<div class="flow">
+  <div class="node">보험에 가입한다<small>고객</small></div>
+  <div class="arrow">→</div>
+  <div class="node">사고가 나서 청구한다<small>고객</small></div>
+  <div class="arrow">→</div>
+  <div class="node db">보험금을 받는다<small>시스템</small></div>
+</div>
+
+<p class="verdict">고객이 보험에 가입하고, 사고가 나면 보험금을 받는 서비스입니다.</p>
 
 ---
 
-## 무엇을 만들었나 — 한눈에
+## 무엇으로 이루어져 있나 — 도메인
 
-<div class="flow">
-  <div class="node">상품 조회<small>고객</small></div>
-  <div class="arrow">→</div>
-  <div class="node">가입 신청<small>고객</small></div>
-  <div class="arrow">→</div>
-  <div class="node">가입 심사<small>직원</small></div>
-  <div class="arrow">→</div>
-  <div class="node">계약 자동생성<small>시스템</small></div>
-  <div class="arrow">→</div>
-  <div class="node">납입<small>고객</small></div>
+<div class="matchbar">
+  <span class="check" style="border-color:#0b3d5c;color:#0b3d5c">사용자</span>
+  <span class="check" style="border-color:#0b3d5c;color:#0b3d5c">상품</span>
+  <span class="check" style="border-color:#0b3d5c;color:#0b3d5c">계약·납부</span>
+  <span class="check" style="border-color:#0b3d5c;color:#0b3d5c">청구·사고</span>
+  <span class="check" style="border-color:#0b3d5c;color:#0b3d5c">심사·지급</span>
 </div>
 
-<div class="flow">
-  <div class="node">청구·사고 접수<small>고객</small></div>
-  <div class="arrow">→</div>
-  <div class="node">보상 심사<small>직원</small></div>
-  <div class="arrow">→</div>
-  <div class="node db">보험금 지급<small>시스템</small></div>
-</div>
+<p class="verdict">서비스는 다섯 개의 도메인으로 이루어집니다.</p>
 
-**의료·자동차보험**의 가입부터 청구·지급까지. 액터는 셋 — 고객 · 보험사 직원 · 시스템.
-클래스·유스케이스 다이어그램은 직접 설계하고, 구현은 AI로 진행했습니다.
+<p class="small-note" style="text-align:center">이 도메인들을 직접 클래스 다이어그램으로 설계하고, 구현은 AI로 진행했습니다.</p>
 
 ---
 
-## 설계 = 구현 ① — 사용자 · 상품 계층
+## 설계 = 구현 ① — 사용자 · 상품
 
 <div class="clgrid">
   <div class="spacer"></div>
-  <div class="clhead d">내가 설계 (EA)</div>
-  <div class="clhead b">코드 역설계 (구현)</div>
-
-  <div class="cllabel">사용자<small>✓ 일치</small></div>
+  <div class="clhead d">내가 설계</div>
+  <div class="clhead b">코드 역설계</div>
+  <div class="cllabel">사용자</div>
   <img src="diagrams/clusters/user-design.png" alt="">
   <img src="diagrams/clusters/user-code.png" alt="">
-
-  <div class="cllabel">상품<small>✓ 일치</small></div>
+  <div class="cllabel">상품</div>
   <img src="diagrams/clusters/product-design.png" alt="">
   <img src="diagrams/clusters/product-code.png" alt="">
 </div>
 
-<p class="small-note" style="text-align:center">클래스·상속·관계가 동일합니다. 노란 칸의 차이는 식별자(userId→id)·날짜 타입뿐입니다.</p>
+<p class="verdict">설계한 구조 그대로 구현되었습니다.</p>
 
 ---
 
-## 설계 = 구현 ② — 청구 · 심사 계층
+## 설계 = 구현 ② — 계약 · 청구
 
 <div class="clgrid">
   <div class="spacer"></div>
-  <div class="clhead d">내가 설계 (EA)</div>
-  <div class="clhead b">코드 역설계 (구현)</div>
-
-  <div class="cllabel">청구<small>✓ 일치</small></div>
+  <div class="clhead d">내가 설계</div>
+  <div class="clhead b">코드 역설계</div>
+  <div class="cllabel">계약</div>
+  <img src="diagrams/clusters/contract-design.png" alt="">
+  <img src="diagrams/clusters/contract-code.png" alt="">
+  <div class="cllabel">청구</div>
   <img src="diagrams/clusters/claim-design.png" alt="">
   <img src="diagrams/clusters/claim-code.png" alt="">
+</div>
 
-  <div class="cllabel">심사<small>✓ 일치</small></div>
+<p class="verdict">자동이체(AutoDebit) 기능 하나가 더해졌을 뿐, 구조는 같습니다.</p>
+
+---
+
+## 설계 = 구현 ③ — 심사 · 사고이력
+
+<div class="clgrid">
+  <div class="spacer"></div>
+  <div class="clhead d">내가 설계</div>
+  <div class="clhead b">코드 역설계</div>
+  <div class="cllabel">심사</div>
   <img src="diagrams/clusters/review-design.png" alt="">
   <img src="diagrams/clusters/review-code.png" alt="">
+  <div class="cllabel">사고이력</div>
+  <img src="diagrams/clusters/accident-design.png" alt="">
+  <img src="diagrams/clusters/accident-code.png" alt="">
 </div>
 
-<p class="verdict">계층을 하나씩 맞춰봐도 — 설계 = 구현.</p>
+<p class="verdict">외부 사고이력은 실제 연동이 아니라 더미라서, 개별 기록을 집계값으로 단순화했습니다.</p>
 
 ---
 
-## 유스케이스도 명세대로 — 보상 흐름
+## 차이는 왜 생겼나
 
-<div class="compare">
-  <figure><span class="cap cap-d">설계안 (최초)</span><img src="diagrams/uc-design.png" alt="설계 UC"></figure>
-  <figure><span class="cap cap-b">구현 (데모와 일치)</span><img src="diagrams/uc-asbuilt.png" alt="구현 UC"></figure>
-</div>
+| 차이 | 이유 |
+|---|---|
+| 식별자 String → **Long**, 날짜 → LocalDate | JPA 표준 매핑 |
+| 계약에 **AutoDebit** 추가 | 자동이체 기능 |
+| 청구 상태 4값 → **6값** | 송금 성공·실패까지 추적 (ADR 0007) |
+| 지급심사 대상 → **자동차사고 포함** | 자동차도 사정 필요 (ADR 0009) |
+| AccidentRecord 제거 | 더미 외부연동 단순화 |
 
-**자동차사고**가 보상심사 큐로 진입하고(UC09), 배정이 **자동→수동으로 분기**되며(UC14), 지급심사 대상이 **의료+자동차로 확대**(UC12)되었습니다.
+<p class="verdict">차이는 모두 구현상의 이유가 있고, ADR로 기록했습니다.</p>
 
 ---
 
-## 데이터는 어떻게 흐르는가 — 한눈에
+## 유스케이스도 설계대로 동작한다
 
-<div class="flow">
-  <div class="node"><span class="layer-tag tag-fe">FE</span>화면<small>입력·렌더</small></div>
-  <div class="arrow">→</div>
-  <div class="node"><span class="layer-tag tag-fe">FE</span>API client<small>JSON 직렬화</small></div>
-  <div class="arrow">→</div>
-  <div class="node"><span class="layer-tag tag-be">BE</span>Controller<small>DTO</small></div>
-  <div class="arrow">→</div>
-  <div class="node"><span class="layer-tag tag-be">BE</span>Service·Domain<small>규칙</small></div>
-  <div class="arrow">→</div>
-  <div class="node"><span class="layer-tag tag-be">BE</span>Repository</div>
-  <div class="arrow">→</div>
-  <div class="node db">DB</div>
+<div style="text-align:center">
+  <img src="diagrams/uc-map.png" alt="유스케이스 지도" style="height:430px;">
 </div>
 
-- 같은 정보가 계층 경계마다 **정해진 한 곳에서만** 형태를 바꿉니다: 폼 → JSON → 요청 DTO → 도메인 객체 → DB, 그리고 역순으로 응답 DTO → 화면.
-- **핵심 예시**: 직원이 입력한 *할증률* 하나가 도메인 규칙을 거쳐 **계약의 월 보험료**로 기록됩니다. 화면 표시가 아니라 상태 변화입니다.
-- 덕분에 **도메인 모델은 웹·DB 어느 쪽에도 오염되지 않습니다** (응답 DTO가 엔티티를 격리).
+<p class="verdict">설계한 유스케이스가 데모에서 그대로 동작합니다 (노란 경로).</p>
 
 ---
 
 ## AI를 어떻게 썼는가
 
 <div class="who">
-  <div class="human"><b>사람(설계자)</b><br>유스케이스·클래스 다이어그램 · 단계적 진화 전략 · 되돌리기 어려운 결정(ADR) · 리뷰</div>
-  <div class="ai"><b>AI</b><br>다이어그램을 입력으로 받은 구현 · 테스트 작성 · 리팩토링</div>
+  <div class="human"><b>사람(설계자)</b><br>다이어그램 설계 · 결정(ADR) · 리뷰</div>
+  <div class="ai"><b>AI</b><br>구현 · 테스트 · 리팩토링</div>
 </div>
 
 <div class="aipipe">
-  <div class="aistep"><b>발산</b><small>아이디어·설계</small></div>
+  <div class="aistep"><b>설계</b><small>다이어그램</small></div>
   <div class="arrow">→</div>
-  <div class="aistep"><b>취조</b><small>도메인 모델 대조</small></div>
+  <div class="aistep"><b>취조</b><small>모델 대조</small></div>
   <div class="arrow">→</div>
-  <div class="aistep"><b>계획</b><small>단계별 작업</small></div>
+  <div class="aistep"><b>계획</b></div>
   <div class="arrow">→</div>
-  <div class="aistep tdd"><b>TDD 구현</b><small>실패 테스트 우선</small></div>
+  <div class="aistep tdd"><b>TDD 구현</b><small>AI</small></div>
   <div class="arrow">→</div>
-  <div class="aistep"><b>교차 리뷰</b><small>명세·품질</small></div>
+  <div class="aistep"><b>리뷰</b></div>
 </div>
 
-진화도 한 번에 가지 않고 **TUI → DB → 웹 → Spring** 4단계로 통제했습니다.
-통제 장치: **다이어그램(설계) · 용어집 · ADR · TDD.** AI는 구현을 가속했고, 방향은 사람이 정했습니다.
+<p class="verdict">설계와 결정은 사람이, 구현은 AI가 했습니다.</p>
 
 ---
 
 ## AI를 쓰며 생긴 문제와 해결
 
 <div class="cards">
-  <div class="card">
-    <h3>① 성급한 추상화</h3>
-    <p>DB 도입 전부터 계층을 과하게 분리</p>
-    <p class="fix">→ 실익 없어 되돌리고, 진화 단계에 맞춰 재도입</p>
-  </div>
-  <div class="card">
-    <h3>② 유스케이스와 불일치</h3>
-    <p>자동차 보상심사를 자동 배정으로 구현</p>
-    <p class="fix">→ 명세 대조(취조)로 발견, 수동 배정으로 정정</p>
-  </div>
-  <div class="card">
-    <h3>③ 계층 패턴 일탈</h3>
-    <p>일부 컨트롤러가 저장소를 직접 호출</p>
-    <p class="fix">→ 전 도메인 패턴 점검으로 식별·관리</p>
-  </div>
-  <div class="card">
-    <h3>④ 용어·도메인 오염</h3>
-    <p>동의어 혼용, 도메인에 출력 코드 삽입 경향</p>
-    <p class="fix">→ 용어집·ADR로 사전 차단 (도메인 출력 0)</p>
-  </div>
+  <div class="card"><h3>① 성급한 추상화</h3><p class="fix">실익 없는 계층 분리 → 되돌림</p></div>
+  <div class="card"><h3>② 명세와 불일치</h3><p class="fix">자동 배정 → 수동 배정으로 정정</p></div>
+  <div class="card"><h3>③ 계층 패턴 일탈</h3><p class="fix">점검으로 식별·관리</p></div>
+  <div class="card"><h3>④ 용어·도메인 오염</h3><p class="fix">용어집·ADR로 사전 차단</p></div>
 </div>
 
-**AI는 빠르지만 방향은 못 잡습니다. 방향은 사람이 만든 게이트가 잡습니다.**
+<p class="verdict">AI는 빠르지만, 방향은 사람이 잡았습니다.</p>
 
 ---
 
@@ -180,10 +167,8 @@ footer: ''
 
 <br>
 
-- 직접 설계한 **다이어그램이 데모(구현)와 일치**합니다. 벗어난 지점은 ADR로 통제했습니다.
-- 데이터는 **명확한 계층 경계에서만** 형태를 바꾸며 도메인은 오염되지 않습니다.
-- **AI는 구현을 가속**했고, **설계·결정·검증은 사람이** 통제했습니다.
+## 설계한 그대로 구현했고, 그 과정에서 AI를 통제했습니다.
 
 <br>
 
-감사합니다. 질문 받겠습니다.
+감사합니다.

@@ -1,0 +1,12 @@
+classDiagram
+direction TB
+class AccidentHistory {
+  String ssn
+  int accidentCount
+  int totalPaidAmount
+}
+class AccidentRecord {
+  Date accidentDate
+  int paidAmount
+}
+AccidentHistory "1" *-- "*" AccidentRecord

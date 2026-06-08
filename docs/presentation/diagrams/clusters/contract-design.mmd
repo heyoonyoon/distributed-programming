@@ -1,0 +1,17 @@
+classDiagram
+direction TB
+class InsuranceContract {
+  String contractId
+  Date startDate
+  int monthlyPremium
+}
+class Payment {
+  String paymentId
+  PaymentMethod method
+}
+class Notice {
+  String noticeId
+  int overdueDays
+}
+InsuranceContract "1" *-- "*" Payment
+InsuranceContract "1" *-- "*" Notice

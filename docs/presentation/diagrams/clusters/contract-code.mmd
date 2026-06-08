@@ -1,0 +1,22 @@
+classDiagram
+direction TB
+class InsuranceContract {
+  Long id
+  LocalDate startDate
+  int monthlyPremium
+}
+class Payment {
+  Long id
+  PaymentMethod method
+}
+class Notice {
+  Long id
+  int overdueDays
+}
+class AutoDebit {
+  <<embeddable>>
+  String account
+}
+InsuranceContract "1" *-- "*" Payment
+InsuranceContract "1" *-- "*" Notice
+InsuranceContract *-- AutoDebit

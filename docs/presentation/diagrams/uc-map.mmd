@@ -1,0 +1,13 @@
+flowchart TB
+  a1["상품조회·가입신청"]:::demo
+  a3["청구·사고접수"]
+  a2["보험료 납입"]:::demo
+  b1["가입심사"]:::demo
+  b2["지급심사"]
+  c1["계약 자동생성"]:::demo
+  c2["보험금 지급"]
+  a1 --> b1 --> c1 --> a2
+  a3 --> b2 --> c2
+  classDef demo fill:#fff3d6,stroke:#f2a900,stroke-width:3px,color:#0b3d5c;
+  classDef norm fill:#eef3f7,stroke:#0b3d5c,color:#0b3d5c;
+  class a3,b2,c2 norm;
