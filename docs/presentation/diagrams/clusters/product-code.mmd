@@ -1,5 +1,8 @@
 classDiagram
 direction TB
+class InsuranceContract {
+  Long id
+}
 class InsuranceProduct {
   <<abstract>>
   Long id
@@ -21,6 +24,7 @@ class CoverageItem {
   int coverageLimit
   int deductible
 }
+InsuranceContract --> "1" InsuranceProduct : 가입 상품
 InsuranceProduct <|-- HealthInsuranceProduct
 InsuranceProduct <|-- CarInsuranceProduct
 InsuranceProduct "1" *-- "*" CoverageItem

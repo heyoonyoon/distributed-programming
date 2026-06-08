@@ -140,14 +140,14 @@ for d in doms:
 
 # 10-16. 비교
 DC=os.path.join(DIA,"design-crops")
-comps=[("사용자","user","고객과 직원이 '사용자'를 물려받는 뼈대가 똑같다.","글자로 된 번호를 숫자로, 날짜 표기만 손봤다."),
-       ("상품","product","상품을 의료·자동차가 물려받고 보장 항목을 품는 구조가 똑같다.","번호 표기만 손봤다."),
-       ("계약","contract","계약이 납부·고지서를 품는 구조가 똑같다.","자동이체 정보를 더했다."),
-       ("청구","claim","청구를 의료·자동차가 물려받는 뼈대가 똑같다.","첨부파일을 더하고, 상태를 4개→6개로 늘려 송금 결과까지 추적."),
-       ("__CODE__",None,None,None),
-       ("심사","review","심사를 가입 심사·지급 심사가 물려받는 구조가 똑같다.","지급 심사가 의료뿐 아니라 자동차 사고까지 맡도록 넓혔다."),
-       ("사고이력","accident","사고 건수·지급액 같은 집계 정보를 똑같이 가진다.","외부 연동이 아직 가짜라, 사고 한 건 클래스는 빼고 단순화했다.")]
-for name,key,same,diff in comps:
+comps=[("사용자","user","글자로 된 번호를 숫자로 바꾸고, 날짜 표기만 손봤다."),
+       ("상품","product","연결 구조(계약·보장 항목·하위 상품)는 그대로 4개. 번호를 숫자로 바꾸고, 보험료 계산은 아직 뼈대만 있다."),
+       ("계약","contract","자동이체 정보를 더했다."),
+       ("청구","claim","첨부파일을 더하고, 상태를 4개 → 6개로 늘려 송금 결과까지 추적한다."),
+       ("__CODE__",None,None),
+       ("심사","review","지급 심사가 의료뿐 아니라 자동차 사고까지 맡도록 넓혔다."),
+       ("사고이력","accident","외부 연동이 아직 가짜라, 사고 한 건 클래스는 빼고 단순화했다.")]
+for name,key,diff in comps:
     if name=="__CODE__":
         s=slide(); head(s,"","청구 상태값")
         code=("public enum ClaimStatus {\n    PENDING, IN_REVIEW, APPROVED, REJECTED,   // 설계 4개\n"
@@ -156,12 +156,11 @@ for name,key,same,diff in comps:
         tb(s,1.3,2.8,10.8,1.8,[[(l,19,False,BLACK,MONO)] for l in code.split("\n")],anchor=MSO_ANCHOR.MIDDLE)
         tb(s,0.85,5.05,11.6,1.0,[[("돈을 실제로 보냈는지까지 따라가려고 상태 두 개를 더했다.",28,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4); continue
     s=slide(); head(s,"",name)
-    tb(s,0.85,2.05,5.9,0.55,[[("내가 그린 설계",24,True,ACCENT,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
-    tb(s,6.6,2.05,5.9,0.55,[[("실제 코드",24,True,C("b5793a"),SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
-    img_fit(s,os.path.join(DC,f"{key}.png"),0.85,2.6,5.9,2.95)
-    img_fit(s,os.path.join(CL,f"{key}-code.png"),6.6,2.6,5.9,2.95)
-    box(s,0.85,5.65,5.9,1.45,ACCENT_SOFT,[[("같은 점",20,True,ACCENT,SANS)],[(same,18,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.1)
-    box(s,6.6,5.65,5.9,1.45,WARM,[[("다른 점",20,True,C("b5793a"),SANS)],[(diff,18,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.1)
+    tb(s,0.5,1.95,6.1,0.55,[[("내가 그린 설계",24,True,ACCENT,SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+    tb(s,6.75,1.95,6.1,0.55,[[("실제 코드",24,True,C("b5793a"),SANS)]],align=PP_ALIGN.CENTER,spc=-0.3)
+    img_fit(s,os.path.join(DC,f"{key}.png"),0.5,2.5,6.1,3.35)
+    img_fit(s,os.path.join(CL,f"{key}-code.png"),6.75,2.5,6.1,3.35)
+    box(s,0.5,6.05,12.35,1.15,WARM,[[("다른 점   ",19,True,C("b5793a"),SANS),(diff,19,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.12)
 
 # 17. 유스케이스
 s=slide(); head(s,"","실제 동작하는 경로")
