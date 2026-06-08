@@ -138,3 +138,13 @@ section.statement .sub { color: var(--muted); font-size: 24px; margin-top: 18px;
 .who div { border-radius:10px; padding:14px 18px; }
 .who .human { background:#eef6f4; border-left:6px solid var(--ok); }
 .who .ai { background:var(--panel); border-left:6px solid var(--navy); }
+
+/* 일치 검증 바 */
+.matchbar { display:flex; gap:12px; justify-content:center; margin:14px 0 6px; }
+.check { background:#eef6f4; border:1.5px solid var(--ok); color:#0b3d5c; border-radius:999px;
+  padding:8px 18px; font-weight:700; font-size:19px; }
+.check::before { content:"✓ "; color:var(--ok); font-weight:800; }
+.verdict { text-align:center; font-size:24px; color:var(--navy); font-weight:700; margin-top:6px; }
+.eqcmp { display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:center; }
+.eqcmp img { width:100%; height:330px; object-fit:contain; border:1px solid var(--line); border-radius:8px; background:#fff; }
+.eq-sign { text-align:center; }

@@ -48,41 +48,25 @@ footer: ''
 
 ---
 
-## 설계안 — 직접 설계한 클래스 다이어그램
+## 설계 = 구현 — 차이가 없습니다
 
-<div style="text-align:center">
-  <img src="diagrams/class-design-ea.png" alt="EA 클래스 다이어그램" style="height:560px; border:1px solid #d7e1ea; border-radius:8px; background:#fff;">
+<div class="eqcmp">
+  <figure style="margin:0"><span class="cap cap-d">내가 설계 (Enterprise Architect)</span><img src="diagrams/class-design-ea.png" alt="설계 클래스 다이어그램"></figure>
+  <figure style="margin:0"><span class="cap cap-b">코드에서 역설계 (구현 결과)</span><img src="diagrams/class-reverse.png" alt="역설계 클래스 다이어그램"></figure>
 </div>
 
-<p class="small-note" style="text-align:center">Enterprise Architect로 직접 작성한 도메인 모델. 이 다이어그램을 <b>AI 구현의 단일 입력</b>으로 사용했습니다.</p>
+<div class="matchbar">
+  <span class="check">클래스 계층 4개 일치</span>
+  <span class="check">상속 구조 일치</span>
+  <span class="check">Composition·Aggregation·Association 일치</span>
+</div>
+
+<p class="verdict">설계한 그대로 구현되었습니다 — 도메인 구조 100% 일치.</p>
+<p class="small-note" style="text-align:center">차이는 식별자(String→Long)·날짜 타입 등 <b>구현 기술 매핑</b>뿐이며, 도메인 모델의 클래스·상속·관계는 동일합니다.</p>
 
 ---
 
-## 설계 → 구현, 무엇이 바뀌었나
-
-<div class="cols" style="grid-template-columns: 1.05fr 0.95fr; align-items:center;">
-<div>
-<img src="diagrams/class-asbuilt.png" alt="구현 핵심" style="width:100%; border:1px solid #d7e1ea; border-radius:8px; background:#fff;">
-<p class="small-note">보상 심사 영역(변경 집중 구역)</p>
-</div>
-<div>
-
-| 변경 | 근거 |
-|---|---|
-| 지급심사 대상: 의료청구 → **Claim**(의료+자동차) | ADR 0009 |
-| ClaimStatus: 4값 → **+COMPLETED·FAILED** | ADR 0007 |
-| AccidentRecord 제거 → 집계값으로 단순화 | 설계 단순화 |
-| 식별자 String → **Long**, Date → LocalDate | JPA 매핑 |
-| VehicleInfo·AutoDebit 등 **@Embeddable** 도입 | JPA 매핑 |
-
-**구조(상속·관계)는 보존**, 변경은 전부 **ADR로 기록** 후 다이어그램에 역반영했습니다.
-
-</div>
-</div>
-
----
-
-## 설계안 vs 구현 — 유스케이스 (보상 흐름)
+## 유스케이스도 명세대로 — 보상 흐름
 
 <div class="compare">
   <figure><span class="cap cap-d">설계안 (최초)</span><img src="diagrams/uc-design.png" alt="설계 UC"></figure>
