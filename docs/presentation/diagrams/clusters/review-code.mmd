@@ -3,21 +3,29 @@ direction TB
 class Review {
   <<abstract>>
   Long id
-  LocalDateTime reviewedAt
   ReviewResult result
-  String comment
+  LocalDateTime reviewedAt
 }
 class EnrollmentReview {
-  double surchargeRate
   int adjustedPremium
+  double surchargeRate
 }
 class BenefitPaymentReview {
   Long assignedStaffId
-  +approve()
 }
-class Claim {
-  <<abstract>>
+class InsuranceApplication
+class InsuranceEmployee
+class Claim
+class BenefitPayment
+class AccidentHistory {
+  <<embeddable>>
+  int accidentCount
+  int totalPaidAmount
 }
 Review <|-- EnrollmentReview
 Review <|-- BenefitPaymentReview
+EnrollmentReview --> InsuranceApplication : 심사 대상
+EnrollmentReview --> InsuranceEmployee : 담당자
+EnrollmentReview *-- AccidentHistory
 BenefitPaymentReview --> Claim : 대상(의료+자동차)
+BenefitPaymentReview ..> BenefitPayment : 지급 생성

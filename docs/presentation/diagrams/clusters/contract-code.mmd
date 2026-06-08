@@ -4,28 +4,26 @@ class InsuranceContract {
   Long id
   LocalDate startDate
   LocalDate endDate
-  ContractStatus status
   int monthlyPremium
-  +generatePdf()
+  ContractStatus status
 }
-class Payment {
-  Long id
-  int amount
-  LocalDateTime paidAt
-  PaymentMethod method
-  PaymentStatus status
-}
+class Policyholder
+class InsuranceProduct
 class Notice {
-  Long id
-  LocalDate issuedAt
   int dueAmount
   int overdueDays
+  boolean terminationWarning
+}
+class Payment {
+  int amount
+  PaymentStatus status
 }
 class AutoDebit {
-  <<embeddable>>
   String account
   int withdrawalDay
 }
-InsuranceContract "1" *-- "*" Payment
+InsuranceContract --> Policyholder : 계약자
+InsuranceContract --> InsuranceProduct : 가입 상품
 InsuranceContract "1" *-- "*" Notice
+InsuranceContract "1" *-- "*" Payment
 InsuranceContract *-- AutoDebit
