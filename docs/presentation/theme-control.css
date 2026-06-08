@@ -194,3 +194,36 @@ section.statement .sub { color: var(--muted); font-size: 24px; margin-top: 18px;
 .cmp2 img { width:100%; height:388px; object-fit:contain; border:1px solid var(--line); border-radius:8px; background:#fff; padding:6px; }
 .cmp2 + .sd { margin-top:10px; }
 .cmp2 + .sd > div { font-size:16px; padding:10px 16px; }
+
+/* 페르소나(액터) 소개 */
+.personas { display:flex; justify-content:center; gap:64px; margin-top:46px; }
+.persona { text-align:center; width:260px; }
+.persona .pc { width:150px; height:150px; border-radius:50%; margin:0 auto 20px; display:flex;
+  align-items:center; justify-content:center; color:#fff; font-size:30px; font-weight:800;
+  box-shadow:0 8px 20px rgba(11,61,92,.18); }
+.pc.cust{ background:#2c6f9c; } .pc.staff{ background:#1f9e8f; } .pc.sys{ background:#0b3d5c; }
+.persona .pname { font-size:30px; font-weight:800; color:var(--navy); }
+.persona .prole { font-size:21px; color:var(--muted); margin-top:10px; line-height:1.4; }
+
+/* 여정: 주체 원 + 행동 (색이 아니라 라벨로 구분) */
+.flowj { display:flex; align-items:flex-start; justify-content:center; gap:6px; margin-top:40px; }
+.jcol { display:flex; flex-direction:column; align-items:center; gap:14px; width:215px; }
+.javatar { width:74px; height:74px; border-radius:50%; display:flex; align-items:center;
+  justify-content:center; color:#fff; font-weight:800; font-size:19px; }
+.javatar.cust{ background:#2c6f9c; } .javatar.staff{ background:#1f9e8f; } .javatar.sys{ background:#0b3d5c; }
+.jaction { background:#f5f9fc; border:1.5px solid var(--line); border-radius:12px; padding:16px 12px;
+  text-align:center; font-weight:700; color:var(--navy); font-size:21px; width:100%; }
+.jarrow { color:var(--amber); font-size:34px; font-weight:800; margin-top:24px; }
+
+/* 보험 종류 상세 (여백 큰 레이아웃) */
+.detail { margin-top:40px; }
+.detail .lead2 { font-size:34px; font-weight:800; color:var(--navy); margin:0 0 28px;
+  padding-left:18px; border-left:8px solid var(--amber); }
+.detail ul { list-style:none; padding:0; margin:0; }
+.detail li { font-size:25px; color:var(--ink); margin:18px 0; padding-left:34px; position:relative; }
+.detail li::before { content:"—"; position:absolute; left:0; color:var(--amber); font-weight:800; }
+.kinds { display:flex; justify-content:center; gap:40px; margin-top:50px; }
+.kind { width:380px; text-align:center; border-radius:16px; padding:34px 26px; background:#f5f9fc; border-top:8px solid var(--navy); }
+.kind.amber { border-top-color:var(--amber); }
+.kind h3 { font-size:32px; color:var(--navy); margin:0 0 12px; }
+.kind p { font-size:21px; color:var(--muted); margin:0; }

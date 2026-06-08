@@ -17,54 +17,75 @@ footer: ''
 
 ---
 
-## 의료보험
+## 누가 사용하나 — 세 주체
 
-<div class="bigcards" style="grid-template-columns:1fr">
-  <div class="bigcard">
-    <h3>진료비를 청구하는 보험</h3>
-    <p>입원·통원 진료비를 보장합니다.</p>
-    <p>보장 한도와 자기부담금이 있습니다.</p>
-    <p>청구가 간단하면 즉시 지급, 복잡하면 직원 심사로 넘어갑니다.</p>
+<div class="personas">
+  <div class="persona">
+    <div class="pc cust">고객</div>
+    <div class="pname">고객</div>
+    <div class="prole">보험에 가입하고<br>청구·납부한다</div>
+  </div>
+  <div class="persona">
+    <div class="pc staff">직원</div>
+    <div class="pname">보험사 직원</div>
+    <div class="prole">가입과 지급을<br>심사한다</div>
+  </div>
+  <div class="persona">
+    <div class="pc sys">시스템</div>
+    <div class="pname">시스템</div>
+    <div class="prole">계약·고지서·지급을<br>자동 처리한다</div>
   </div>
 </div>
 
 ---
 
-## 자동차보험
+## 어떤 보험을 다루나
 
-<div class="bigcards" style="grid-template-columns:1fr">
-  <div class="bigcard amber">
-    <h3>사고를 접수하는 보험</h3>
-    <p>차량 정보·운전자 범위·사고 이력으로 보험료를 산정합니다.</p>
-    <p>사고가 나면 접수합니다.</p>
-    <p>접수되면 담당 직원이 지급액을 사정합니다.</p>
-  </div>
+<div class="kinds">
+  <div class="kind"><h3>의료보험</h3><p>아프면 진료비를 돌려받는다</p></div>
+  <div class="kind amber"><h3>자동차보험</h3><p>사고가 나면 보상받는다</p></div>
+</div>
+
+<p class="verdict">이 서비스는 두 가지 보험을 다룹니다.</p>
+
+---
+
+## 의료보험이란
+
+<div class="detail">
+  <p class="lead2">아프면 진료비를 돌려받는 보험</p>
+  <ul>
+    <li>입원·통원 진료비를 보장한다</li>
+    <li>보장 한도와 자기부담금이 있다</li>
+    <li>청구가 간단하면 즉시 지급, 복잡하면 직원이 심사한다</li>
+  </ul>
 </div>
 
 ---
 
-## 세 주체가 참여한다
+## 자동차보험이란
 
-<div class="bigcards three">
-  <div class="bigcard"><h3>고객</h3><p>가입·납부·청구·사고접수</p></div>
-  <div class="bigcard"><h3>보험사 직원</h3><p>가입 심사·지급 심사</p></div>
-  <div class="bigcard amber"><h3>시스템</h3><p>계약 생성·고지서·지급</p></div>
+<div class="detail">
+  <p class="lead2">사고가 나면 보상받는 보험</p>
+  <ul>
+    <li>차량 정보·운전자 범위·사고 이력으로 보험료를 정한다</li>
+    <li>사고가 나면 접수한다</li>
+    <li>담당 직원이 지급액을 사정해 보상한다</li>
+  </ul>
 </div>
 
 ---
 
 ## 여정 ① — 가입
 
-<div class="legend"><span class="lc">고객</span><span class="ls">직원</span><span class="ly">시스템</span></div>
-
-<div class="flow">
-  <div class="node cust">상품 조회</div>
-  <div class="arrow">→</div>
-  <div class="node cust">가입 신청</div>
-  <div class="arrow">→</div>
-  <div class="node staff">가입 심사</div>
-  <div class="arrow">→</div>
-  <div class="node sys">계약 자동 생성</div>
+<div class="flowj">
+  <div class="jcol"><div class="javatar cust">고객</div><div class="jaction">상품 조회</div></div>
+  <div class="jarrow">→</div>
+  <div class="jcol"><div class="javatar cust">고객</div><div class="jaction">가입 신청</div></div>
+  <div class="jarrow">→</div>
+  <div class="jcol"><div class="javatar staff">직원</div><div class="jaction">가입 심사</div></div>
+  <div class="jarrow">→</div>
+  <div class="jcol"><div class="javatar sys">시스템</div><div class="jaction">계약 자동 생성</div></div>
 </div>
 
 <p class="verdict">심사가 승인되면 계약이 자동으로 만들어집니다.</p>
@@ -73,14 +94,12 @@ footer: ''
 
 ## 여정 ② — 납부와 미납
 
-<div class="legend"><span class="lc">고객</span><span class="ly">시스템</span></div>
-
-<div class="flow">
-  <div class="node cust">매달 보험료 납부</div>
-  <div class="arrow">→</div>
-  <div class="node sys">미납 감지</div>
-  <div class="arrow">→</div>
-  <div class="node sys">고지서 자동 발송</div>
+<div class="flowj">
+  <div class="jcol"><div class="javatar cust">고객</div><div class="jaction">매달 보험료 납부</div></div>
+  <div class="jarrow">→</div>
+  <div class="jcol"><div class="javatar sys">시스템</div><div class="jaction">미납 감지</div></div>
+  <div class="jarrow">→</div>
+  <div class="jcol"><div class="javatar sys">시스템</div><div class="jaction">고지서 자동 발송</div></div>
 </div>
 
 <p class="verdict">납부가 밀리면 시스템이 고지서를 자동으로 보냅니다.</p>
@@ -89,14 +108,12 @@ footer: ''
 
 ## 여정 ③ — 보상과 지급
 
-<div class="legend"><span class="lc">고객</span><span class="ls">직원</span><span class="ly">시스템</span></div>
-
-<div class="flow">
-  <div class="node cust">청구·사고 접수</div>
-  <div class="arrow">→</div>
-  <div class="node staff">보상 심사</div>
-  <div class="arrow">→</div>
-  <div class="node sys">보험금 지급</div>
+<div class="flowj">
+  <div class="jcol"><div class="javatar cust">고객</div><div class="jaction">청구·사고 접수</div></div>
+  <div class="jarrow">→</div>
+  <div class="jcol"><div class="javatar staff">직원</div><div class="jaction">보상 심사</div></div>
+  <div class="jarrow">→</div>
+  <div class="jcol"><div class="javatar sys">시스템</div><div class="jaction">보험금 지급</div></div>
 </div>
 
 <p class="verdict">심사를 거쳐 보험금이 지급됩니다.</p>
