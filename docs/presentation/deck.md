@@ -53,11 +53,11 @@ footer: ''
 ## 의료보험이란
 
 <div class="detail">
-  <p class="lead2">아프면 진료비를 돌려받는 보험</p>
+  <p class="lead2">아프면 병원비를 돌려받는 보험</p>
   <ul>
-    <li>입원·통원 진료비를 보장한다</li>
-    <li>보장 한도와 자기부담금이 있다</li>
-    <li>청구가 간단하면 즉시 지급, 복잡하면 직원이 심사한다</li>
+    <li>병원비를 청구하면 보험금을 계좌로 입금해 준다</li>
+    <li>청구액이 100만 원보다 적으면 — 묻지 않고 바로 입금 (예: 30만 원 청구 → 즉시)</li>
+    <li>100만 원 이상이면 — 직원이 확인한 뒤 입금</li>
   </ul>
 </div>
 
@@ -68,9 +68,9 @@ footer: ''
 <div class="detail">
   <p class="lead2">사고가 나면 보상받는 보험</p>
   <ul>
-    <li>차량 정보·운전자 범위·사고 이력으로 보험료를 정한다</li>
-    <li>사고가 나면 접수한다</li>
-    <li>담당 직원이 지급액을 사정해 보상한다</li>
+    <li>사고를 접수하면 접수번호가 나온다</li>
+    <li>직원 한 명이 그 사고를 맡아(배정) 보상 금액을 정한다</li>
+    <li>정해진 금액이 계좌로 입금된다</li>
   </ul>
 </div>
 
@@ -88,7 +88,7 @@ footer: ''
   <div class="jcol"><div class="javatar sys">시스템</div><div class="jaction">계약 자동 생성</div></div>
 </div>
 
-<p class="verdict">심사가 승인되면 계약이 자동으로 만들어집니다.</p>
+<p class="verdict">직원이 승인하면, 같은 처리 안에서 계약이 곧바로 만들어집니다.</p>
 
 ---
 
@@ -102,7 +102,7 @@ footer: ''
   <div class="jcol"><div class="javatar sys">시스템</div><div class="jaction">고지서 자동 발송</div></div>
 </div>
 
-<p class="verdict">납부가 밀리면 시스템이 고지서를 자동으로 보냅니다.</p>
+<p class="verdict">낼 회차보다 납부가 밀리면 미납으로 잡히고, 매일 아침 시스템이 고지서를 보냅니다 (30일 넘으면 해지 예고).</p>
 
 ---
 
@@ -116,17 +116,17 @@ footer: ''
   <div class="jcol"><div class="javatar sys">시스템</div><div class="jaction">보험금 지급</div></div>
 </div>
 
-<p class="verdict">심사를 거쳐 보험금이 지급됩니다.</p>
+<p class="verdict">병원비는 100만 원 미만이면 즉시, 이상이거나 자동차 사고면 직원 심사를 거쳐 지급됩니다.</p>
 
 ---
 
-## 다섯 개의 도메인으로 설계했다
+## 여섯 개의 도메인으로 설계했다
 
 <div class="legend" style="flex-wrap:wrap">
-  <span class="ly">사용자</span><span class="ly">상품</span><span class="ly">계약·납부</span><span class="ly">청구·사고</span><span class="ly">심사·지급</span>
+  <span class="ly">사용자</span><span class="ly">상품</span><span class="ly">계약</span><span class="ly">청구</span><span class="ly">심사</span><span class="ly">사고이력</span>
 </div>
 
-<p class="verdict">이 도메인들을 직접 클래스 다이어그램으로 설계하고, 구현은 AI가 했습니다.</p>
+<p class="verdict">이 여섯 도메인을 직접 클래스 다이어그램으로 설계했고, 지금부터 하나씩 코드와 비교합니다.</p>
 
 ---
 
