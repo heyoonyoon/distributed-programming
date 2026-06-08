@@ -3,14 +3,22 @@ direction TB
 class InsuranceContract {
   String contractId
   Date startDate
+  Date endDate
+  ContractStatus status
   int monthlyPremium
+  +generatePdf()
 }
 class Payment {
   String paymentId
+  int amount
+  Date paidAt
   PaymentMethod method
+  PaymentStatus status
 }
 class Notice {
   String noticeId
+  Date issuedAt
+  int dueAmount
   int overdueDays
 }
 InsuranceContract "1" *-- "*" Payment

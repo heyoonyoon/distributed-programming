@@ -176,3 +176,21 @@ section.statement .sub { color: var(--muted); font-size: 24px; margin-top: 18px;
 .sd b { display:block; margin-bottom:5px; font-size:19px; }
 .sd .same b::before { content:"= "; color:var(--ok); font-weight:800; }
 .sd .diff b::before { content:"≠ "; color:#c8860a; font-weight:800; }
+
+/* 액터 색상 (여정 가독성) */
+.node.cust { background:#e8f1f8; border-color:#2c6f9c; color:#163e5c; }
+.node.cust small { color:#2c6f9c; }
+.node.staff { background:#e6f4f1; border-color:#1f9e8f; color:#0f5f55; }
+.node.staff small { color:#1f9e8f; }
+.node.sys { background:var(--navy); border-color:var(--navy); color:#fff; }
+.node.sys small { color:#bcd2e3; }
+.legend { display:flex; gap:22px; justify-content:center; margin:6px 0 14px; font-size:18px; font-weight:600; }
+.legend span::before { content:"●  "; }
+.legend .lc { color:#2c6f9c; } .legend .ls { color:#1f9e8f; } .legend .ly { color:var(--navy); }
+
+/* 1도메인 큰 비교 */
+.cmp2 { display:grid; grid-template-columns:1fr 1fr; gap:26px; margin-top:4px; }
+.cmp2 figure { margin:0; text-align:center; }
+.cmp2 img { width:100%; height:388px; object-fit:contain; border:1px solid var(--line); border-radius:8px; background:#fff; padding:6px; }
+.cmp2 + .sd { margin-top:10px; }
+.cmp2 + .sd > div { font-size:16px; padding:10px 16px; }

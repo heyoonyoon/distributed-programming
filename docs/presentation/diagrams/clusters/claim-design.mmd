@@ -3,9 +3,24 @@ direction TB
 class Claim {
   <<abstract>>
   String claimId
+  Date claimDate
+  int requestAmount
   ClaimStatus status
+  +submit()
 }
-class HealthInsuranceClaim
-class CarAccidentReport
+class HealthInsuranceClaim {
+  String hospitalName
+  String diagnosisCode
+  Date treatmentDate
+  int receiptAmount
+  ClaimComplexity complexity
+}
+class CarAccidentReport {
+  Date accidentDate
+  String accidentType
+  String vehicleNumber
+  boolean hasInjury
+  int injuredCount
+}
 Claim <|-- HealthInsuranceClaim
 Claim <|-- CarAccidentReport

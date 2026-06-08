@@ -3,13 +3,23 @@ direction TB
 class InsuranceProduct {
   <<abstract>>
   Long id
+  String productName
+  String description
   int basePremium
+  +calculatePremium()
 }
-class HealthInsuranceProduct
-class CarInsuranceProduct
+class HealthInsuranceProduct {
+  int maxHospitalizationDays
+}
+class CarInsuranceProduct {
+  String vehicleType
+  String driverScopeType
+}
 class CoverageItem {
   Long id
+  String itemName
   int coverageLimit
+  int deductible
 }
 InsuranceProduct <|-- HealthInsuranceProduct
 InsuranceProduct <|-- CarInsuranceProduct

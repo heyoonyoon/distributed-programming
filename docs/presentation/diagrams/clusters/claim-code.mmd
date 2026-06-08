@@ -3,9 +3,30 @@ direction TB
 class Claim {
   <<abstract>>
   Long id
+  LocalDate claimDate
+  int requestAmount
   ClaimStatus status
+  +submit()
 }
-class HealthInsuranceClaim
-class CarAccidentReport
+class HealthInsuranceClaim {
+  String hospitalName
+  String diagnosisCode
+  LocalDate treatmentDate
+  int receiptAmount
+  ClaimComplexity complexity
+}
+class CarAccidentReport {
+  LocalDate accidentDate
+  String accidentType
+  String vehicleNumber
+  boolean hasInjury
+  int injuredCount
+}
+class ClaimAttachment {
+  <<embeddable>>
+  String filename
+  String storedPath
+}
 Claim <|-- HealthInsuranceClaim
 Claim <|-- CarAccidentReport
+HealthInsuranceClaim "1" *-- "*" ClaimAttachment

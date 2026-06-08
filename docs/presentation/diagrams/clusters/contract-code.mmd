@@ -3,19 +3,28 @@ direction TB
 class InsuranceContract {
   Long id
   LocalDate startDate
+  LocalDate endDate
+  ContractStatus status
   int monthlyPremium
+  +generatePdf()
 }
 class Payment {
   Long id
+  int amount
+  LocalDateTime paidAt
   PaymentMethod method
+  PaymentStatus status
 }
 class Notice {
   Long id
+  LocalDate issuedAt
+  int dueAmount
   int overdueDays
 }
 class AutoDebit {
   <<embeddable>>
   String account
+  int withdrawalDay
 }
 InsuranceContract "1" *-- "*" Payment
 InsuranceContract "1" *-- "*" Notice

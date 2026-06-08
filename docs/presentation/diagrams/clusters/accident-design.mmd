@@ -4,9 +4,12 @@ class AccidentHistory {
   String ssn
   int accidentCount
   int totalPaidAmount
+  String licenseStatus
+  Date fetchedAt
 }
 class AccidentRecord {
   Date accidentDate
+  String accidentType
   int paidAmount
 }
 AccidentHistory "1" *-- "*" AccidentRecord

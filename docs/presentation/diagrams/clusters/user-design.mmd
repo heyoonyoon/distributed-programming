@@ -5,14 +5,22 @@ class User {
   String userId
   String name
   String email
+  String phone
+  String password
+  +login() boolean
 }
 class Policyholder {
   String ssn
   Date birthDate
+  String address
+  String bankAccount
+  +applyInsurance()
 }
 class InsuranceEmployee {
   String employeeId
+  String department
   int currentLoad
+  +reviewEnrollment()
 }
 User <|-- Policyholder
 User <|-- InsuranceEmployee

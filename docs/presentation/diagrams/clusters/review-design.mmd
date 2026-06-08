@@ -3,9 +3,19 @@ direction TB
 class Review {
   <<abstract>>
   String reviewId
+  Date reviewedAt
   ReviewResult result
+  String comment
 }
-class EnrollmentReview
-class BenefitPaymentReview
+class EnrollmentReview {
+  double surchargeRate
+  int adjustedPremium
+}
+class BenefitPaymentReview {
+  String assignedStaffId
+  +approve()
+}
+class HealthInsuranceClaim
 Review <|-- EnrollmentReview
 Review <|-- BenefitPaymentReview
+BenefitPaymentReview --> HealthInsuranceClaim : 대상
