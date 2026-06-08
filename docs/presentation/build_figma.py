@@ -163,9 +163,11 @@ for name,key,diff in comps:
     box(s,0.5,6.05,12.35,1.15,WARM,[[("다른 점   ",19,True,C("b5793a"),SANS),(diff,19,True,BLACK,SANS)]],align=PP_ALIGN.LEFT,rad=0.12)
 
 # 17. 유스케이스
-s=slide(); head(s,"","유스케이스 중 내가 시연하는 부분")
-img_fit(s,os.path.join(DIA,"uc-map.png"),2.4,2.05,8.5,3.9)
-tb(s,0.85,6.1,11.6,0.9,[[("두 시나리오를 직접 시연한다 — ① 가입~납입, ② 보상심사~지급.",26,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
+s=slide(); head(s,"","전체 중 내가 시연하는 부분")
+img_fit(s,os.path.join(DIA,"uc-map.png"),4.6,2.0,4.1,4.1)
+box(s,0.85,2.3,3.4,0.8,ACCENT,[[("파란 박스 = 직접 시연",18,True,WHITE,SANS)]],wrap=False)
+box(s,0.85,3.3,3.4,0.8,C("f1f1f3"),[[("회색 = 시연 외(코드엔 있음)",17,True,GRAY,SANS)]],line=C("c9c9cf"),wrap=False)
+tb(s,0.85,6.35,11.6,0.8,[[("전체 흐름 중 파란 부분만 라이브로 시연한다.",26,True,BLACK,SANS)]],align=PP_ALIGN.CENTER,spc=-0.4)
 
 # 18. AI 사용
 s=slide(); head(s,"","AI를 어떻게 썼나")

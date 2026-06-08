@@ -1,20 +1,6 @@
 flowchart TB
-  subgraph S1["① 가입 ~ 납입  (직접 시연)"]
-    direction TB
-    a1["상품조회·가입신청"]:::demo1
-    b1["가입심사"]:::demo1
-    c1["계약 자동생성"]:::demo1
-    a2["보험료 납입"]:::demo1
-    a1 --> b1 --> c1 --> a2
-  end
-  subgraph S2["② 보상심사 ~ 지급  (직접 시연)"]
-    direction TB
-    a3["청구·사고접수"]:::demo2
-    b2["지급심사"]:::demo2
-    c2["보험금 지급"]:::demo2
-    a3 --> b2 --> c2
-  end
-  classDef demo1 fill:#fff3d6,stroke:#f2a900,stroke-width:3px,color:#0b3d5c;
-  classDef demo2 fill:#ecebfb,stroke:#5b5bd6,stroke-width:3px,color:#1f1d3d;
-  style S1 fill:#ffffff,stroke:#f2a900,stroke-width:1px,color:#9a6b00;
-  style S2 fill:#ffffff,stroke:#5b5bd6,stroke-width:1px,color:#3d3a7a;
+  a0["상품조회·가입신청"]:::demo --> a1["가입 심사"]:::demo --> a2["계약 자동생성"]:::demo --> a3["보험료 납입"]:::demo --> a4["미납·고지서·해지예고"]:::off
+  b0["청구·사고 접수"]:::off --> b1["담당자 배정"]:::demo --> b2["지급 심사"]:::demo --> b3["보험금 지급<br/>성공 · 실패→재시도"]:::demo
+
+  classDef demo fill:#5b5bd6,stroke:#5b5bd6,stroke-width:2px,color:#ffffff;
+  classDef off fill:#f1f1f3,stroke:#c9c9cf,stroke-width:1px,color:#9a9aa3;
