@@ -1,0 +1,31 @@
+classDiagram
+direction TB
+class Review {
+  <<abstract>>
+  Long id
+  ReviewResult result
+  LocalDateTime reviewedAt
+  +confirm(ReviewResult, String)
+}
+class EnrollmentReview {
+  int adjustedPremium
+  double surchargeRate
+  +applySurcharge(double)
+}
+class BenefitPaymentReview {
+  Long assignedStaffId
+  +approve() BenefitPayment
+  +assignStaff(InsuranceEmployee)
+}
+class InsuranceApplication
+class InsuranceEmployee
+class Claim
+class AccidentHistory {
+  <<embeddable>>
+}
+EnrollmentReview --|> Review
+BenefitPaymentReview --|> Review
+EnrollmentReview --> InsuranceApplication : 심사 대상
+EnrollmentReview --> InsuranceEmployee : 담당자
+EnrollmentReview *-- AccidentHistory
+BenefitPaymentReview --> Claim : 대상(의료+자동차)

@@ -1,0 +1,25 @@
+classDiagram
+direction TB
+class User {
+  <<abstract>>
+  Long id
+  String name
+  String email
+  String phone
+  String password
+  +login() boolean
+}
+class Policyholder {
+  String ssn
+  LocalDate birthDate
+  String address
+  String bankAccount
+  +applyInsurance()
+}
+class InsuranceEmployee {
+  String department
+  int currentLoad
+  +reviewEnrollment()
+}
+User <|-- Policyholder
+User <|-- InsuranceEmployee

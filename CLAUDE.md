@@ -84,6 +84,16 @@ brainstorming → grill-with-docs → writing-plans → executing-plans → fini
 - **이슈 브랜치 하나 = PR 하나.** 한 이슈의 작업이 끝나면 그 브랜치로 PR을 올리고, PR이 머지되면 이슈가 닫힌다. 여러 이슈를 한 브랜치/PR에 섞지 않는다.
 - main/master에서 직접 구현 시작 금지 — 항상 이슈 브랜치에서 작업한다.
 
+## pane 간 전달(핸드오프) 규약
+- **옆 pane(다른 작업자)에게 넘기는 산출물(API 명세서·비즈니스 로직·핸드오프 노트 등)은 "전달"이지 "배포"가 아니다.** 같은 머신·같은 레포이므로 **로컬 파일로 디스크에 두면 그게 전달이다**(예: `docs/api/`).
+- **이 핸드오프 산출물을 원격(origin)에 push하거나 PR을 만들지 마라.** "전달해라/넘겨라"는 원격 반영 요청이 아니다. 사용자가 명시적으로 "원격에 올려/PR 만들어"라고 할 때만 원격에 반영한다.
+- 핸드오프 노트에 적는 PR·머지·워크트리 지시는 **받는 쪽(옆 pane)의 작업 절차**에 대한 것이지, 핸드오프 문서 자체를 원격에 올리라는 뜻이 아니다.
+- 여러 pane이 동시에 한 워킹트리에서 커밋해 충돌하지 않도록, 각 pane은 **별도 git worktree**에서 작업한다.
+- **옆 pane에게 알릴 때는 `cmux`로 직접 보낸다(알아서 cmux 사용).** 산출물은 `docs/`에 로컬 파일로 두고, 그 위치와 작업 지시를 `cmux send`로 옆 pane 터미널에 전달한다:
+  - 대상 찾기: `cmux tree` / `cmux list-workspaces`로 옆 pane(surface)을 확인.
+  - 전송: `cmux send --surface <surface-ref> '<메시지>'` 후 `cmux send-key --surface <surface-ref> enter`로 제출.
+  - 메시지에는 문서 경로(예: `docs/api/...`)와 핵심 지시(worktree 분리, PR→머지 워크플로우)를 담는다. 원격 push가 아니라 cmux 메시지가 "전달"이다.
+
 ## 항상 지킬 것
 - 코드/문서 네이밍은 `CONTEXT.md` 용어집을 단일 출처로 따른다.
 - 계획 수립 시 CONTEXT.md 용어 + docs/adr 결정을 항상 준수한다(자동 아님 — 명시적으로 적용).

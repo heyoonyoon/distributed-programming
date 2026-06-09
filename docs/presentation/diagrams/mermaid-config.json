@@ -1,0 +1,13 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#eef3f7",
+    "primaryBorderColor": "#0b3d5c",
+    "primaryTextColor": "#0b3d5c",
+    "secondaryColor": "#ffffff",
+    "lineColor": "#5b7185",
+    "fontFamily": "Apple SD Gothic Neo, Pretendard, sans-serif",
+    "fontSize": "20px"
+  },
+  "flowchart": { "curve": "basis", "nodeSpacing": 45, "rankSpacing": 55 }
+}

@@ -1,0 +1,16 @@
+{
+  "theme": "base",
+  "themeVariables": {
+    "primaryColor": "#ecebfb",
+    "primaryBorderColor": "#5b5bd6",
+    "primaryTextColor": "#1f1d3d",
+    "secondaryColor": "#ffffff",
+    "lineColor": "#5b5bd6",
+    "classText": "#1f1d3d",
+    "fontFamily": "Menlo, Consolas, monospace",
+    "fontSize": "14px"
+  },
+  "class": {
+    "hideEmptyMembersBox": true
+  }
+}

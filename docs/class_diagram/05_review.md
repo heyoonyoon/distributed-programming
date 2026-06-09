@@ -27,8 +27,8 @@
 ```
 
 ### BenefitPaymentReview extends Review
-> 복잡한 의료보험 청구 심사. InsuranceEmployee 배정 필수.
-> 승인 시 BenefitPayment를 Composition으로 포함.
+> 보험금 지급 심사. 대상은 Claim(추상) — 복잡한 의료보험 청구(COMPLEX)와 자동차사고 둘 다. (ADR 0009)
+> InsuranceEmployee 배정 필수(수동 배정). 승인 시 BenefitPayment를 Composition으로 포함.
 ```
 [BenefitPaymentReview] extends [Review]
 ──────────────────────────────

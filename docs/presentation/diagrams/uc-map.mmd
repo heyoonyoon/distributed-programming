@@ -1,0 +1,6 @@
+flowchart TB
+  a0["상품조회·가입신청"]:::demo --> a1["가입 심사"]:::demo --> a2["계약 자동생성"]:::demo --> a3["보험료 납입"]:::demo --> a4["미납·고지서·해지예고"]:::off
+  b0["청구·사고 접수"]:::off --> b1["담당자 배정"]:::demo --> b2["지급 심사"]:::demo --> b3["보험금 지급<br/>성공 · 실패→재시도"]:::demo
+
+  classDef demo fill:#5b5bd6,stroke:#5b5bd6,stroke-width:2px,color:#ffffff;
+  classDef off fill:#f1f1f3,stroke:#c9c9cf,stroke-width:1px,color:#9a9aa3;

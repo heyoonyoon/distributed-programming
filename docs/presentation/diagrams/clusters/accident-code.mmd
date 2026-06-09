@@ -1,0 +1,12 @@
+classDiagram
+direction TB
+class EnrollmentReview
+class AccidentHistory {
+  <<embeddable>>
+  int accidentCount
+  LocalDateTime fetchedAt
+  String licenseStatus
+  int totalPaidAmount
+  +getSummary()
+}
+EnrollmentReview *-- AccidentHistory

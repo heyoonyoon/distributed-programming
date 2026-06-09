@@ -1,0 +1,31 @@
+classDiagram
+direction TB
+class InsuranceContract {
+  String contractId
+  ContractStatus status
+  Date startDate
+  Date endDate
+  +generatePdf() File
+  +suspend()
+  +terminate()
+}
+class Policyholder
+class InsuranceProduct
+class Notice {
+  String noticeId
+  int dueAmount
+  int overdueDays
+  boolean isTerminationWarning
+  +send(String, String) boolean
+}
+class Payment {
+  String paymentId
+  int amount
+  PaymentMethod method
+  PaymentStatus status
+  +process()
+}
+InsuranceContract --> Policyholder : 계약자
+InsuranceContract --> InsuranceProduct : 가입 상품
+InsuranceContract "1" *-- "*" Notice
+InsuranceContract "1" *-- "*" Payment

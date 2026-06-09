@@ -31,7 +31,6 @@ Review
 | InsuranceContract | HealthInsuranceClaim | 유효 계약 없으면 청구 불가 |
 | InsuranceContract | CarAccidentReport | 유효 계약 없으면 사고 접수 불가 |
 | BenefitPaymentReview | BenefitPayment | 심사 없으면 지급 객체 생성 안 됨 |
-| AccidentHistory | AccidentRecord | 이력 없이 개별 사고 기록은 의미 없음 |
 
 ### 1-3. Aggregation (약한 포함 ◇) — 생명 주기 분리
 
@@ -47,7 +46,7 @@ Review
 |-------|------|
 | InsuranceEmployee → BenefitPaymentReview | 직원이 심사를 담당 |
 | EnrollmentReview → AccidentHistory | 자동차보험 심사 시에만 조회 |
-| HealthInsuranceClaim → BenefitPaymentReview | 복잡한 청구 건이 심사 요청 |
+| Claim → BenefitPaymentReview | 복잡 의료청구(COMPLEX)·자동차사고가 지급심사로 진입 (ADR 0009) |
 
 > 보험가입자 ↔ 보험상품 직접 연관 없음.
 > InsuranceApplication → InsuranceContract 를 통해 간접 연결.
@@ -161,7 +160,7 @@ Review
 ──────────────────────────────
 - applicationId  : String
 - appliedAt      : Date
-- status         : ApplicationStatus   // PENDING, APPROVED, REJECTED
+- status         : ApplicationStatus   // PENDING, APPROVED, REJECTED, CANCELLED
 - vehicleInfo    : VehicleInfo         // 자동차보험 시에만 유효, nullable
 - medicalHistory : MedicalHistory      // 의료보험 시에만 유효, nullable
 ──────────────────────────────
@@ -229,7 +228,7 @@ Review
 # claimId       : String
 # claimDate     : Date
 # requestAmount : int
-# status        : ClaimStatus   // PENDING, IN_REVIEW, APPROVED, REJECTED
+# status        : ClaimStatus   // PENDING, IN_REVIEW, APPROVED, REJECTED, COMPLETED, FAILED (ADR 0007)
 ──────────────────────────────
 + submit() : void
 + getStatus() : ClaimStatus
@@ -303,8 +302,8 @@ Review
 ---
  
 ### 2-16. BenefitPaymentReview (보험금 지급 심사) extends Review
-> 복잡한 의료보험 청구 건 심사. 반드시 InsuranceEmployee 배정 필요.
-> 승인 시 BenefitPayment 를 Composition 으로 포함.
+> 보험금 지급 심사. 대상은 Claim(추상) — 복잡 의료청구(COMPLEX)와 자동차사고 둘 다. (ADR 0009)
+> 반드시 InsuranceEmployee 수동 배정. 승인 시 BenefitPayment 를 Composition 으로 포함.
 ```
 [BenefitPaymentReview] extends [Review]
 ──────────────────────────────
@@ -336,27 +335,18 @@ Review
 ---
  
 ### 2-18. AccidentHistory (사고 이력 — 금융감독원 연동)
-> 금융감독원 API 로부터 조회되는 외부 데이터 객체.
-> AccidentRecord 들을 Composition 으로 보유.
+> 금융감독원 API 로부터 조회되는 외부 데이터 객체. 더미로 시뮬레이션.
+> 구현상 EnrollmentReview 에 내장(@Embeddable)되는 요약 값 객체로 단순화 — 개별 사고
+> 기록은 집계값(accidentCount, totalPaidAmount)으로 갈음하며 AccidentRecord 는 두지 않는다.
 ```
 [AccidentHistory]
 ──────────────────────────────
-- ssn             : String
 - accidentCount   : int
 - totalPaidAmount : int
 - licenseStatus   : String   // VALID, SUSPENDED, REVOKED
 - fetchedAt       : Date
 ──────────────────────────────
-+ fetch(ssn: String) : AccidentHistory   // static, 금융감독원 API 호출
++ fetch(ssn: String) : AccidentHistory   // static, 금융감독원 API 호출 → 더미 반환
 + getSummary() : AccidentSummary
-```
- 
-#### AccidentRecord — Composition with AccidentHistory
-```
-[AccidentRecord]
-──────────────────────────────
-- accidentDate : Date
-- accidentType : String
-- paidAmount   : int
 ```
  

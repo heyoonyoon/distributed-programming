@@ -7,7 +7,7 @@
 ──────────────────────────────
 - applicationId  : String
 - appliedAt      : Date
-- status         : ApplicationStatus   // PENDING, APPROVED, REJECTED
+- status         : ApplicationStatus   // PENDING, APPROVED, REJECTED, CANCELLED
 - vehicleInfo    : VehicleInfo         // 자동차보험만, nullable
 - medicalHistory : MedicalHistory      // 의료보험만, nullable
 ──────────────────────────────

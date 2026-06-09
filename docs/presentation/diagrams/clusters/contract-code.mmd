@@ -1,0 +1,37 @@
+classDiagram
+direction TB
+class InsuranceContract {
+  Long id
+  ContractStatus status
+  LocalDate startDate
+  LocalDate endDate
+  int monthlyPremium
+  +generatePdf() File
+  +suspend()
+  +terminate()
+}
+class Policyholder
+class InsuranceProduct
+class Notice {
+  Long id
+  int dueAmount
+  int overdueDays
+  boolean terminationWarning
+  +send() boolean
+}
+class Payment {
+  Long id
+  int amount
+  PaymentMethod method
+  PaymentStatus status
+  +process()
+}
+class AutoDebit {
+  String account
+  int withdrawalDay
+}
+InsuranceContract --> Policyholder : 계약자
+InsuranceContract --> InsuranceProduct : 가입 상품
+InsuranceContract "1" *-- "*" Notice
+InsuranceContract "1" *-- "*" Payment
+InsuranceContract *-- AutoDebit

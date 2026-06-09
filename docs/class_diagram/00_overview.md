@@ -13,7 +13,7 @@
 | 04_claim.md | Claim, HealthInsuranceClaim, CarAccidentReport | 청구/사고 계층 |
 | 05_review.md | Review, EnrollmentReview, BenefitPaymentReview | 심사 계층 |
 | 06_payment.md | BenefitPayment | 보험금 지급 |
-| 07_external.md | AccidentHistory, AccidentRecord | 금융감독원 연동 |
+| 07_external.md | AccidentHistory | 금융감독원 연동 |
 
 ## 상속 관계
 
@@ -48,11 +48,10 @@ InsuranceContract ◆── Notice             (composition)
 InsuranceContract ◆── HealthInsuranceClaim (composition)
 InsuranceContract ◆── CarAccidentReport  (composition)
 BenefitPaymentReview ◆── BenefitPayment  (composition)
-AccidentHistory ◆── AccidentRecord       (composition)
 
 InsuranceEmployee → BenefitPaymentReview (association: 직원이 심사 담당)
 EnrollmentReview → AccidentHistory       (association: 자동차보험 심사 시 조회)
-HealthInsuranceClaim → BenefitPaymentReview (association: 복잡한 청구 → 심사 요청)
+Claim → BenefitPaymentReview             (association: 복잡 의료청구·자동차사고 → 심사 진입, ADR 0009)
 ```
 
 ## UC별 필요 클래스 매핑 (추정임, 필요시 추가하거나 빼도 됨)

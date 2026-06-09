@@ -1,0 +1,229 @@
+/* @theme control */
+/* 보험 발표용 커스텀 테마 — 네이비 + 앰버 액센트, 한 슬라이드 한 메시지 */
+
+@import 'default';
+
+:root {
+  --navy: #0b3d5c;
+  --navy-2: #0f2a43;
+  --amber: #f2a900;
+  --ink: #1c2b36;
+  --muted: #5b7185;
+  --line: #d7e1ea;
+  --panel: #eef3f7;
+  --ok: #1f9e8f;
+  --bad: #d9534f;
+}
+
+section {
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Helvetica Neue", sans-serif;
+  font-size: 26px;
+  color: var(--ink);
+  background: #ffffff;
+  padding: 56px 64px 64px;
+  letter-spacing: -0.01em;
+}
+
+/* 상단 액센트 바 */
+section::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 10px;
+  background: linear-gradient(90deg, var(--navy) 0%, var(--navy) 70%, var(--amber) 70%, var(--amber) 100%);
+}
+
+h1 { color: var(--navy); font-size: 46px; line-height: 1.15; margin: 0 0 10px; }
+h2 { color: var(--navy); font-size: 34px; line-height: 1.2; border-bottom: 3px solid var(--amber); padding-bottom: 8px; display: inline-block; margin: 0 0 24px; }
+h3 { color: var(--navy-2); font-size: 24px; margin: 6px 0; }
+strong { color: var(--navy); }
+em { color: var(--bad); font-style: normal; font-weight: 700; }
+a { color: var(--ok); }
+
+ul { line-height: 1.5; }
+li { margin: 6px 0; }
+small, .muted { color: var(--muted); font-size: 18px; }
+
+code { background: var(--panel); color: var(--navy-2); padding: 1px 6px; border-radius: 5px; font-size: 0.9em; }
+
+table { font-size: 21px; border-collapse: collapse; width: 100%; }
+th { background: var(--navy); color: #fff; padding: 10px 12px; text-align: left; }
+td { border-bottom: 1px solid var(--line); padding: 9px 12px; }
+tr:nth-child(even) td { background: #f7fafc; }
+
+footer { color: var(--muted); font-size: 14px; }
+section::after { color: var(--muted); font-size: 16px; } /* 페이지 번호 */
+
+/* 타이틀/섹션 분할 슬라이드 */
+section.lead {
+  background: radial-gradient(1200px 600px at 20% 0%, #14507a 0%, var(--navy-2) 60%, #08203a 100%);
+  color: #eaf2f8;
+  justify-content: center;
+}
+section.lead::before { background: var(--amber); height: 10px; }
+section.lead h1 { color: #ffffff; font-size: 54px; }
+section.lead h2 { color: var(--amber); border: none; font-size: 30px; }
+section.lead strong { color: var(--amber); }
+section.lead p, section.lead li { color: #cfe0ec; }
+
+/* 큰 한 문장 강조 슬라이드 */
+section.statement { justify-content: center; }
+section.statement h1 { font-size: 50px; max-width: 22ch; }
+section.statement .sub { color: var(--muted); font-size: 24px; margin-top: 18px; }
+
+/* 가로 흐름(레이어/파이프라인) */
+.flow { display: flex; align-items: stretch; gap: 0; margin: 18px 0; }
+.node { background: var(--panel); border: 2px solid var(--navy); border-radius: 12px;
+  padding: 16px 14px; flex: 1; text-align: center; font-weight: 700; color: var(--navy);
+  display: flex; flex-direction: column; justify-content: center; }
+.node small { display:block; color: var(--muted); font-weight: 500; margin-top:4px; }
+.arrow { align-self: center; color: var(--amber); font-size: 30px; font-weight: 800; padding: 0 8px; }
+.node.db { background: var(--navy); color: #fff; }
+.node.db small { color: #bcd2e3; }
+
+/* 진화 타임라인 4단계 */
+.timeline { display: flex; gap: 14px; margin: 16px 0; }
+.stage { flex: 1; border: 1px solid var(--line); border-top: 6px solid var(--navy); border-radius: 10px; padding: 14px; background: #fbfdff; }
+.stage:last-child { border-top-color: var(--amber); box-shadow: 0 6px 18px rgba(11,61,92,.12); }
+.stage h3 { font-size: 20px; margin-bottom: 6px; }
+.stage ul { font-size: 16px; padding-left: 18px; margin: 6px 0; color: var(--ink); }
+.stage .hash { font-size: 14px; color: var(--ok); font-family: monospace; }
+
+/* 2열 카드(단점→통제) */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px; }
+.card { border: 1px solid var(--line); border-left: 6px solid var(--amber); border-radius: 10px; padding: 14px 16px; background: #fbfdff; }
+.card h3 { font-size: 20px; margin: 0 0 6px; }
+.card p { font-size: 17px; margin: 4px 0; color: var(--ink); }
+.card .fix { color: var(--ok); font-weight: 700; }
+
+/* 배지 */
+.badge { display:inline-block; background: var(--ok); color:#fff; font-size:18px; font-weight:700;
+  padding: 6px 14px; border-radius: 999px; margin-top: 14px; }
+
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+
+/* 데이터 변환 파이프라인 (컴포넌트 → 데이터 모양) */
+.pipe { display: flex; flex-direction: column; gap: 0; margin: 8px 0; }
+.prow { display: grid; grid-template-columns: 240px 1fr; align-items: center; gap: 14px;
+  padding: 4px 0; border-bottom: 1px dashed var(--line); }
+.prow:last-child { border-bottom: none; }
+.comp { font-weight: 700; color: var(--navy); font-size: 19px; }
+.comp small { display:block; color: var(--muted); font-weight: 500; font-size: 14px; }
+.shape { font-family: monospace; font-size: 17px; background: var(--panel); color: var(--navy-2);
+  padding: 6px 12px; border-radius: 6px; border-left: 4px solid var(--amber); }
+.layer-tag { display:inline-block; font-size:13px; font-weight:700; padding:2px 8px; border-radius:4px;
+  margin-right:8px; color:#fff; }
+.tag-fe { background:#2c7a7b; } .tag-net { background:#7a5c2c; } .tag-be { background:var(--navy); } .tag-db { background:#444; }
+
+/* 변형 비교 표 강조 */
+.xform td:nth-child(2) { color: var(--muted); }
+.xform td:nth-child(3) { color: var(--navy); font-weight: 600; }
+
+.small-note { font-size: 16px; color: var(--muted); margin-top: 10px; }
+
+/* 설계 vs 구현 비교 */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: start; margin-top: 6px; }
+.compare figure { margin: 0; text-align: center; }
+.compare img { width: 100%; height: 380px; object-fit: contain; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 6px; }
+.cap { display:inline-block; font-weight:700; font-size:18px; padding:5px 16px; border-radius:999px; margin-bottom:8px; }
+.cap-d { background:#e4ebf1; color:var(--navy); }
+.cap-b { background:var(--amber); color:#3a2a00; }
+
+/* AI 사용 파이프라인 */
+.aipipe { display:flex; align-items:center; gap:0; margin:14px 0; }
+.aistep { flex:1; text-align:center; background:var(--panel); border:1px solid var(--line); border-top:5px solid var(--navy); border-radius:10px; padding:12px 8px; }
+.aistep b { color:var(--navy); font-size:19px; } .aistep small{ display:block; color:var(--muted); font-size:14px; margin-top:4px; }
+.aistep.tdd { border-top-color:var(--amber); }
+.who { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:10px 0 4px; }
+.who div { border-radius:10px; padding:14px 18px; }
+.who .human { background:#eef6f4; border-left:6px solid var(--ok); }
+.who .ai { background:var(--panel); border-left:6px solid var(--navy); }
+
+/* 일치 검증 바 */
+.matchbar { display:flex; gap:12px; justify-content:center; margin:14px 0 6px; }
+.check { background:#eef6f4; border:1.5px solid var(--ok); color:#0b3d5c; border-radius:999px;
+  padding:8px 18px; font-weight:700; font-size:19px; }
+.check::before { content:"✓ "; color:var(--ok); font-weight:800; }
+.verdict { text-align:center; font-size:24px; color:var(--navy); font-weight:700; margin-top:6px; }
+.eqcmp { display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:center; }
+.eqcmp img { width:100%; height:330px; object-fit:contain; border:1px solid var(--line); border-radius:8px; background:#fff; }
+.eq-sign { text-align:center; }
+
+/* 클러스터별 설계 vs 구현 비교 그리드 */
+.clgrid { display:grid; grid-template-columns: 92px 1fr 1fr; gap:10px 18px; align-items:center; margin-top:8px; }
+.clhead { text-align:center; font-weight:700; font-size:19px; padding:4px 0; border-radius:6px; }
+.clhead.d { background:#e4ebf1; color:var(--navy); }
+.clhead.b { background:var(--amber); color:#3a2a00; }
+.cllabel { font-weight:700; color:var(--navy); font-size:18px; text-align:center; }
+.cllabel small { display:block; color:var(--ok); font-size:15px; margin-top:3px; }
+.clgrid img { width:100%; height:200px; object-fit:contain; border:1px solid var(--line); border-radius:8px; background:#fff; padding:4px; }
+.clgrid .spacer { }
+
+/* 서비스 소개용 큰 카드 */
+.bigcards { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:14px; }
+.bigcards.three { grid-template-columns:1fr 1fr 1fr; }
+.bigcard { border:1px solid var(--line); border-top:6px solid var(--navy); border-radius:12px; padding:20px 24px; background:#fbfdff; }
+.bigcard.amber { border-top-color:var(--amber); }
+.bigcard h3 { font-size:25px; color:var(--navy); margin:0 0 10px; }
+.bigcard p { font-size:19px; color:var(--ink); margin:7px 0; }
+.bigcard small { color:var(--muted); font-size:15px; }
+
+/* 같음 / 다름 설명 */
+.sd { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:14px; }
+.sd > div { border-radius:10px; padding:12px 18px; font-size:18px; }
+.sd .same { background:#eef6f4; border-left:6px solid var(--ok); }
+.sd .diff { background:#fff3d6; border-left:6px solid var(--amber); }
+.sd b { display:block; margin-bottom:5px; font-size:19px; }
+.sd .same b::before { content:"= "; color:var(--ok); font-weight:800; }
+.sd .diff b::before { content:"≠ "; color:#c8860a; font-weight:800; }
+
+/* 액터 색상 (여정 가독성) */
+.node.cust { background:#e8f1f8; border-color:#2c6f9c; color:#163e5c; }
+.node.cust small { color:#2c6f9c; }
+.node.staff { background:#e6f4f1; border-color:#1f9e8f; color:#0f5f55; }
+.node.staff small { color:#1f9e8f; }
+.node.sys { background:var(--navy); border-color:var(--navy); color:#fff; }
+.node.sys small { color:#bcd2e3; }
+.legend { display:flex; gap:22px; justify-content:center; margin:6px 0 14px; font-size:18px; font-weight:600; }
+.legend span::before { content:"●  "; }
+.legend .lc { color:#2c6f9c; } .legend .ls { color:#1f9e8f; } .legend .ly { color:var(--navy); }
+
+/* 1도메인 큰 비교 */
+.cmp2 { display:grid; grid-template-columns:1fr 1fr; gap:26px; margin-top:4px; }
+.cmp2 figure { margin:0; text-align:center; }
+.cmp2 img { width:100%; height:388px; object-fit:contain; border:1px solid var(--line); border-radius:8px; background:#fff; padding:6px; }
+.cmp2 + .sd { margin-top:10px; }
+.cmp2 + .sd > div { font-size:16px; padding:10px 16px; }
+
+/* 페르소나(액터) 소개 */
+.personas { display:flex; justify-content:center; gap:64px; margin-top:46px; }
+.persona { text-align:center; width:260px; }
+.persona .pc { width:150px; height:150px; border-radius:50%; margin:0 auto 20px; display:flex;
+  align-items:center; justify-content:center; color:#fff; font-size:30px; font-weight:800;
+  box-shadow:0 8px 20px rgba(11,61,92,.18); }
+.pc.cust{ background:#2c6f9c; } .pc.staff{ background:#1f9e8f; } .pc.sys{ background:#0b3d5c; }
+.persona .pname { font-size:30px; font-weight:800; color:var(--navy); }
+.persona .prole { font-size:21px; color:var(--muted); margin-top:10px; line-height:1.4; }
+
+/* 여정: 주체 원 + 행동 (색이 아니라 라벨로 구분) */
+.flowj { display:flex; align-items:flex-start; justify-content:center; gap:6px; margin-top:40px; }
+.jcol { display:flex; flex-direction:column; align-items:center; gap:14px; width:215px; }
+.javatar { width:74px; height:74px; border-radius:50%; display:flex; align-items:center;
+  justify-content:center; color:#fff; font-weight:800; font-size:19px; }
+.javatar.cust{ background:#2c6f9c; } .javatar.staff{ background:#1f9e8f; } .javatar.sys{ background:#0b3d5c; }
+.jaction { background:#f5f9fc; border:1.5px solid var(--line); border-radius:12px; padding:16px 12px;
+  text-align:center; font-weight:700; color:var(--navy); font-size:21px; width:100%; }
+.jarrow { color:var(--amber); font-size:34px; font-weight:800; margin-top:24px; }
+
+/* 보험 종류 상세 (여백 큰 레이아웃) */
+.detail { margin-top:40px; }
+.detail .lead2 { font-size:34px; font-weight:800; color:var(--navy); margin:0 0 28px;
+  padding-left:18px; border-left:8px solid var(--amber); }
+.detail ul { list-style:none; padding:0; margin:0; }
+.detail li { font-size:25px; color:var(--ink); margin:18px 0; padding-left:34px; position:relative; }
+.detail li::before { content:"—"; position:absolute; left:0; color:var(--amber); font-weight:800; }
+.kinds { display:flex; justify-content:center; gap:40px; margin-top:50px; }
+.kind { width:380px; text-align:center; border-radius:16px; padding:34px 26px; background:#f5f9fc; border-top:8px solid var(--navy); }
+.kind.amber { border-top-color:var(--amber); }
+.kind h3 { font-size:32px; color:var(--navy); margin:0 0 12px; }
+.kind p { font-size:21px; color:var(--muted); margin:0; }
