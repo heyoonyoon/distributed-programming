@@ -29,6 +29,7 @@ import type {
   ProductType,
   RetryBenefitPayoutResponse,
   ReviewApplicationDetail,
+  UnassignedBenefitReview,
   UnpaidContract,
   UpdateProfileRequest,
   UserType,
@@ -48,6 +49,8 @@ export class ApiError extends Error {
 
 type TokenPayload = {
   userType?: UserType
+  // 직원 토큰의 sub 클레임이 곧 employeeId (문자열 숫자, 예 "3").
+  sub?: string
 }
 
 function decodeBase64Url(value: string) {
@@ -66,6 +69,17 @@ export function decodeUserType(token: string): UserType | null {
     return payload.userType === 'POLICYHOLDER' || payload.userType === 'EMPLOYEE'
       ? payload.userType
       : null
+  } catch {
+    return null
+  }
+}
+
+// 직원 JWT의 sub 클레임에서 employeeId를 추출한다. 없거나 파싱 불가면 null.
+export function employeeIdFromToken(token: string): number | null {
+  try {
+    const payload = JSON.parse(decodeBase64Url(token.split('.')[1])) as TokenPayload
+    const id = Number(payload.sub)
+    return Number.isFinite(id) && id > 0 ? id : null
   } catch {
     return null
   }
@@ -363,6 +377,12 @@ export const apiClient = {
 
   async getBenefitReviews(token: string): Promise<BenefitReviewSummary[]> {
     return request('/staff/benefit-reviews', {}, token)
+  },
+
+  async getUnassignedBenefitReviews(
+    token: string,
+  ): Promise<UnassignedBenefitReview[]> {
+    return request('/staff/benefit-reviews/unassigned', {}, token)
   },
 
   async getBenefitReview(

@@ -29,7 +29,7 @@ import {
   Routes,
   useNavigate,
 } from 'react-router-dom'
-import { ApiError, apiClient, decodeUserType } from './api/apiClient'
+import { ApiError, apiClient, decodeUserType, employeeIdFromToken } from './api/apiClient'
 import './App.css'
 import type {
   AuthSession,
@@ -39,6 +39,7 @@ import type {
   BenefitReviewDetail,
   BenefitReviewResult,
   BenefitReviewSummary,
+  UnassignedBenefitReview,
   ConfirmBenefitReviewResponse,
   ConfirmReviewResponse,
   ContractDetail,
@@ -65,12 +66,6 @@ const acceptedClaimFileTypes = new Set([
   'image/jpeg',
   'image/png',
 ])
-
-const employees = [
-  { name: '김심사', department: '지급심사팀', load: 3 },
-  { name: '오담당', department: '가입심사팀', load: 5 },
-  { name: '한검토', department: '의료심사팀', load: 2 },
-]
 
 function readSession(): AuthSession | null {
   const token = window.localStorage.getItem(tokenKey)
@@ -291,7 +286,8 @@ function CustomerShell({
           <NavLink to="/customer/claims/car-accident">사고접수</NavLink>
           <NavLink to="/customer/claims/status">보상현황</NavLink>
           <NavLink to="/customer/claims/history">보상이력</NavLink>
-          <NavLink to="/customer/claims/benefit-analysis">실익분석</NavLink>
+          {/* 데모 중 임시 숨김 — 라우트/페이지는 그대로, 탭만 비표시 */}
+          {/* <NavLink to="/customer/claims/benefit-analysis">실익분석</NavLink> */}
           <NavLink to="/customer/profile">내 정보</NavLink>
         </nav>
         <button className="text-button" type="button" onClick={onLogout}>
@@ -332,10 +328,6 @@ function EmployeeShell({
           <NavLink to="/employee/benefit-reviews">
             <Receipt size={18} />
             보험금 심사
-          </NavLink>
-          <NavLink to="/employee/assignments">
-            <Users size={18} />
-            담당자 배정
           </NavLink>
         </nav>
         <div className="sidebar-footer">
@@ -1243,12 +1235,17 @@ function CustomerClaimsPage({
     }
   }
 
+  // 같은 CustomerClaimsPage 인스턴스가 view prop만 바뀌며 재사용되므로(리마운트 X),
+  // 보상현황 탭으로 진입할 때마다 최신 데이터를 다시 불러온다.
   useEffect(() => {
+    if (view !== 'status') {
+      return
+    }
     void Promise.resolve().then(() => {
       loadStatusClaims()
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [view])
 
   function changeHealthAttachments(files: FileList | null) {
     const nextFiles = Array.from(files ?? [])
@@ -1719,6 +1716,15 @@ function CustomerClaimsPage({
         </div>
         {isQueryLoading ? <p>보상 현황을 불러오는 중입니다.</p> : null}
         <div className="claim-table">
+          {statusClaims.length > 0 ? (
+            <article className="claim-table__head">
+              <span>청구</span>
+              <span>접수일</span>
+              <span>청구금액</span>
+              <span>지급금액</span>
+              <span>상태</span>
+            </article>
+          ) : null}
           {statusClaims.map((claim) => (
             <article key={`${claim.claimType}-${claim.claimId}`}>
               <strong>{formatClaimType(claim.claimType)}-{claim.claimId}</strong>
@@ -1764,6 +1770,15 @@ function CustomerClaimsPage({
           </button>
         </form>
         <div className="claim-table">
+          {historyClaims.length > 0 ? (
+            <article className="claim-table__head">
+              <span>청구</span>
+              <span>접수일</span>
+              <span>청구금액</span>
+              <span>지급금액</span>
+              <span>상태</span>
+            </article>
+          ) : null}
           {historyClaims.map((claim) => (
             <article key={`${claim.claimType}-${claim.claimId}`}>
               <strong>{formatClaimType(claim.claimType)}-{claim.claimId}</strong>
@@ -2191,18 +2206,18 @@ function EmployeeBenefitReviewsPage({
   onUnauthorized: () => void
 }) {
   const [reviews, setReviews] = useState<BenefitReviewSummary[]>([])
+  const [unassigned, setUnassigned] = useState<UnassignedBenefitReview[]>([])
+  const [assigningClaimId, setAssigningClaimId] = useState<number | null>(null)
   const [selectedReview, setSelectedReview] = useState<BenefitReviewDetail | null>(null)
   const [reviewResult, setReviewResult] = useState<BenefitReviewResult>('APPROVED')
   const [comment, setComment] = useState('정상 청구')
-  const [assignClaimId, setAssignClaimId] = useState('')
-  const [assignEmployeeId, setAssignEmployeeId] = useState('')
+  const [payoutAmount, setPayoutAmount] = useState('')
   const [decision, setDecision] = useState<ConfirmBenefitReviewResponse | null>(null)
   const [statusMessage, setStatusMessage] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setLoading] = useState(true)
   const [isSubmitting, setSubmitting] = useState(false)
   const [isRetrying, setRetrying] = useState(false)
-  const [isAssigning, setAssigning] = useState(false)
   const canRetry =
     selectedReview?.claimStatus === 'FAILED' || decision?.claimStatus === 'FAILED'
   const metrics = useMemo(
@@ -2220,6 +2235,51 @@ function EmployeeBenefitReviewsPage({
 
   async function refreshBenefitReviews() {
     setReviews(await apiClient.getBenefitReviews(token))
+    await loadUnassigned()
+  }
+
+  async function loadUnassigned() {
+    try {
+      setUnassigned(await apiClient.getUnassignedBenefitReviews(token))
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+      }
+      // 미배정 목록은 보조 정보라 실패해도 메인 흐름은 막지 않는다.
+    }
+  }
+
+  // 미배정 자동차사고를 본인(로그인 직원)에게 배정 → 내 심사 큐로 편입.
+  async function assignToMe(claimId: number) {
+    const employeeId = employeeIdFromToken(token)
+    if (!employeeId) {
+      setError('토큰에서 직원 정보를 확인할 수 없습니다. 다시 로그인해 주세요.')
+      return
+    }
+
+    setError('')
+    setStatusMessage('')
+    setAssigningClaimId(claimId)
+
+    try {
+      await apiClient.assignClaim(token, claimId, { employeeId })
+      setStatusMessage(`청구 ${claimId}번을 내 심사 큐로 배정했습니다.`)
+      await refreshBenefitReviews()
+      await selectBenefitReview(claimId)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        onUnauthorized()
+        return
+      }
+      if (err instanceof ApiError && err.status === 409) {
+        setError('이미 다른 담당자에게 배정된 건입니다.')
+        await refreshBenefitReviews()
+        return
+      }
+      setError(err instanceof Error ? err.message : '배정에 실패했습니다.')
+    } finally {
+      setAssigningClaimId(null)
+    }
   }
 
   async function loadBenefitReviews() {
@@ -2229,6 +2289,7 @@ function EmployeeBenefitReviewsPage({
     try {
       const list = await apiClient.getBenefitReviews(token)
       setReviews(list)
+      await loadUnassigned()
       if (list[0]) {
         await selectBenefitReview(list[0].claimId)
       } else {
@@ -2260,7 +2321,7 @@ function EmployeeBenefitReviewsPage({
     try {
       const detail = await apiClient.getBenefitReview(token, claimId)
       setSelectedReview(detail)
-      setAssignClaimId(String(detail.claimId))
+      setPayoutAmount(String(detail.requestAmount))
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         onUnauthorized()
@@ -2280,6 +2341,12 @@ function EmployeeBenefitReviewsPage({
       return
     }
 
+    const parsedPayout = Number(payoutAmount)
+    if (reviewResult === 'APPROVED' && (!payoutAmount || Number.isNaN(parsedPayout) || parsedPayout <= 0)) {
+      setError('승인 시 지급금액을 0보다 큰 값으로 입력해 주세요.')
+      return
+    }
+
     setError('')
     setStatusMessage('')
     setSubmitting(true)
@@ -2288,6 +2355,7 @@ function EmployeeBenefitReviewsPage({
       const response = await apiClient.confirmBenefitReview(token, selectedReview.claimId, {
         result: reviewResult,
         comment,
+        ...(reviewResult === 'APPROVED' ? { payoutAmount: parsedPayout } : {}),
       })
       setDecision(response)
       setStatusMessage(describeBenefitReviewResult(response))
@@ -2332,35 +2400,6 @@ function EmployeeBenefitReviewsPage({
     }
   }
 
-  async function assignClaim(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const claimId = Number(assignClaimId)
-    const employeeId = Number(assignEmployeeId)
-
-    if (!claimId || !employeeId) {
-      setError('청구번호와 직원번호를 입력해 주세요.')
-      return
-    }
-
-    setError('')
-    setStatusMessage('')
-    setAssigning(true)
-
-    try {
-      await apiClient.assignClaim(token, claimId, { employeeId })
-      setStatusMessage(`청구 ${claimId}번을 직원 ${employeeId}에게 재배정했습니다.`)
-      await refreshBenefitReviews()
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        onUnauthorized()
-        return
-      }
-      setError(err instanceof Error ? err.message : '담당자 재배정에 실패했습니다.')
-    } finally {
-      setAssigning(false)
-    }
-  }
-
   return (
     <section className="page">
       <div className="page-header">
@@ -2381,6 +2420,39 @@ function EmployeeBenefitReviewsPage({
       </div>
 
       <div className="split-layout">
+        <section className="panel">
+          <div className="section-title">
+            <AlertTriangle size={18} />
+            <h2>미배정 자동차사고</h2>
+          </div>
+          <p className="section-note">
+            미배정 사고접수 건입니다. [나에게 배정]을 누르면 내 심사 큐로 들어옵니다.
+          </p>
+          <div className="review-list">
+            {unassigned.map((item) => (
+              <article key={item.claimId} className="review-row">
+                <div>
+                  <strong>{formatClaimType(item.claimType)}-{item.claimId}</strong>
+                  <span>
+                    {item.accidentType ? `${item.accidentType} · ` : ''}
+                    {formatCurrency(item.requestAmount)}
+                  </span>
+                  <small>{formatContractStatus(item.claimStatus)}</small>
+                </div>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={assigningClaimId === item.claimId}
+                  onClick={() => assignToMe(item.claimId)}
+                >
+                  {assigningClaimId === item.claimId ? '배정 중' : '나에게 배정'}
+                </button>
+              </article>
+            ))}
+            {unassigned.length === 0 ? <p>미배정 건이 없습니다.</p> : null}
+          </div>
+        </section>
+
         <section className="panel">
           <div className="section-title">
             <ClipboardCheck size={18} />
@@ -2431,6 +2503,17 @@ function EmployeeBenefitReviewsPage({
                   <option value="REJECTED">거절</option>
                 </select>
               </label>
+              {reviewResult === 'APPROVED' ? (
+                <label>
+                  지급금액
+                  <input
+                    type="number"
+                    min="1"
+                    value={payoutAmount}
+                    onChange={(event) => setPayoutAmount(event.target.value)}
+                  />
+                </label>
+              ) : null}
               <label>
                 심사 의견
                 <input value={comment} onChange={(event) => setComment(event.target.value)} />
@@ -2462,90 +2545,6 @@ function EmployeeBenefitReviewsPage({
           {error ? <p className="form-error">{error}</p> : null}
         </form>
       </div>
-
-      <form className="panel assignment-form" onSubmit={assignClaim}>
-        <div className="section-title">
-          <Users size={18} />
-          <h2>수동 재배정</h2>
-        </div>
-        <div className="inline-fields">
-          <label>
-            청구번호
-            <input
-              value={assignClaimId}
-              onChange={(event) => setAssignClaimId(event.target.value)}
-            />
-          </label>
-          <label>
-            직원번호
-            <input
-              value={assignEmployeeId}
-              onChange={(event) => setAssignEmployeeId(event.target.value)}
-            />
-          </label>
-        </div>
-        <button className="secondary-button" disabled={isAssigning} type="submit">
-          {isAssigning ? '변경 중' : '담당자 변경'}
-        </button>
-      </form>
-    </section>
-  )
-}
-
-function EmployeeAssignmentsPage() {
-  const [assigned, setAssigned] = useState('')
-  const nextEmployee = employees.reduce((best, employee) =>
-    employee.load < best.load ? employee : best,
-  )
-
-  return (
-    <section className="page">
-      <div className="page-header">
-        <div>
-          <span className="eyebrow">UC14</span>
-          <h1>담당자 배정</h1>
-        </div>
-      </div>
-      <section className="workflow-band">
-        <div>
-          <Users size={22} />
-          <h2>업무량 기준 자동 배정</h2>
-          <p>현재 업무량이 가장 낮은 {nextEmployee.name}에게 다음 심사 건을 배정할 수 있습니다.</p>
-        </div>
-        <button
-          className="primary-button"
-          type="button"
-          onClick={() => setAssigned(`${nextEmployee.name}에게 새 심사 건이 배정되었습니다.`)}
-        >
-          자동 배정
-          <ArrowRight size={18} />
-        </button>
-      </section>
-
-      {assigned ? <p className="form-success">{assigned}</p> : null}
-
-      <section className="panel">
-        <div className="section-title">
-          <Users size={18} />
-          <h2>배정 가능한 직원</h2>
-        </div>
-        <div className="employee-grid">
-          {employees.map((employee) => (
-            <article key={employee.name}>
-              <strong>{employee.name}</strong>
-              <span>{employee.department}</span>
-              <small>현재 담당 {employee.load}건</small>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => setAssigned(`${employee.name}에게 수동 배정되었습니다.`)}
-              >
-                수동 배정
-              </button>
-            </article>
-          ))}
-        </div>
-      </section>
     </section>
   )
 }
@@ -2711,7 +2710,6 @@ function App() {
                     />
                   }
                 />
-                <Route path="/assignments" element={<EmployeeAssignmentsPage />} />
                 <Route path="*" element={<Navigate to="/employee/reviews" replace />} />
               </Routes>
             </EmployeeShell>

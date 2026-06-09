@@ -559,6 +559,27 @@ select:focus {
   gap: 10px;
 }
 
+.review-list .review-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 14px;
+  background: #fff;
+}
+
+.review-list .review-row > div {
+  display: grid;
+  gap: 4px;
+}
+
+.review-list .review-row small,
+.review-list .review-row span {
+  color: #7a7a7a;
+}
+
 .product-tabs button,
 .review-list button {
   display: grid;
@@ -838,6 +859,18 @@ select:focus {
 .claim-table span {
   color: #333;
   font-size: 14px;
+}
+
+.claim-table__head {
+  background: #f7f8fa;
+  border-color: #e6e8ec;
+  padding: 10px 14px;
+}
+
+.claim-table__head span {
+  color: #8a8f99;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .status-badge {
