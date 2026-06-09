@@ -3,3 +3,32 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+
+.section-note {
+  margin-top: -4px;
+  color: #5f6b7a;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.review-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 14px;
+  background: #fff;
+}
+
+.review-row > div {
+  display: grid;
+  gap: 4px;
+}
+
+.review-row small,
+.review-row span {
+  color: #7a7a7a;
+  font-size: 13px;
+}

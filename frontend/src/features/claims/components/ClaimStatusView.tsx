@@ -15,6 +15,15 @@ export function ClaimStatusView({ state }: { state: CustomerClaimsState }) {
       </div>
       {isQueryLoading ? <p>보상 현황을 불러오는 중입니다.</p> : null}
       <div className={styles.claimTable}>
+        {statusClaims.length > 0 ? (
+          <article className={styles.claimTableHead}>
+            <span>청구</span>
+            <span>접수일</span>
+            <span>청구금액</span>
+            <span>지급금액</span>
+            <span>상태</span>
+          </article>
+        ) : null}
         {statusClaims.map((claim) => (
           <article key={`${claim.claimType}-${claim.claimId}`}>
             <strong>{formatClaimType(claim.claimType)}-{claim.claimId}</strong>

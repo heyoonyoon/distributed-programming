@@ -1,4 +1,4 @@
-import type { BenefitReviewResult, ClaimStatus } from '../../lib/types'
+import type { BenefitReviewResult, ClaimStatus, ClaimType } from '../../lib/types'
 
 export type BenefitReviewSummary = {
   claimId: number
@@ -12,9 +12,21 @@ export type BenefitReviewDetail = BenefitReviewSummary & {
   assignedStaffId: number
 }
 
+// GET /staff/benefit-reviews/unassigned — 미배정(assignedStaffId=null && IN_REVIEW) 보상심사 요약.
+export type UnassignedBenefitReview = {
+  claimId: number
+  claimType: ClaimType
+  requestAmount: number
+  hospitalName: string | null
+  accidentType: string | null
+  claimStatus: ClaimStatus
+}
+
 export type ConfirmBenefitReviewRequest = {
   result: BenefitReviewResult
   comment: string
+  // 승인(APPROVED) 시 백엔드 필수. 거절 시 생략 가능.
+  payoutAmount?: number
 }
 
 export type ConfirmBenefitReviewResponse = {

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import shared from '../../../styles/shared.module.css'
 import { useCustomerClaims } from '../hooks/useCustomerClaims'
 import { BenefitAnalysisView } from './BenefitAnalysisView'
@@ -26,6 +27,19 @@ export function CustomerClaimsPage({
   view: CustomerClaimView
 }) {
   const state = useCustomerClaims(token, onUnauthorized)
+
+  // 같은 CustomerClaimsPage 인스턴스가 view prop만 바뀌며 재사용되므로(리마운트 X),
+  // 보상현황 탭으로 진입할 때마다 최신 데이터를 다시 불러온다.
+  const { loadStatusClaims } = state
+  useEffect(() => {
+    if (view !== 'status') {
+      return
+    }
+    void Promise.resolve().then(() => {
+      loadStatusClaims()
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view])
 
   return (
     <section className={shared.page}>

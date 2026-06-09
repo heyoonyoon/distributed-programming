@@ -16,7 +16,7 @@ export type ClaimStatus =
   | 'FAILED'
 export type BenefitReviewResult = 'APPROVED' | 'REJECTED'
 export type ClaimComplexity = 'SIMPLE' | 'COMPLEX'
-export type ClaimType = 'HEALTH' | 'CAR'
+export type ClaimType = 'HEALTH' | 'CAR' | 'CAR_ACCIDENT'
 
 export type AuthSession = {
   token: string

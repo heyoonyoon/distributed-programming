@@ -6,11 +6,18 @@ import type {
   ConfirmBenefitReviewRequest,
   ConfirmBenefitReviewResponse,
   RetryBenefitPayoutResponse,
+  UnassignedBenefitReview,
 } from './types'
 
 export const benefitReviewApi = {
   async getBenefitReviews(token: string): Promise<BenefitReviewSummary[]> {
     return request('/staff/benefit-reviews', {}, token)
+  },
+
+  async getUnassignedBenefitReviews(
+    token: string,
+  ): Promise<UnassignedBenefitReview[]> {
+    return request('/staff/benefit-reviews/unassigned', {}, token)
   },
 
   async getBenefitReview(

@@ -35,7 +35,8 @@ export function CustomerShell({
           <NavLink to="/customer/claims/car-accident">사고접수</NavLink>
           <NavLink to="/customer/claims/status">보상현황</NavLink>
           <NavLink to="/customer/claims/history">보상이력</NavLink>
-          <NavLink to="/customer/claims/benefit-analysis">실익분석</NavLink>
+          {/* 데모 중 임시 숨김 — 라우트/페이지는 그대로, 탭만 비표시 */}
+          {/* <NavLink to="/customer/claims/benefit-analysis">실익분석</NavLink> */}
           <NavLink to="/customer/profile">내 정보</NavLink>
         </nav>
         <button className={shared.textButton} type="button" onClick={onLogout}>
