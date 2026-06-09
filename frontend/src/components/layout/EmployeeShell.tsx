@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, ClipboardCheck, LogOut, Receipt, Users } from 'lucide-react'
+import { BriefcaseBusiness, ClipboardCheck, LogOut, Receipt } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link, NavLink, Navigate } from 'react-router-dom'
 import { homePath } from '../../lib/session'
@@ -34,10 +34,6 @@ export function EmployeeShell({
           <NavLink to="/employee/benefit-reviews">
             <Receipt size={18} />
             보험금 심사
-          </NavLink>
-          <NavLink to="/employee/assignments">
-            <Users size={18} />
-            담당자 배정
           </NavLink>
         </nav>
         <div className={styles.sidebarFooter}>

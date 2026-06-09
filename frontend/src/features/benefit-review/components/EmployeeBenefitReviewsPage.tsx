@@ -1,7 +1,7 @@
-import { AlertTriangle, CheckCircle2, ClipboardCheck, FileText, Receipt, Users } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, ClipboardCheck, FileText, Receipt } from 'lucide-react'
 import { useMemo } from 'react'
 import type { BenefitReviewResult } from '../../../lib/types'
-import { formatContractStatus, formatCurrency } from '../../../utils/format'
+import { formatClaimType, formatContractStatus, formatCurrency } from '../../../utils/format'
 import shared from '../../../styles/shared.module.css'
 import { useBenefitReviews } from '../hooks/useBenefitReviews'
 import styles from '../benefit.module.css'
@@ -15,27 +15,26 @@ export function EmployeeBenefitReviewsPage({
 }) {
   const {
     reviews,
+    unassigned,
     selectedReview,
     reviewResult,
     setReviewResult,
     comment,
     setComment,
-    assignClaimId,
-    setAssignClaimId,
-    assignEmployeeId,
-    setAssignEmployeeId,
+    payoutAmount,
+    setPayoutAmount,
     decision,
     statusMessage,
     error,
     isLoading,
     isSubmitting,
     isRetrying,
-    isAssigning,
+    assigningClaimId,
     canRetry,
     selectBenefitReview,
     confirmBenefitReview,
     retryPayout,
-    assignClaim,
+    assignToMe,
   } = useBenefitReviews(token, onUnauthorized)
 
   const metrics = useMemo(
@@ -71,6 +70,39 @@ export function EmployeeBenefitReviewsPage({
       </div>
 
       <div className={shared.splitLayout}>
+        <section className={shared.panel}>
+          <div className={shared.sectionTitle}>
+            <AlertTriangle size={18} />
+            <h2>미배정 자동차사고</h2>
+          </div>
+          <p className={styles.sectionNote}>
+            미배정 사고접수 건입니다. [나에게 배정]을 누르면 내 심사 큐로 들어옵니다.
+          </p>
+          <div className={shared.reviewList}>
+            {unassigned.map((item) => (
+              <article key={item.claimId} className={styles.reviewRow}>
+                <div>
+                  <strong>{formatClaimType(item.claimType)}-{item.claimId}</strong>
+                  <span>
+                    {item.accidentType ? `${item.accidentType} · ` : ''}
+                    {formatCurrency(item.requestAmount)}
+                  </span>
+                  <small>{formatContractStatus(item.claimStatus)}</small>
+                </div>
+                <button
+                  className={shared.secondaryButton}
+                  type="button"
+                  disabled={assigningClaimId === item.claimId}
+                  onClick={() => assignToMe(item.claimId)}
+                >
+                  {assigningClaimId === item.claimId ? '배정 중' : '나에게 배정'}
+                </button>
+              </article>
+            ))}
+            {unassigned.length === 0 ? <p>미배정 건이 없습니다.</p> : null}
+          </div>
+        </section>
+
         <section className={shared.panel}>
           <div className={shared.sectionTitle}>
             <ClipboardCheck size={18} />
@@ -121,6 +153,17 @@ export function EmployeeBenefitReviewsPage({
                   <option value="REJECTED">거절</option>
                 </select>
               </label>
+              {reviewResult === 'APPROVED' ? (
+                <label>
+                  지급금액
+                  <input
+                    type="number"
+                    min="1"
+                    value={payoutAmount}
+                    onChange={(event) => setPayoutAmount(event.target.value)}
+                  />
+                </label>
+              ) : null}
               <label>
                 심사 의견
                 <input value={comment} onChange={(event) => setComment(event.target.value)} />
@@ -152,26 +195,6 @@ export function EmployeeBenefitReviewsPage({
           {error ? <p className={shared.formError}>{error}</p> : null}
         </form>
       </div>
-
-      <form className={shared.panel} onSubmit={assignClaim}>
-        <div className={shared.sectionTitle}>
-          <Users size={18} />
-          <h2>수동 재배정</h2>
-        </div>
-        <div className={shared.inlineFields}>
-          <label>
-            청구번호
-            <input value={assignClaimId} onChange={(event) => setAssignClaimId(event.target.value)} />
-          </label>
-          <label>
-            직원번호
-            <input value={assignEmployeeId} onChange={(event) => setAssignEmployeeId(event.target.value)} />
-          </label>
-        </div>
-        <button className={shared.secondaryButton} disabled={isAssigning} type="submit">
-          {isAssigning ? '변경 중' : '담당자 변경'}
-        </button>
-      </form>
     </section>
   )
 }

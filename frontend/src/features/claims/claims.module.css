@@ -139,6 +139,18 @@
   font-size: 14px;
 }
 
+.claim-table__head {
+  background: #f7f8fa;
+  border-color: #e6e8ec;
+  padding: 10px 14px;
+}
+
+.claim-table__head span {
+  color: #8a8f99;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .status-badge {
   width: fit-content;
   border-radius: 999px;

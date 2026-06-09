@@ -9,7 +9,6 @@ import { CustomerClaimsPage } from '../features/claims/components/CustomerClaims
 import { ProfilePage } from '../features/profile/components/ProfilePage'
 import { EmployeeReviewsPage } from '../features/underwriting-review/components/EmployeeReviewsPage'
 import { EmployeeBenefitReviewsPage } from '../features/benefit-review/components/EmployeeBenefitReviewsPage'
-import { EmployeeAssignmentsPage } from '../features/assignments/components/EmployeeAssignmentsPage'
 import { homePath } from '../lib/session'
 
 function App() {
@@ -116,7 +115,6 @@ function App() {
                   path="/benefit-reviews"
                   element={<EmployeeBenefitReviewsPage token={session.token} onUnauthorized={handleUnauthorized} />}
                 />
-                <Route path="/assignments" element={<EmployeeAssignmentsPage />} />
                 <Route path="*" element={<Navigate to="/employee/reviews" replace />} />
               </Routes>
             </EmployeeShell>

@@ -388,6 +388,7 @@ export function useCustomerClaims(token: string, onUnauthorized: () => void) {
     changeAccidentAttachments,
     submitClaim,
     submitAccident,
+    loadStatusClaims,
     loadHistory,
     loadBenefitAnalysis,
   }
