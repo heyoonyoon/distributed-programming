@@ -1,0 +1,9 @@
+.risk-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 14px;
+  padding: 12px;
+  color: #7a4d00;
+  background: #fff7e6;
+}

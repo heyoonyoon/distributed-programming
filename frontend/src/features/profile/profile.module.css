@@ -1,0 +1,9 @@
+.profile-form {
+  display: grid;
+  gap: 18px;
+  width: min(680px, 100%);
+  padding: 28px;
+  border: 1px solid #e0e0e0;
+  border-radius: 18px;
+  background: #fff;
+}

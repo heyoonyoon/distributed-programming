@@ -1,0 +1,163 @@
+.customer-shell {
+  min-height: 100svh;
+  background: #f5f5f7;
+}
+
+.customer-nav {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px max(24px, calc((100vw - 1120px) / 2));
+  border-bottom: 1px solid #e0e0e0;
+  background: rgb(255 255 255 / 92%);
+}
+
+.brand,
+.customer-nav nav a,
+.nav-list a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1d1d1f;
+  text-decoration: none;
+}
+
+.brand {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.customer-nav nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.customer-nav nav a {
+  min-height: 36px;
+  border-radius: 999px;
+  padding: 0 10px;
+  color: #333;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.customer-nav nav a:hover,
+.customer-nav nav a:global(.active) {
+  color: #0066cc;
+  background: #f5f5f7;
+}
+
+.customer-nav nav a:global(.active) {
+  font-weight: 700;
+  outline: 2px solid rgb(0 102 204 / 18%);
+}
+
+.customer-content {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+.employee-shell {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  background: #f5f5f7;
+}
+
+.sidebar {
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 28px;
+  padding: 24px;
+  border-right: 1px solid #e0e0e0;
+  background: #fff;
+}
+
+.nav-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.nav-list a {
+  min-height: 42px;
+  border-radius: 11px;
+  padding: 0 12px;
+  color: #333;
+}
+
+.nav-list a:hover,
+.nav-list a:global(.active) {
+  color: #0066cc;
+  background: #f5f5f7;
+}
+
+.nav-list a:global(.active) {
+  font-weight: 700;
+  outline: 2px solid rgb(0 102 204 / 18%);
+}
+
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.sidebar-footer div {
+  display: grid;
+  gap: 2px;
+}
+
+.sidebar-footer span {
+  color: #7a7a7a;
+  font-size: 12px;
+}
+
+.content {
+  padding: 40px;
+}
+
+@media (max-width: 860px) {
+  .employee-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .content,
+  .customer-content {
+    padding: 28px;
+  }
+
+  .customer-nav {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+  }
+
+  .customer-nav nav {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .sidebar {
+    min-height: auto;
+    grid-template-rows: auto auto;
+    gap: 16px;
+    border-right: 0;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+}
